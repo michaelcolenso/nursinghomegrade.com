@@ -1,0 +1,16 @@
+name = "nursinghomegrade"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "nursinghomegrade"
+database_id = "57cfa03c-1808-48e7-a2d4-ea8691565af8"
+
+[[kv_namespaces]]
+binding = "CACHE"
+id = "fa0faa67ae0c434093a3aeaa14a5992e"
+preview_id = "0b453a4b546847e78b7249faac04dd26"
+
+[triggers]
+crons = ["0 2 * * 1"]

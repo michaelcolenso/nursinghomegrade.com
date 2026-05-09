@@ -1,0 +1,69 @@
+import { describe, expect, it } from "vitest";
+import { facilityPage } from "../src/templates/facility";
+import type { FacilityPageData, Deficiency } from "../src/types";
+
+const baseFacility: FacilityPageData = {
+  cms_id: "015001",
+  name: "Sunrise Care Center",
+  address: "123 Main St",
+  city: "Birmingham",
+  state: "AL",
+  zip: "35201",
+  latitude: 33.5186,
+  longitude: -86.8104,
+  overall_rating: 3,
+  quality_rating: 4,
+  staffing_rating: 2,
+  inspection_rating: 3,
+  rn_hours_per_resident_day: 0.48,
+  total_deficiencies: 7,
+  grade_score: 62,
+  grade_letter: "C",
+  grade_summary: "Staffing is slightly below ideal but quality is mixed.",
+  slug: "sunrise-care-center",
+  updated_at: "2026-01-01T00:00:00.000Z",
+  complaint_deficiencies_cycle_1: 2,
+};
+
+const sampleDeficiency: Deficiency = {
+  id: 1,
+  cms_id: "015001",
+  survey_date: "2023-03-02",
+  deficiency_category: "Infection Control Deficiencies",
+  deficiency_tag_number: "0880",
+  deficiency_description: "Provide and implement an infection prevention and control program.",
+  scope_severity_code: "F",
+  deficiency_corrected: "Deficient, Provider has date of correction",
+  correction_date: "2023-04-06",
+  inspection_cycle: 1,
+  standard_deficiency: "Y",
+  complaint_deficiency: "N",
+};
+
+describe("facilityPage", () => {
+  it("renders complaint-based inspection deficiencies when available", () => {
+    const html = facilityPage(baseFacility, []);
+    expect(html).toContain("Complaint-based Deficiencies");
+    expect(html).toContain(">2<");
+  });
+
+  it("renders Not reported when complaint deficiencies are missing", () => {
+    const html = facilityPage({ ...baseFacility, complaint_deficiencies_cycle_1: null }, []);
+    expect(html).toContain("Complaint-based Deficiencies");
+    expect(html).toContain("Not reported");
+  });
+
+  it("renders actual deficiency details when available", () => {
+    const html = facilityPage(baseFacility, [sampleDeficiency]);
+    expect(html).toContain("Inspection Deficiencies");
+    expect(html).toContain("Infection Control Deficiencies");
+    expect(html).toContain("Provide and implement an infection prevention and control program.");
+    expect(html).toContain("F0880");
+    expect(html).toContain("Potential harm — widespread");
+  });
+
+  it("shows empty state when no deficiencies available", () => {
+    const html = facilityPage(baseFacility, []);
+    expect(html).toContain("No detailed deficiency records available");
+  });
+});
