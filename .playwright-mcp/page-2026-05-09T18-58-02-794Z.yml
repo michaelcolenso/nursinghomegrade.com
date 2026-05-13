@@ -1,0 +1,24 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - link "NursingHomeGrade" [ref=e5] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e6]: Independent ratings from CMS data
+  - main [ref=e7]:
+    - generic [ref=e8]:
+      - heading "No facilities found near 99999" [level=1] [ref=e9]
+      - paragraph [ref=e10]: We search within 25 miles of the ZIP code. Try another ZIP or check that you entered it correctly.
+      - generic [ref=e11]:
+        - textbox "Enter ZIP code" [ref=e12]
+        - button "Search" [ref=e13] [cursor=pointer]
+      - paragraph [ref=e14]: We have facilities in TX (1,177), CA (1,162), OH (922), FL (694), IL (668), PA (657), NY (596), IN (507), MO (487), MI (423), NC (418), IA (390).
+    - paragraph [ref=e15]:
+      - link "← Back to home" [ref=e16] [cursor=pointer]:
+        - /url: /
+  - contentinfo [ref=e17]:
+    - generic [ref=e19]:
+      - generic [ref=e20]: Data sourced from CMS Nursing Home Compare. Updated monthly.
+      - generic [ref=e21]:
+        - text: We do not accept commissions from facilities or referral networks.
+        - link "About" [ref=e22] [cursor=pointer]:
+          - /url: /about

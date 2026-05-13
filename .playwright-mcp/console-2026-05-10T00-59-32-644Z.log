@@ -1,0 +1,11 @@
+[   50221ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[   50407ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ https://recall-radar.aged-morning-c8e4.workers.dev/admin:0
+[   50498ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://recall-radar.aged-morning-c8e4.workers.dev/api/admin/status:0
+[   50500ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://recall-radar.aged-morning-c8e4.workers.dev/api/admin/stats:0
+[   62718ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://recall-radar.aged-morning-c8e4.workers.dev/api/admin/stats:0
+[   62723ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://recall-radar.aged-morning-c8e4.workers.dev/api/admin/status:0
+[   71120ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://recall-radar.aged-morning-c8e4.workers.dev/api/admin/stats:0
+[   71121ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://recall-radar.aged-morning-c8e4.workers.dev/api/admin/status:0
+[   73261ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://recall-radar.aged-morning-c8e4.workers.dev/api/admin/stats:0
+[   73272ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://recall-radar.aged-morning-c8e4.workers.dev/api/admin/status:0
+[  169044ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://recall-radar.aged-morning-c8e4.workers.dev/api/admin/enrich:0

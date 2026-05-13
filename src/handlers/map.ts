@@ -28,7 +28,7 @@ export async function handleMapApi(request: Request, env: Env): Promise<Response
     maxLat,
     minLng,
     maxLatLng: maxLng,
-  });
+  }, 2000);
 
   // Return only essential data for the map
   const data = facilities.map((f) => ({

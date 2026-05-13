@@ -1,0 +1,44 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - link "NursingHomeGrade" [ref=e5] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e6]: Independent ratings from CMS data
+  - main [ref=e7]:
+    - heading "About NursingHomeGrade" [level=1] [ref=e8]
+    - heading "Why we built this" [level=2] [ref=e9]
+    - paragraph [ref=e10]: The dominant nursing home referral services earn commissions from the facilities they recommend — as much as $3,500 per family placed. In May 2024, the Washington Post and a Senate investigation documented how this creates incentives to hide violation records.
+    - paragraph [ref=e11]: NursingHomeGrade takes no commissions. We surface the same CMS data that's publicly available, organized and scored in a way that's actually useful.
+    - heading "How we grade facilities" [level=2] [ref=e12]
+    - paragraph [ref=e13]: "The NursingHomeGrade Score (0–100) is a weighted composite of four CMS data points:"
+    - list [ref=e14]:
+      - listitem [ref=e15]:
+        - strong [ref=e16]: "Staffing compliance (35%):"
+        - text: RN hours per resident per day vs. the 2024 federal minimum of 0.55 hours
+      - listitem [ref=e17]:
+        - strong [ref=e18]: "Inspection clean rate (30%):"
+        - text: Total health inspection deficiencies and their severity
+      - listitem [ref=e19]:
+        - strong [ref=e20]: "Quality measures (20%):"
+        - text: CMS quality star rating
+      - listitem [ref=e21]:
+        - strong [ref=e22]: "Staffing consistency (15%):"
+        - text: CMS staffing star rating
+    - heading "Data source" [level=2] [ref=e23]
+    - paragraph [ref=e24]:
+      - text: All data comes from
+      - link "CMS Nursing Home Compare" [ref=e25] [cursor=pointer]:
+        - /url: https://data.cms.gov/provider-data/topics/nursing-homes
+      - text: ", a public dataset updated monthly by the Centers for Medicare & Medicaid Services. We apply no editorial adjustments."
+    - heading "Business model" [level=2] [ref=e26]
+    - paragraph [ref=e27]: We display contextual advertising and earn small referral fees when users click through to comparison services. We never receive payments from nursing facilities. If that ever changes, we'll disclose it prominently.
+    - paragraph [ref=e28]:
+      - link "← Back to home" [ref=e29] [cursor=pointer]:
+        - /url: /
+  - contentinfo [ref=e30]:
+    - generic [ref=e32]:
+      - generic [ref=e33]: Data sourced from CMS Nursing Home Compare. Updated monthly.
+      - generic [ref=e34]:
+        - text: We do not accept commissions from facilities or referral networks.
+        - link "About" [ref=e35] [cursor=pointer]:
+          - /url: /about

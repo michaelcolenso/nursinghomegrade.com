@@ -1,0 +1,28 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - link "NursingHomeGrade" [ref=e5] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e6]: Independent ratings from CMS data
+  - main [ref=e7]:
+    - heading "Find honest nursing home grades" [level=1] [ref=e8]
+    - paragraph [ref=e9]:
+      - strong [ref=e10]: 44.2% of U.S. nursing homes
+      - text: fail the federal staffing minimum. We show you which ones — no commissions, no conflicts.
+    - paragraph [ref=e11]: Data from CMS Nursing Home Compare. Updated monthly.
+    - generic [ref=e12]:
+      - textbox "Enter ZIP code" [ref=e13]
+      - button "Search" [ref=e14] [cursor=pointer]
+      - button "Use my location" [ref=e15] [cursor=pointer]
+    - blockquote [ref=e16]:
+      - strong [ref=e17]: "Why this site exists:"
+      - text: A Place for Mom earns up to $3,500 per family they refer to a facility — paid by the facility. Their incentive is placement, not quality. We take no commissions. Ever.
+      - link "Read more →" [ref=e18] [cursor=pointer]:
+        - /url: /about
+  - contentinfo [ref=e19]:
+    - generic [ref=e21]:
+      - generic [ref=e22]: Data sourced from CMS Nursing Home Compare. Updated monthly.
+      - generic [ref=e23]:
+        - text: We do not accept commissions from facilities or referral networks.
+        - link "About" [ref=e24] [cursor=pointer]:
+          - /url: /about

@@ -1,0 +1,663 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - link "NursingHomeGrade" [ref=e5] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e6]: Independent ratings from CMS data
+  - main [ref=e7]:
+    - generic [ref=e8]:
+      - generic [ref=e9]:
+        - generic [ref=e10]: Search results
+        - generic [ref=e11]: 25 facilities near 10001
+        - paragraph [ref=e12]: Sorted to surface the strongest options first. Scan grade, staffing, and inspection issues before opening a full facility record.
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - text: Sort by
+          - combobox "Sort by" [ref=e15] [cursor=pointer]:
+            - option "Best grade" [selected]
+            - option "Closest"
+            - option "Name A-Z"
+        - generic [ref=e16]:
+          - text: Minimum grade
+          - combobox "Minimum grade" [ref=e17] [cursor=pointer]:
+            - option "Any grade" [selected]
+            - option "A only"
+            - option "B or better"
+            - option "C or better"
+            - option "D or better"
+    - generic [ref=e18]:
+      - generic [ref=e20]:
+        - generic [ref=e21]:
+          - generic [ref=e22]: Top match
+          - generic [ref=e23]: A
+          - generic [ref=e24]: 99/100
+        - generic [ref=e25]:
+          - generic [ref=e26]:
+            - generic [ref=e27]:
+              - link "COLER REHABILITATION AND NURSING CARE CENTER" [ref=e28] [cursor=pointer]:
+                - /url: /facility/335063-coler-rehabilitation-and-nursing-care-center
+              - generic [ref=e29]: 900 MAIN ST, ROOSEVELT ISLAND, NY
+            - generic [ref=e30]: 2.3 mi away
+          - generic [ref=e31]:
+            - generic [ref=e32]:
+              - generic [ref=e33]: RN staffing
+              - generic [ref=e34]:
+                - text: "1.35"
+                - generic [ref=e35]: ✓
+            - generic [ref=e36]:
+              - generic [ref=e37]: Deficiencies
+              - generic [ref=e38]: "1"
+            - generic [ref=e39]:
+              - generic [ref=e40]: CMS rating
+              - generic [ref=e41]: ★★★★★
+          - paragraph [ref=e42]: Exceeds federal staffing minimum — top tier inspection record.
+      - generic [ref=e44]:
+        - generic [ref=e45]:
+          - generic [ref=e46]: "#2"
+          - generic [ref=e47]: A
+          - generic [ref=e48]: 97/100
+        - generic [ref=e49]:
+          - generic [ref=e50]:
+            - generic [ref=e51]:
+              - link "DR SUSAN SMITH MCKINNEY NURSING AND REHAB CENTER" [ref=e52] [cursor=pointer]:
+                - /url: /facility/335805-dr-susan-smith-mckinney-nursing-and-rehab-center
+              - generic [ref=e53]: 594 ALBANY AVENUE, BROOKLYN, NY
+            - generic [ref=e54]: 6.8 mi away
+          - generic [ref=e55]:
+            - generic [ref=e56]:
+              - generic [ref=e57]: RN staffing
+              - generic [ref=e58]:
+                - text: "1.73"
+                - generic [ref=e59]: ✓
+            - generic [ref=e60]:
+              - generic [ref=e61]: Deficiencies
+              - generic [ref=e62]: "2"
+            - generic [ref=e63]:
+              - generic [ref=e64]: CMS rating
+              - generic [ref=e65]: ★★★★★
+          - paragraph [ref=e66]: Exceeds federal staffing minimum — top tier inspection record.
+      - generic [ref=e68]:
+        - generic [ref=e69]:
+          - generic [ref=e70]: "#3"
+          - generic [ref=e71]: A
+          - generic [ref=e72]: 96/100
+        - generic [ref=e73]:
+          - generic [ref=e74]:
+            - generic [ref=e75]:
+              - link "ELIZABETH SETON CHILDREN'S CENTER" [ref=e76] [cursor=pointer]:
+                - /url: /facility/33A246-elizabeth-seton-children-s-center
+              - generic [ref=e77]: 300 CORPORATE BLVD SOUTH, YONKERS, NY
+            - generic [ref=e78]: 16.6 mi away
+          - generic [ref=e79]:
+            - generic [ref=e80]:
+              - generic [ref=e81]: RN staffing
+              - generic [ref=e82]:
+                - text: "6.26"
+                - generic [ref=e83]: ✓
+            - generic [ref=e84]:
+              - generic [ref=e85]: Deficiencies
+              - generic [ref=e86]: "3"
+            - generic [ref=e87]:
+              - generic [ref=e88]: CMS rating
+              - generic [ref=e89]: ★★★★★
+          - paragraph [ref=e90]: Exceeds federal staffing minimum — top tier inspection record.
+      - generic [ref=e92]:
+        - generic [ref=e93]:
+          - generic [ref=e94]: "#4"
+          - generic [ref=e95]: A
+          - generic [ref=e96]: 95/100
+        - generic [ref=e97]:
+          - generic [ref=e98]:
+            - generic [ref=e99]:
+              - link "PARKER JEWISH INSTITUTE FOR HEALTH CARE & REHAB" [ref=e100] [cursor=pointer]:
+                - /url: /facility/335132-parker-jewish-institute-for-health-care-rehab
+              - generic [ref=e101]: 271-11 76TH AVE, NEW HYDE PARK, NY
+            - generic [ref=e102]: 15.2 mi away
+          - generic [ref=e103]:
+            - generic [ref=e104]:
+              - generic [ref=e105]: RN staffing
+              - generic [ref=e106]:
+                - text: "1.19"
+                - generic [ref=e107]: ✓
+            - generic [ref=e108]:
+              - generic [ref=e109]: Deficiencies
+              - generic [ref=e110]: "1"
+            - generic [ref=e111]:
+              - generic [ref=e112]: CMS rating
+              - generic [ref=e113]: ★★★★★
+          - paragraph [ref=e114]: Exceeds federal staffing minimum — top tier inspection record.
+      - generic [ref=e116]:
+        - generic [ref=e117]:
+          - generic [ref=e118]: "#5"
+          - generic [ref=e119]: A
+          - generic [ref=e120]: 95/100
+        - generic [ref=e121]:
+          - generic [ref=e122]:
+            - generic [ref=e123]:
+              - link "THE STEVEN AND ALEXANDRA COHEN PED L T C PAVILION" [ref=e124] [cursor=pointer]:
+                - /url: /facility/335874-the-steven-and-alexandra-cohen-ped-l-t-c-pavilion
+              - generic [ref=e125]: 95 BRADHURST AVE, VALHALLA, NY
+            - generic [ref=e126]: 24.8 mi away
+          - generic [ref=e127]:
+            - generic [ref=e128]:
+              - generic [ref=e129]: RN staffing
+              - generic [ref=e130]:
+                - text: "5.34"
+                - generic [ref=e131]: ✓
+            - generic [ref=e132]:
+              - generic [ref=e133]: Deficiencies
+              - generic [ref=e134]: "1"
+            - generic [ref=e135]:
+              - generic [ref=e136]: CMS rating
+              - generic [ref=e137]: ★★★★★
+          - paragraph [ref=e138]: Exceeds federal staffing minimum — top tier inspection record.
+      - generic [ref=e140]:
+        - generic [ref=e141]:
+          - generic [ref=e142]: "#6"
+          - generic [ref=e143]: A
+          - generic [ref=e144]: 94/100
+        - generic [ref=e145]:
+          - generic [ref=e146]:
+            - generic [ref=e147]:
+              - link "WHITE PLAINS CENTER FOR NURSING CARE, L L C" [ref=e148] [cursor=pointer]:
+                - /url: /facility/335224-white-plains-center-for-nursing-care-l-l-c
+              - generic [ref=e149]: 220 WEST POST ROAD, WHITE PLAINS, NY
+            - generic [ref=e150]: 21.9 mi away
+          - generic [ref=e151]:
+            - generic [ref=e152]:
+              - generic [ref=e153]: RN staffing
+              - generic [ref=e154]:
+                - text: "0.91"
+                - generic [ref=e155]: ✓
+            - generic [ref=e156]:
+              - generic [ref=e157]: Deficiencies
+              - generic [ref=e158]: "4"
+            - generic [ref=e159]:
+              - generic [ref=e160]: CMS rating
+              - generic [ref=e161]: ★★★★★
+          - paragraph [ref=e162]: Exceeds federal staffing minimum — top tier inspection record.
+      - generic [ref=e164]:
+        - generic [ref=e165]:
+          - generic [ref=e166]: "#7"
+          - generic [ref=e167]: A
+          - generic [ref=e168]: 94/100
+        - generic [ref=e169]:
+          - generic [ref=e170]:
+            - generic [ref=e171]:
+              - link "The Wartburg Home" [ref=e172] [cursor=pointer]:
+                - /url: /facility/335269-the-wartburg-home
+              - generic [ref=e173]: 1 Wartburg Place, MOUNT VERNON, NY
+            - generic [ref=e174]: 15.2 mi away
+          - generic [ref=e175]:
+            - generic [ref=e176]:
+              - generic [ref=e177]: RN staffing
+              - generic [ref=e178]:
+                - text: "1.07"
+                - generic [ref=e179]: ✓
+            - generic [ref=e180]:
+              - generic [ref=e181]: Deficiencies
+              - generic [ref=e182]: "4"
+            - generic [ref=e183]:
+              - generic [ref=e184]: CMS rating
+              - generic [ref=e185]: ★★★★★
+          - paragraph [ref=e186]: Exceeds federal staffing minimum — top tier inspection record.
+      - generic [ref=e188]:
+        - generic [ref=e189]:
+          - generic [ref=e190]: "#8"
+          - generic [ref=e191]: A
+          - generic [ref=e192]: 94/100
+        - generic [ref=e193]:
+          - generic [ref=e194]:
+            - generic [ref=e195]:
+              - link "NEW GOUVERNEUR HOSPITAL S N F" [ref=e196] [cursor=pointer]:
+                - /url: /facility/335461-new-gouverneur-hospital-s-n-f
+              - generic [ref=e197]: 227 MADISON STREET, NEW YORK, NY
+            - generic [ref=e198]: 2.5 mi away
+          - generic [ref=e199]:
+            - generic [ref=e200]:
+              - generic [ref=e201]: RN staffing
+              - generic [ref=e202]:
+                - text: "1.46"
+                - generic [ref=e203]: ✓
+            - generic [ref=e204]:
+              - generic [ref=e205]: Deficiencies
+              - generic [ref=e206]: "4"
+            - generic [ref=e207]:
+              - generic [ref=e208]: CMS rating
+              - generic [ref=e209]: ★★★★★
+          - paragraph [ref=e210]: Exceeds federal staffing minimum — top tier inspection record.
+      - generic [ref=e212]:
+        - generic [ref=e213]:
+          - generic [ref=e214]: "#9"
+          - generic [ref=e215]: A
+          - generic [ref=e216]: 94/100
+        - generic [ref=e217]:
+          - generic [ref=e218]:
+            - generic [ref=e219]:
+              - link "MOUNT SINAI SOUTH NASSAU T C U" [ref=e220] [cursor=pointer]:
+                - /url: /facility/335871-mount-sinai-south-nassau-t-c-u
+              - generic [ref=e221]: 1 HEALTHY WAY, OCEANSIDE, NY
+            - generic [ref=e222]: 20.3 mi away
+          - generic [ref=e223]:
+            - generic [ref=e224]:
+              - generic [ref=e225]: RN staffing
+              - generic [ref=e226]:
+                - text: "4.15"
+                - generic [ref=e227]: ✓
+            - generic [ref=e228]:
+              - generic [ref=e229]: Deficiencies
+              - generic [ref=e230]: "1"
+            - generic [ref=e231]:
+              - generic [ref=e232]: CMS rating
+              - generic [ref=e233]: ★★★★★
+          - paragraph [ref=e234]: Exceeds federal staffing minimum — top tier inspection record.
+      - generic [ref=e236]:
+        - generic [ref=e237]:
+          - generic [ref=e238]: "#10"
+          - generic [ref=e239]: A
+          - generic [ref=e240]: 93/100
+        - generic [ref=e241]:
+          - generic [ref=e242]:
+            - generic [ref=e243]:
+              - link "DITMAS PARK CARE CENTER" [ref=e244] [cursor=pointer]:
+                - /url: /facility/335648-ditmas-park-care-center
+              - generic [ref=e245]: 2107 DITMAS AVENUE, BROOKLYN, NY
+            - generic [ref=e246]: 7.8 mi away
+          - generic [ref=e247]:
+            - generic [ref=e248]:
+              - generic [ref=e249]: RN staffing
+              - generic [ref=e250]:
+                - text: "1.25"
+                - generic [ref=e251]: ✓
+            - generic [ref=e252]:
+              - generic [ref=e253]: Deficiencies
+              - generic [ref=e254]: "2"
+            - generic [ref=e255]:
+              - generic [ref=e256]: CMS rating
+              - generic [ref=e257]: ★★★★★
+          - paragraph [ref=e258]: Exceeds federal staffing minimum — top tier inspection record.
+      - generic [ref=e260]:
+        - generic [ref=e261]:
+          - generic [ref=e262]: "#11"
+          - generic [ref=e263]: A
+          - generic [ref=e264]: 93/100
+        - generic [ref=e265]:
+          - generic [ref=e266]:
+            - generic [ref=e267]:
+              - link "ST MARYS CENTER INC" [ref=e268] [cursor=pointer]:
+                - /url: /facility/335762-st-marys-center-inc
+              - generic [ref=e269]: 516 WEST 126TH STREET, NEW YORK, NY
+            - generic [ref=e270]: 5.1 mi away
+          - generic [ref=e271]:
+            - generic [ref=e272]:
+              - generic [ref=e273]: RN staffing
+              - generic [ref=e274]:
+                - text: "0.73"
+                - generic [ref=e275]: ✓
+            - generic [ref=e276]:
+              - generic [ref=e277]: Deficiencies
+              - generic [ref=e278]: "2"
+            - generic [ref=e279]:
+              - generic [ref=e280]: CMS rating
+              - generic [ref=e281]: ★★★★★
+          - paragraph [ref=e282]: Exceeds federal staffing minimum — top tier inspection record.
+      - generic [ref=e284]:
+        - generic [ref=e285]:
+          - generic [ref=e286]: "#12"
+          - generic [ref=e287]: A
+          - generic [ref=e288]: 92/100
+        - generic [ref=e289]:
+          - generic [ref=e290]:
+            - generic [ref=e291]:
+              - link "HEBREW HOME FOR THE AGED AT RIVERDALE" [ref=e292] [cursor=pointer]:
+                - /url: /facility/335020-hebrew-home-for-the-aged-at-riverdale
+              - generic [ref=e293]: 5901 PALISADE AVENUE, RIVERDALE, NY
+            - generic [ref=e294]: 12.0 mi away
+          - generic [ref=e295]:
+            - generic [ref=e296]:
+              - generic [ref=e297]: RN staffing
+              - generic [ref=e298]:
+                - text: "0.91"
+                - generic [ref=e299]: ✓
+            - generic [ref=e300]:
+              - generic [ref=e301]: Deficiencies
+              - generic [ref=e302]: "0"
+            - generic [ref=e303]:
+              - generic [ref=e304]: CMS rating
+              - generic [ref=e305]: ★★★★★
+          - paragraph [ref=e306]: Exceeds federal staffing minimum — top tier inspection record.
+      - generic [ref=e308]:
+        - generic [ref=e309]:
+          - generic [ref=e310]: "#13"
+          - generic [ref=e311]: A
+          - generic [ref=e312]: 92/100
+        - generic [ref=e313]:
+          - generic [ref=e314]:
+            - generic [ref=e315]:
+              - link "MARGARET TIETZ CENTER FOR NURSING CARE INC" [ref=e316] [cursor=pointer]:
+                - /url: /facility/335336-margaret-tietz-center-for-nursing-care-inc
+              - generic [ref=e317]: 164 11 CHAPIN PARKWAY, JAMAICA, NY
+            - generic [ref=e318]: 10.9 mi away
+          - generic [ref=e319]:
+            - generic [ref=e320]:
+              - generic [ref=e321]: RN staffing
+              - generic [ref=e322]:
+                - text: "1.24"
+                - generic [ref=e323]: ✓
+            - generic [ref=e324]:
+              - generic [ref=e325]: Deficiencies
+              - generic [ref=e326]: "0"
+            - generic [ref=e327]:
+              - generic [ref=e328]: CMS rating
+              - generic [ref=e329]: ★★★★★
+          - paragraph [ref=e330]: Exceeds federal staffing minimum — top tier inspection record.
+      - generic [ref=e332]:
+        - generic [ref=e333]:
+          - generic [ref=e334]: "#14"
+          - generic [ref=e335]: A
+          - generic [ref=e336]: 92/100
+        - generic [ref=e337]:
+          - generic [ref=e338]:
+            - generic [ref=e339]:
+              - link "JAMAICA HOSPITAL NURSING HOME CO INC" [ref=e340] [cursor=pointer]:
+                - /url: /facility/335436-jamaica-hospital-nursing-home-co-inc
+              - generic [ref=e341]: 89-40 135TH STREET, JAMAICA, NY
+            - generic [ref=e342]: 10.0 mi away
+          - generic [ref=e343]:
+            - generic [ref=e344]:
+              - generic [ref=e345]: RN staffing
+              - generic [ref=e346]:
+                - text: "0.97"
+                - generic [ref=e347]: ✓
+            - generic [ref=e348]:
+              - generic [ref=e349]: Deficiencies
+              - generic [ref=e350]: "0"
+            - generic [ref=e351]:
+              - generic [ref=e352]: CMS rating
+              - generic [ref=e353]: ★★★★★
+          - paragraph [ref=e354]: Exceeds federal staffing minimum — top tier inspection record.
+      - generic [ref=e356]:
+        - generic [ref=e357]:
+          - generic [ref=e358]: "#15"
+          - generic [ref=e359]: A
+          - generic [ref=e360]: 92/100
+        - generic [ref=e361]:
+          - generic [ref=e362]:
+            - generic [ref=e363]:
+              - link "ARCHCARE AT PROVIDENCE REST" [ref=e364] [cursor=pointer]:
+                - /url: /facility/335583-archcare-at-providence-rest
+              - generic [ref=e365]: 3304 WATERBURY AVENUE, BRONX, NY
+            - generic [ref=e366]: 11.1 mi away
+          - generic [ref=e367]:
+            - generic [ref=e368]:
+              - generic [ref=e369]: RN staffing
+              - generic [ref=e370]:
+                - text: "0.87"
+                - generic [ref=e371]: ✓
+            - generic [ref=e372]:
+              - generic [ref=e373]: Deficiencies
+              - generic [ref=e374]: "0"
+            - generic [ref=e375]:
+              - generic [ref=e376]: CMS rating
+              - generic [ref=e377]: ★★★★★
+          - paragraph [ref=e378]: Exceeds federal staffing minimum — top tier inspection record.
+      - generic [ref=e380]:
+        - generic [ref=e381]:
+          - generic [ref=e382]: "#16"
+          - generic [ref=e383]: A
+          - generic [ref=e384]: 92/100
+        - generic [ref=e385]:
+          - generic [ref=e386]:
+            - generic [ref=e387]:
+              - link "NEW YORK CENTER FOR REHABILITATION & NURSING" [ref=e388] [cursor=pointer]:
+                - /url: /facility/335838-new-york-center-for-rehabilitation-nursing
+              - generic [ref=e389]: 26-13 21ST STREET, ASTORIA, NY
+            - generic [ref=e390]: 4.1 mi away
+          - generic [ref=e391]:
+            - generic [ref=e392]:
+              - generic [ref=e393]: RN staffing
+              - generic [ref=e394]:
+                - text: "1.30"
+                - generic [ref=e395]: ✓
+            - generic [ref=e396]:
+              - generic [ref=e397]: Deficiencies
+              - generic [ref=e398]: "3"
+            - generic [ref=e399]:
+              - generic [ref=e400]: CMS rating
+              - generic [ref=e401]: ★★★★★
+          - paragraph [ref=e402]: Exceeds federal staffing minimum — top tier inspection record.
+      - generic [ref=e404]:
+        - generic [ref=e405]:
+          - generic [ref=e406]: "#17"
+          - generic [ref=e407]: A
+          - generic [ref=e408]: 91/100
+        - generic [ref=e409]:
+          - generic [ref=e410]:
+            - generic [ref=e411]:
+              - link "SEA VIEW HOSPITAL REHABILITATION CENTER AND HOME" [ref=e412] [cursor=pointer]:
+                - /url: /facility/335108-sea-view-hospital-rehabilitation-center-and-home
+              - generic [ref=e413]: 460 BRIELLE AVE, STATEN ISLAND, NY
+            - generic [ref=e414]: 12.9 mi away
+          - generic [ref=e415]:
+            - generic [ref=e416]:
+              - generic [ref=e417]: RN staffing
+              - generic [ref=e418]:
+                - text: "1.38"
+                - generic [ref=e419]: ✓
+            - generic [ref=e420]:
+              - generic [ref=e421]: Deficiencies
+              - generic [ref=e422]: "6"
+            - generic [ref=e423]:
+              - generic [ref=e424]: CMS rating
+              - generic [ref=e425]: ★★★★★
+          - paragraph [ref=e426]: Exceeds federal staffing minimum — top tier inspection record.
+      - generic [ref=e428]:
+        - generic [ref=e429]:
+          - generic [ref=e430]: "#18"
+          - generic [ref=e431]: A
+          - generic [ref=e432]: 91/100
+        - generic [ref=e433]:
+          - generic [ref=e434]:
+            - generic [ref=e435]:
+              - link "SHORE VIEW NURSING & REHABILITATION CENTER" [ref=e436] [cursor=pointer]:
+                - /url: /facility/335288-shore-view-nursing-rehabilitation-center
+              - generic [ref=e437]: 2865 BRIGHTON 3RD STREET, BROOKLYN, NY
+            - generic [ref=e438]: 11.7 mi away
+          - generic [ref=e439]:
+            - generic [ref=e440]:
+              - generic [ref=e441]: RN staffing
+              - generic [ref=e442]:
+                - text: "1.39"
+                - generic [ref=e443]: ✓
+            - generic [ref=e444]:
+              - generic [ref=e445]: Deficiencies
+              - generic [ref=e446]: "1"
+            - generic [ref=e447]:
+              - generic [ref=e448]: CMS rating
+              - generic [ref=e449]: ★★★★★
+          - paragraph [ref=e450]: Exceeds federal staffing minimum — top tier inspection record.
+      - generic [ref=e452]:
+        - generic [ref=e453]:
+          - generic [ref=e454]: "#19"
+          - generic [ref=e455]: A
+          - generic [ref=e456]: 91/100
+        - generic [ref=e457]:
+          - generic [ref=e458]:
+            - generic [ref=e459]:
+              - link "NEW EAST SIDE NURSING HOME" [ref=e460] [cursor=pointer]:
+                - /url: /facility/335517-new-east-side-nursing-home
+              - generic [ref=e461]: 25 BIALYSTOKER PLACE, NEW YORK, NY
+            - generic [ref=e462]: 2.4 mi away
+          - generic [ref=e463]:
+            - generic [ref=e464]:
+              - generic [ref=e465]: RN staffing
+              - generic [ref=e466]:
+                - text: "1.13"
+                - generic [ref=e467]: ✓
+            - generic [ref=e468]:
+              - generic [ref=e469]: Deficiencies
+              - generic [ref=e470]: "0"
+            - generic [ref=e471]:
+              - generic [ref=e472]: CMS rating
+              - generic [ref=e473]: ★★★★★
+          - paragraph [ref=e474]: Exceeds federal staffing minimum — top tier inspection record.
+      - generic [ref=e476]:
+        - generic [ref=e477]:
+          - generic [ref=e478]: "#20"
+          - generic [ref=e479]: A
+          - generic [ref=e480]: 91/100
+        - generic [ref=e481]:
+          - generic [ref=e482]:
+            - generic [ref=e483]:
+              - link "NORTH SHORE - L I J ORZAC CTR FOR REHABILITATION" [ref=e484] [cursor=pointer]:
+                - /url: /facility/335700-north-shore-l-i-j-orzac-ctr-for-rehabilitation
+              - generic [ref=e485]: 900 FRANKLIN AVENUE, VALLEY STREAM, NY
+            - generic [ref=e486]: 16.9 mi away
+          - generic [ref=e487]:
+            - generic [ref=e488]:
+              - generic [ref=e489]: RN staffing
+              - generic [ref=e490]:
+                - text: "2.06"
+                - generic [ref=e491]: ✓
+            - generic [ref=e492]:
+              - generic [ref=e493]: Deficiencies
+              - generic [ref=e494]: "3"
+            - generic [ref=e495]:
+              - generic [ref=e496]: CMS rating
+              - generic [ref=e497]: ★★★☆☆
+          - paragraph [ref=e498]: Exceeds federal staffing minimum — top tier inspection record.
+      - generic [ref=e500]:
+        - generic [ref=e501]:
+          - generic [ref=e502]: "#21"
+          - generic [ref=e503]: A
+          - generic [ref=e504]: 91/100
+        - generic [ref=e505]:
+          - generic [ref=e506]:
+            - generic [ref=e507]:
+              - link "KENDAL ON HUDSON" [ref=e508] [cursor=pointer]:
+                - /url: /facility/335848-kendal-on-hudson
+              - generic [ref=e509]: ONE KENDAL WAY, SLEEPY HOLLOW, NY
+            - generic [ref=e510]: 23.9 mi away
+          - generic [ref=e511]:
+            - generic [ref=e512]:
+              - generic [ref=e513]: RN staffing
+              - generic [ref=e514]:
+                - text: "1.80"
+                - generic [ref=e515]: ✓
+            - generic [ref=e516]:
+              - generic [ref=e517]: Deficiencies
+              - generic [ref=e518]: "6"
+            - generic [ref=e519]:
+              - generic [ref=e520]: CMS rating
+              - generic [ref=e521]: ★★★★★
+          - paragraph [ref=e522]: Exceeds federal staffing minimum — top tier inspection record.
+      - generic [ref=e524]:
+        - generic [ref=e525]:
+          - generic [ref=e526]: "#22"
+          - generic [ref=e527]: A
+          - generic [ref=e528]: 90/100
+        - generic [ref=e529]:
+          - generic [ref=e530]:
+            - generic [ref=e531]:
+              - link "WEST VILLAGE REHABILITATION AND NURSING CENTER" [ref=e532] [cursor=pointer]:
+                - /url: /facility/335027-west-village-rehabilitation-and-nursing-center
+              - generic [ref=e533]: 214 W HOUSTON STREET, NEW YORK, NY
+            - generic [ref=e534]: 1.4 mi away
+          - generic [ref=e535]:
+            - generic [ref=e536]:
+              - generic [ref=e537]: RN staffing
+              - generic [ref=e538]:
+                - text: "1.40"
+                - generic [ref=e539]: ✓
+            - generic [ref=e540]:
+              - generic [ref=e541]: Deficiencies
+              - generic [ref=e542]: "2"
+            - generic [ref=e543]:
+              - generic [ref=e544]: CMS rating
+              - generic [ref=e545]: ★★★★★
+          - paragraph [ref=e546]: Exceeds federal staffing minimum — top tier inspection record.
+      - generic [ref=e548]:
+        - generic [ref=e549]:
+          - generic [ref=e550]: "#23"
+          - generic [ref=e551]: A
+          - generic [ref=e552]: 90/100
+        - generic [ref=e553]:
+          - generic [ref=e554]:
+            - generic [ref=e555]:
+              - link "SAPPHIRE CENTER FOR REHAB & NURSING" [ref=e556] [cursor=pointer]:
+                - /url: /facility/335133-sapphire-center-for-rehab-nursing
+              - generic [ref=e557]: 35 15 PARSONS BLVD, FLUSHING, NY
+            - generic [ref=e558]: 9.1 mi away
+          - generic [ref=e559]:
+            - generic [ref=e560]:
+              - generic [ref=e561]: RN staffing
+              - generic [ref=e562]:
+                - text: "0.95"
+                - generic [ref=e563]: ✓
+            - generic [ref=e564]:
+              - generic [ref=e565]: Deficiencies
+              - generic [ref=e566]: "2"
+            - generic [ref=e567]:
+              - generic [ref=e568]: CMS rating
+              - generic [ref=e569]: ★★☆☆☆
+          - paragraph [ref=e570]: Exceeds federal staffing minimum — top tier inspection record.
+      - generic [ref=e572]:
+        - generic [ref=e573]:
+          - generic [ref=e574]: "#24"
+          - generic [ref=e575]: A
+          - generic [ref=e576]: 90/100
+        - generic [ref=e577]:
+          - generic [ref=e578]:
+            - generic [ref=e579]:
+              - link "EMERGE NURSING AND REHABILITATION AT GLEN COVE" [ref=e580] [cursor=pointer]:
+                - /url: /facility/335141-emerge-nursing-and-rehabilitation-at-glen-cove
+              - generic [ref=e581]: 2 MEDICAL PLAZA, GLEN COVE, NY
+            - generic [ref=e582]: 21.4 mi away
+          - generic [ref=e583]:
+            - generic [ref=e584]:
+              - generic [ref=e585]: RN staffing
+              - generic [ref=e586]:
+                - text: "0.86"
+                - generic [ref=e587]: ✓
+            - generic [ref=e588]:
+              - generic [ref=e589]: Deficiencies
+              - generic [ref=e590]: "2"
+            - generic [ref=e591]:
+              - generic [ref=e592]: CMS rating
+              - generic [ref=e593]: ★★★★★
+          - paragraph [ref=e594]: Exceeds federal staffing minimum — top tier inspection record.
+      - generic [ref=e596]:
+        - generic [ref=e597]:
+          - generic [ref=e598]: "#25"
+          - generic [ref=e599]: A
+          - generic [ref=e600]: 90/100
+        - generic [ref=e601]:
+          - generic [ref=e602]:
+            - generic [ref=e603]:
+              - link "HOLLIS PARK MANOR NURSING HOME" [ref=e604] [cursor=pointer]:
+                - /url: /facility/335333-hollis-park-manor-nursing-home
+              - generic [ref=e605]: 191 06 HILLSIDE AVENUE, HOLLIS, NY
+            - generic [ref=e606]: 12.2 mi away
+          - generic [ref=e607]:
+            - generic [ref=e608]:
+              - generic [ref=e609]: RN staffing
+              - generic [ref=e610]:
+                - text: "1.31"
+                - generic [ref=e611]: ✓
+            - generic [ref=e612]:
+              - generic [ref=e613]: Deficiencies
+              - generic [ref=e614]: "1"
+            - generic [ref=e615]:
+              - generic [ref=e616]: CMS rating
+              - generic [ref=e617]: ★★★★★
+          - paragraph [ref=e618]: Exceeds federal staffing minimum — top tier inspection record.
+    - paragraph [ref=e619]:
+      - link "← New search" [ref=e620] [cursor=pointer]:
+        - /url: /
+  - contentinfo [ref=e621]:
+    - generic [ref=e623]:
+      - generic [ref=e624]: Data sourced from CMS Nursing Home Compare. Updated monthly.
+      - generic [ref=e625]:
+        - text: We do not accept payments from nursing facilities, and referral relationships never affect grades.
+        - link "About" [ref=e626] [cursor=pointer]:
+          - /url: /about

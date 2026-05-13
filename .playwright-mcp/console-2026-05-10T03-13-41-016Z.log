@@ -1,0 +1,72 @@
+[     301ms] [LOG] [polaris] initializing polaris... @ https://polaris.truevaultcdn.com/static/pc/J3NLAIS3J/polaris.js:0
+[    1327ms] TypeError: $fotoramaElement.fotorama is not a function
+    at UiClass.initGallery (https://palmettostatearmory.com/static/version1778047292/frontend/PSA/theme-base/en_US/mage/gallery/gallery.js:310:30)
+    at UiClass.initialize (https://palmettostatearmory.com/static/version1778047292/frontend/PSA/theme-base/en_US/mage/gallery/gallery.js:144:18)
+    at UiClass.initialize (https://palmettostatearmory.com/static/version1778047292/frontend/PSA/theme-base/en_US/mage/utils/wrapper.js:109:34)
+    at UiClass (https://palmettostatearmory.com/static/version1778047292/frontend/PSA/theme-base/en_US/Magento_Ui/js/lib/core/class.js:49:32)
+[    1359ms] [LOG] Sezzle widget rendering started from Sezzle end @ https://palmettostatearmory.com/static/version1778047292/frontend/PSA/theme-base/en_US/Sezzle_Sezzlepay/js/sezzle_widget/widget-renderer.js:52
+[    1360ms] [LOG] dom loaded @ https://palmettostatearmory.com/static/version1778047292/frontend/PSA/theme-base/en_US/Sezzle_Sezzlepay/js/sezzle_widget/widget-renderer.js:58
+[    1581ms] [WARNING] Fallback to JQueryUI Compat activated. Your store is missing a dependency for a jQueryUI widget. Identifying and addressing the dependency will drastically improve the performance of your site. @ https://palmettostatearmory.com/static/version1778047292/frontend/PSA/theme-base/en_US/jquery/compat.js:42
+[    1886ms] [LOG] segment loaded @ :2
+[    2299ms] [WARNING] [Meta Pixel] - Duplicate Pixel ID: 1800775264197955. @ https://connect.facebook.net/en_US/fbevents.js:181
+[    2324ms] [LOG] [0.221, Guarantee: Ignoring duplicate request, _GUARANTEE_SealSpan] @ https://nsg.symantec.com/private/rollover/rollover.core.js:11
+[   43582ms] [LOG] [polaris] initializing polaris... @ https://polaris.truevaultcdn.com/static/pc/J3NLAIS3J/polaris.js:0
+[   43961ms] [WARNING] Fallback to JQueryUI Compat activated. Your store is missing a dependency for a jQueryUI widget. Identifying and addressing the dependency will drastically improve the performance of your site. @ https://palmettostatearmory.com/static/version1778047292/frontend/PSA/theme-base/en_US/jquery/compat.js:42
+[   44073ms] [LOG] segment loaded @ :2
+[   44368ms] [LOG] [0.308, Guarantee: Ignoring duplicate request, _GUARANTEE_SealSpan] @ https://nsg.symantec.com/private/rollover/rollover.core.js:11
+[   83404ms] [LOG] [polaris] initializing polaris... @ https://polaris.truevaultcdn.com/static/pc/J3NLAIS3J/polaris.js:0
+[   83806ms] [WARNING] Fallback to JQueryUI Compat activated. Your store is missing a dependency for a jQueryUI widget. Identifying and addressing the dependency will drastically improve the performance of your site. @ https://palmettostatearmory.com/static/version1778047292/frontend/PSA/theme-base/en_US/jquery/compat.js:42
+[   83880ms] [LOG] segment loaded @ :2
+[   84119ms] [LOG] [0.253, Guarantee: Ignoring duplicate request, _GUARANTEE_SealSpan] @ https://nsg.symantec.com/private/rollover/rollover.core.js:11
+[   89081ms] [LOG] [polaris] initializing polaris... @ https://polaris.truevaultcdn.com/static/pc/J3NLAIS3J/polaris.js:0
+[   89423ms] [WARNING] Fallback to JQueryUI Compat activated. Your store is missing a dependency for a jQueryUI widget. Identifying and addressing the dependency will drastically improve the performance of your site. @ https://palmettostatearmory.com/static/version1778047292/frontend/PSA/theme-base/en_US/jquery/compat.js:42
+[   89504ms] [LOG] segment loaded @ :2
+[   89676ms] [LOG] [0.186, Guarantee: Ignoring duplicate request, _GUARANTEE_SealSpan] @ https://nsg.symantec.com/private/rollover/rollover.core.js:11
+[  106460ms] [LOG] [polaris] initializing polaris... @ https://polaris.truevaultcdn.com/static/pc/J3NLAIS3J/polaris.js:0
+[  106791ms] [WARNING] Fallback to JQueryUI Compat activated. Your store is missing a dependency for a jQueryUI widget. Identifying and addressing the dependency will drastically improve the performance of your site. @ https://palmettostatearmory.com/static/version1778047292/frontend/PSA/theme-base/en_US/jquery/compat.js:42
+[  106915ms] [LOG] segment loaded @ :2
+[  107049ms] [LOG] [0.147, Guarantee: Ignoring duplicate request, _GUARANTEE_SealSpan] @ https://nsg.symantec.com/private/rollover/rollover.core.js:11
+[  112288ms] [LOG] [polaris] initializing polaris... @ https://polaris.truevaultcdn.com/static/pc/J3NLAIS3J/polaris.js:0
+[  112583ms] [WARNING] Fallback to JQueryUI Compat activated. Your store is missing a dependency for a jQueryUI widget. Identifying and addressing the dependency will drastically improve the performance of your site. @ https://palmettostatearmory.com/static/version1778047292/frontend/PSA/theme-base/en_US/jquery/compat.js:42
+[  112668ms] [LOG] segment loaded @ :2
+[  112810ms] [LOG] [0.157, Guarantee: Ignoring duplicate request, _GUARANTEE_SealSpan] @ https://nsg.symantec.com/private/rollover/rollover.core.js:11
+[  128634ms] [LOG] [polaris] initializing polaris... @ https://polaris.truevaultcdn.com/static/pc/J3NLAIS3J/polaris.js:0
+[  128972ms] [WARNING] Fallback to JQueryUI Compat activated. Your store is missing a dependency for a jQueryUI widget. Identifying and addressing the dependency will drastically improve the performance of your site. @ https://palmettostatearmory.com/static/version1778047292/frontend/PSA/theme-base/en_US/jquery/compat.js:42
+[  129041ms] [LOG] segment loaded @ :2
+[  129215ms] [LOG] [0.187, Guarantee: Ignoring duplicate request, _GUARANTEE_SealSpan] @ https://nsg.symantec.com/private/rollover/rollover.core.js:11
+[  142862ms] [LOG] [polaris] initializing polaris... @ https://polaris.truevaultcdn.com/static/pc/J3NLAIS3J/polaris.js:0
+[  143249ms] [WARNING] Fallback to JQueryUI Compat activated. Your store is missing a dependency for a jQueryUI widget. Identifying and addressing the dependency will drastically improve the performance of your site. @ https://palmettostatearmory.com/static/version1778047292/frontend/PSA/theme-base/en_US/jquery/compat.js:42
+[  143362ms] [LOG] segment loaded @ :2
+[  143552ms] [LOG] [0.203, Guarantee: Ignoring duplicate request, _GUARANTEE_SealSpan] @ https://nsg.symantec.com/private/rollover/rollover.core.js:11
+[  145413ms] [LOG] [polaris] initializing polaris... @ https://polaris.truevaultcdn.com/static/pc/J3NLAIS3J/polaris.js:0
+[  145691ms] [WARNING] Fallback to JQueryUI Compat activated. Your store is missing a dependency for a jQueryUI widget. Identifying and addressing the dependency will drastically improve the performance of your site. @ https://palmettostatearmory.com/static/version1778047292/frontend/PSA/theme-base/en_US/jquery/compat.js:42
+[  145791ms] [LOG] segment loaded @ :2
+[  145928ms] [LOG] [0.150, Guarantee: Ignoring duplicate request, _GUARANTEE_SealSpan] @ https://nsg.symantec.com/private/rollover/rollover.core.js:11
+[  149373ms] [LOG] [polaris] initializing polaris... @ https://polaris.truevaultcdn.com/static/pc/J3NLAIS3J/polaris.js:0
+[  149815ms] [WARNING] Fallback to JQueryUI Compat activated. Your store is missing a dependency for a jQueryUI widget. Identifying and addressing the dependency will drastically improve the performance of your site. @ https://palmettostatearmory.com/static/version1778047292/frontend/PSA/theme-base/en_US/jquery/compat.js:42
+[  150050ms] [LOG] [0.169, Guarantee: Ignoring duplicate request, _GUARANTEE_SealSpan] @ https://nsg.symantec.com/private/rollover/rollover.core.js:11
+[  201135ms] [LOG] [polaris] initializing polaris... @ https://polaris.truevaultcdn.com/static/pc/J3NLAIS3J/polaris.js:0
+[  201777ms] [WARNING] Fallback to JQueryUI Compat activated. Your store is missing a dependency for a jQueryUI widget. Identifying and addressing the dependency will drastically improve the performance of your site. @ https://palmettostatearmory.com/static/version1778047292/frontend/PSA/theme-base/en_US/jquery/compat.js:42
+[  201975ms] [LOG] segment loaded @ :2
+[  202169ms] [LOG] [0.210, Guarantee: Ignoring duplicate request, _GUARANTEE_SealSpan] @ https://nsg.symantec.com/private/rollover/rollover.core.js:11
+[  204248ms] [LOG] [polaris] initializing polaris... @ https://polaris.truevaultcdn.com/static/pc/J3NLAIS3J/polaris.js:0
+[  204613ms] [WARNING] Fallback to JQueryUI Compat activated. Your store is missing a dependency for a jQueryUI widget. Identifying and addressing the dependency will drastically improve the performance of your site. @ https://palmettostatearmory.com/static/version1778047292/frontend/PSA/theme-base/en_US/jquery/compat.js:42
+[  204855ms] [LOG] [0.182, Guarantee: Ignoring duplicate request, _GUARANTEE_SealSpan] @ https://nsg.symantec.com/private/rollover/rollover.core.js:11
+[  209543ms] [LOG] [polaris] initializing polaris... @ https://polaris.truevaultcdn.com/static/pc/J3NLAIS3J/polaris.js:0
+[  209956ms] [WARNING] Fallback to JQueryUI Compat activated. Your store is missing a dependency for a jQueryUI widget. Identifying and addressing the dependency will drastically improve the performance of your site. @ https://palmettostatearmory.com/static/version1778047292/frontend/PSA/theme-base/en_US/jquery/compat.js:42
+[  210056ms] [LOG] segment loaded @ :2
+[  210226ms] [LOG] [0.183, Guarantee: Ignoring duplicate request, _GUARANTEE_SealSpan] @ https://nsg.symantec.com/private/rollover/rollover.core.js:11
+[  216204ms] [LOG] [polaris] initializing polaris... @ https://polaris.truevaultcdn.com/static/pc/J3NLAIS3J/polaris.js:0
+[  216565ms] [WARNING] Fallback to JQueryUI Compat activated. Your store is missing a dependency for a jQueryUI widget. Identifying and addressing the dependency will drastically improve the performance of your site. @ https://palmettostatearmory.com/static/version1778047292/frontend/PSA/theme-base/en_US/jquery/compat.js:42
+[  216652ms] [LOG] segment loaded @ :2
+[  216873ms] [LOG] [0.234, Guarantee: Ignoring duplicate request, _GUARANTEE_SealSpan] @ https://nsg.symantec.com/private/rollover/rollover.core.js:11
+[  222247ms] [LOG] [polaris] initializing polaris... @ https://polaris.truevaultcdn.com/static/pc/J3NLAIS3J/polaris.js:0
+[  222609ms] [WARNING] Fallback to JQueryUI Compat activated. Your store is missing a dependency for a jQueryUI widget. Identifying and addressing the dependency will drastically improve the performance of your site. @ https://palmettostatearmory.com/static/version1778047292/frontend/PSA/theme-base/en_US/jquery/compat.js:42
+[  222691ms] [LOG] segment loaded @ :2
+[  222842ms] [LOG] [0.164, Guarantee: Ignoring duplicate request, _GUARANTEE_SealSpan] @ https://nsg.symantec.com/private/rollover/rollover.core.js:11
+[  232734ms] [LOG] [polaris] initializing polaris... @ https://polaris.truevaultcdn.com/static/pc/J3NLAIS3J/polaris.js:0
+[  233090ms] [WARNING] Fallback to JQueryUI Compat activated. Your store is missing a dependency for a jQueryUI widget. Identifying and addressing the dependency will drastically improve the performance of your site. @ https://palmettostatearmory.com/static/version1778047292/frontend/PSA/theme-base/en_US/jquery/compat.js:42
+[  233321ms] [LOG] [0.152, Guarantee: Ignoring duplicate request, _GUARANTEE_SealSpan] @ https://nsg.symantec.com/private/rollover/rollover.core.js:11
+[  233565ms] [LOG] [polaris] initializing polaris... @ https://polaris.truevaultcdn.com/static/pc/J3NLAIS3J/polaris.js:0
+[  233921ms] [WARNING] Fallback to JQueryUI Compat activated. Your store is missing a dependency for a jQueryUI widget. Identifying and addressing the dependency will drastically improve the performance of your site. @ https://palmettostatearmory.com/static/version1778047292/frontend/PSA/theme-base/en_US/jquery/compat.js:42
+[  234173ms] [LOG] [0.161, Guarantee: Ignoring duplicate request, _GUARANTEE_SealSpan] @ https://nsg.symantec.com/private/rollover/rollover.core.js:11

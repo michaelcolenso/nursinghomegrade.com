@@ -1,0 +1,221 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - link "NursingHomeGrade" [ref=e5] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e6]: Independent ratings from CMS data
+  - main [ref=e7]:
+    - navigation [ref=e8]:
+      - link "Home" [ref=e9] [cursor=pointer]:
+        - /url: /
+      - text: › NY › ROOSEVELT ISLAND › COLER REHABILITATION AND NURSING CARE CENTER
+    - generic [ref=e10]:
+      - heading "COLER REHABILITATION AND NURSING CARE CENTER" [level=1] [ref=e11]
+      - generic [ref=e12]: A
+    - paragraph [ref=e13]: 900 MAIN ST, ROOSEVELT ISLAND, NY 10044
+    - paragraph [ref=e14]: Exceeds federal staffing minimum — top tier inspection record.
+    - heading "Quality Breakdown" [level=2] [ref=e15]
+    - table [ref=e16]:
+      - rowgroup [ref=e17]:
+        - 'row "RN Staffing — registered nurse time each resident receives daily. Federal minimum: 0.55 hrs. 1.35 ✓ Meets federal minimum" [ref=e18]':
+          - 'cell "RN Staffing — registered nurse time each resident receives daily. Federal minimum: 0.55 hrs." [ref=e19]'
+          - cell "1.35 ✓ Meets federal minimum" [ref=e20]
+        - row "Health Inspection Deficiencies 1" [ref=e21]:
+          - cell "Health Inspection Deficiencies" [ref=e22]
+          - cell "1" [ref=e23]
+        - row "Complaint-based Deficiencies — violations found during the most recent inspection cycle Not reported" [ref=e24]:
+          - cell "Complaint-based Deficiencies — violations found during the most recent inspection cycle" [ref=e25]
+          - cell "Not reported" [ref=e26]
+        - row "CMS Quality Rating ★★★★★ (5/5)" [ref=e27]:
+          - cell "CMS Quality Rating" [ref=e28]
+          - cell "★★★★★ (5/5)" [ref=e29]
+        - row "CMS Staffing Rating ★★★★★ (5/5)" [ref=e30]:
+          - cell "CMS Staffing Rating" [ref=e31]
+          - cell "★★★★★ (5/5)" [ref=e32]
+        - row "NursingHomeGrade Score 99/100 (A)" [ref=e33]:
+          - cell "NursingHomeGrade Score" [ref=e34]
+          - cell "99/100 (A)" [ref=e35]
+    - paragraph [ref=e36]: "Data last updated: April 28, 2026"
+    - heading "Inspection Deficiencies" [level=2] [ref=e37]
+    - paragraph [ref=e38]:
+      - text: Health inspections identify violations of federal standards. Severity ranges from no actual harm (A–F) to immediate jeopardy (J–L).
+      - link "How we grade →" [ref=e39] [cursor=pointer]:
+        - /url: /about
+    - generic [ref=e40]:
+      - heading "Most recent inspection (November 30, 2025)" [level=3] [ref=e41]
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - generic [ref=e44]: D
+          - generic [ref=e45]: Potential harm — isolated
+          - generic [ref=e46]: F0609
+          - generic [ref=e47]: Complaint inspection
+        - paragraph [ref=e48]: Timely report suspected abuse, neglect, or theft and report the results of the investigation to proper authorities.
+        - paragraph [ref=e49]: Freedom from Abuse, Neglect, and Exploitation Deficiencies — Deficient, Provider has date of correction, corrected January 28, 2026
+    - generic [ref=e50]:
+      - heading "Inspection cycle 2 (January 12, 2023)" [level=3] [ref=e51]
+      - generic [ref=e52]:
+        - generic [ref=e53]:
+          - generic [ref=e54]: E
+          - generic [ref=e55]: Potential harm — pattern
+          - generic [ref=e56]: F0604
+          - generic [ref=e57]: Standard inspection
+        - paragraph [ref=e58]: Ensure that each resident is free from the use of physical restraints, unless needed for medical treatment.
+        - paragraph [ref=e59]: Freedom from Abuse, Neglect, and Exploitation Deficiencies — Deficient, Provider has date of correction, corrected March 12, 2023
+      - generic [ref=e60]:
+        - generic [ref=e61]:
+          - generic [ref=e62]: D
+          - generic [ref=e63]: Potential harm — isolated
+          - generic [ref=e64]: F0761
+          - generic [ref=e65]: Standard inspection
+        - paragraph [ref=e66]: Ensure drugs and biologicals used in the facility are labeled in accordance with currently accepted professional principles; and all drugs and biologicals must be stored in locked compartments, separately locked, compartments for controlled drugs.
+        - paragraph [ref=e67]: Pharmacy Service Deficiencies — Deficient, Provider has date of correction, corrected March 12, 2023
+      - generic [ref=e68]:
+        - generic [ref=e69]:
+          - generic [ref=e70]: D
+          - generic [ref=e71]: Potential harm — isolated
+          - generic [ref=e72]: F0689
+          - generic [ref=e73]: Complaint inspection
+        - paragraph [ref=e74]: Ensure that a nursing home area is free from accident hazards and provides adequate supervision to prevent accidents.
+        - paragraph [ref=e75]: Quality of Life and Care Deficiencies — Deficient, Provider has date of correction, corrected February 4, 2025
+      - generic [ref=e76]:
+        - generic [ref=e77]:
+          - generic [ref=e78]: D
+          - generic [ref=e79]: Potential harm — isolated
+          - generic [ref=e80]: F0685
+          - generic [ref=e81]: Standard inspection
+        - paragraph [ref=e82]: Assist a resident in gaining access to vision and hearing services.
+        - paragraph [ref=e83]: Quality of Life and Care Deficiencies — Deficient, Provider has date of correction, corrected March 12, 2023
+      - generic [ref=e84]:
+        - generic [ref=e85]:
+          - generic [ref=e86]: E
+          - generic [ref=e87]: Potential harm — pattern
+          - generic [ref=e88]: F0689
+          - generic [ref=e89]: Standard inspection
+        - paragraph [ref=e90]: Ensure that a nursing home area is free from accident hazards and provides adequate supervision to prevent accidents.
+        - paragraph [ref=e91]: Quality of Life and Care Deficiencies — Deficient, Provider has date of correction, corrected March 12, 2023
+      - generic [ref=e92]:
+        - generic [ref=e93]:
+          - generic [ref=e94]: D
+          - generic [ref=e95]: Potential harm — isolated
+          - generic [ref=e96]: F0655
+          - generic [ref=e97]: Standard inspection
+        - paragraph [ref=e98]: Create and put into place a plan for meeting the resident's most immediate needs within 48 hours of being admitted
+        - paragraph [ref=e99]: Resident Assessment and Care Planning Deficiencies — Deficient, Provider has date of correction, corrected March 12, 2023
+      - generic [ref=e100]:
+        - generic [ref=e101]:
+          - generic [ref=e102]: D
+          - generic [ref=e103]: Potential harm — isolated
+          - generic [ref=e104]: F0656
+          - generic [ref=e105]: Standard inspection
+        - paragraph [ref=e106]: Develop and implement a complete care plan that meets all the resident's needs, with timetables and actions that can be measured.
+        - paragraph [ref=e107]: Resident Assessment and Care Planning Deficiencies — Deficient, Provider has date of correction, corrected March 12, 2023
+      - generic [ref=e108]:
+        - generic [ref=e109]:
+          - generic [ref=e110]: D
+          - generic [ref=e111]: Potential harm — isolated
+          - generic [ref=e112]: F0657
+          - generic [ref=e113]: Standard inspection
+        - paragraph [ref=e114]: Develop the complete care plan within 7 days of the comprehensive assessment; and prepared, reviewed, and revised by a team of health professionals.
+        - paragraph [ref=e115]: Resident Assessment and Care Planning Deficiencies — Deficient, Provider has date of correction, corrected March 12, 2023
+      - generic [ref=e116]:
+        - generic [ref=e117]:
+          - generic [ref=e118]: D
+          - generic [ref=e119]: Potential harm — isolated
+          - generic [ref=e120]: F0578
+          - generic [ref=e121]: Standard inspection
+        - paragraph [ref=e122]: Honor the resident's right to request, refuse, and/or discontinue treatment, to participate in or refuse to participate in experimental research, and to formulate an advance directive.
+        - paragraph [ref=e123]: Resident Rights Deficiencies — Deficient, Provider has date of correction, corrected March 12, 2023
+    - generic [ref=e124]:
+      - heading "Inspection cycle 3 (January 17, 2024)" [level=3] [ref=e125]
+      - generic [ref=e126]:
+        - generic [ref=e127]:
+          - generic [ref=e128]: D
+          - generic [ref=e129]: Potential harm — isolated
+          - generic [ref=e130]: F0604
+          - generic [ref=e131]: Complaint inspection
+        - paragraph [ref=e132]: Ensure that each resident is free from the use of physical restraints, unless needed for medical treatment.
+        - paragraph [ref=e133]: Freedom from Abuse, Neglect, and Exploitation Deficiencies — Deficient, Provider has date of correction, corrected March 14, 2024
+      - generic [ref=e134]:
+        - generic [ref=e135]:
+          - generic [ref=e136]: D
+          - generic [ref=e137]: Potential harm — isolated
+          - generic [ref=e138]: F0604
+          - generic [ref=e139]: Standard inspection
+        - paragraph [ref=e140]: Ensure that each resident is free from the use of physical restraints, unless needed for medical treatment.
+        - paragraph [ref=e141]: Freedom from Abuse, Neglect, and Exploitation Deficiencies — Deficient, Provider has date of correction, corrected January 16, 2020
+      - generic [ref=e142]:
+        - generic [ref=e143]:
+          - generic [ref=e144]: D
+          - generic [ref=e145]: Potential harm — isolated
+          - generic [ref=e146]: F0657
+          - generic [ref=e147]: Complaint inspection
+        - paragraph [ref=e148]: Develop the complete care plan within 7 days of the comprehensive assessment; and prepared, reviewed, and revised by a team of health professionals.
+        - paragraph [ref=e149]: Resident Assessment and Care Planning Deficiencies — Deficient, Provider has date of correction, corrected March 14, 2024
+      - generic [ref=e150]:
+        - generic [ref=e151]:
+          - generic [ref=e152]: E
+          - generic [ref=e153]: Potential harm — pattern
+          - generic [ref=e154]: F0640
+          - generic [ref=e155]: Standard inspection
+        - paragraph [ref=e156]: Encode each resident’s assessment data and transmit these data to the State within 7 days of assessment.
+        - paragraph [ref=e157]: Resident Assessment and Care Planning Deficiencies — Deficient, Provider has date of correction, corrected January 16, 2020
+      - generic [ref=e158]:
+        - generic [ref=e159]:
+          - generic [ref=e160]: D
+          - generic [ref=e161]: Potential harm — isolated
+          - generic [ref=e162]: F0641
+          - generic [ref=e163]: Standard inspection
+        - paragraph [ref=e164]: Ensure each resident receives an accurate assessment.
+        - paragraph [ref=e165]: Resident Assessment and Care Planning Deficiencies — Deficient, Provider has date of correction, corrected January 16, 2020
+      - generic [ref=e166]:
+        - generic [ref=e167]:
+          - generic [ref=e168]: D
+          - generic [ref=e169]: Potential harm — isolated
+          - generic [ref=e170]: F0657
+          - generic [ref=e171]: Standard inspection
+        - paragraph [ref=e172]: Develop the complete care plan within 7 days of the comprehensive assessment; and prepared, reviewed, and revised by a team of health professionals.
+        - paragraph [ref=e173]: Resident Assessment and Care Planning Deficiencies — Deficient, Provider has date of correction, corrected January 16, 2020
+      - generic [ref=e174]:
+        - generic [ref=e175]:
+          - generic [ref=e176]: D
+          - generic [ref=e177]: Potential harm — isolated
+          - generic [ref=e178]: F0550
+          - generic [ref=e179]: Standard inspection
+        - paragraph [ref=e180]: Honor the resident's right to a dignified existence, self-determination, communication, and to exercise his or her rights.
+        - paragraph [ref=e181]: Resident Rights Deficiencies — Deficient, Provider has date of correction, corrected January 16, 2020
+      - generic [ref=e182]:
+        - generic [ref=e183]:
+          - generic [ref=e184]: D
+          - generic [ref=e185]: Potential harm — isolated
+          - generic [ref=e186]: F0583
+          - generic [ref=e187]: Standard inspection
+        - paragraph [ref=e188]: Keep residents' personal and medical records private and confidential.
+        - paragraph [ref=e189]: Resident Rights Deficiencies — Deficient, Provider has date of correction, corrected January 16, 2020
+      - generic [ref=e190]:
+        - generic [ref=e191]:
+          - generic [ref=e192]: D
+          - generic [ref=e193]: Potential harm — isolated
+          - generic [ref=e194]: F0584
+          - generic [ref=e195]: Standard inspection
+        - paragraph [ref=e196]: Honor the resident's right to a safe, clean, comfortable and homelike environment, including but not limited to receiving treatment and supports for daily living safely.
+        - paragraph [ref=e197]: Resident Rights Deficiencies — Deficient, Provider has date of correction, corrected January 16, 2020
+    - generic [ref=e198]:
+      - heading "Need help choosing a facility?" [level=3] [ref=e199]
+      - paragraph [ref=e200]: Get free, unbiased guidance from senior living advisors. We earn nothing from this referral.
+      - link "Compare nearby options →" [ref=e201] [cursor=pointer]:
+        - /url: https://www.senioradvisor.com/nursing-homes
+      - link "Get free help →" [ref=e202] [cursor=pointer]:
+        - /url: https://www.caring.com/local/nursing-homes
+    - generic [ref=e203]:
+      - heading "Get score alerts for this facility" [level=3] [ref=e204]
+      - paragraph [ref=e205]: We'll email you when COLER REHABILITATION AND NURSING CARE CENTER's staffing score changes.
+      - generic [ref=e206]:
+        - textbox "your@email.com" [ref=e207]
+        - button "Notify me" [ref=e208] [cursor=pointer]
+  - contentinfo [ref=e209]:
+    - generic [ref=e211]:
+      - generic [ref=e212]: Data sourced from CMS Nursing Home Compare. Updated monthly.
+      - generic [ref=e213]:
+        - text: We do not accept commissions from facilities or referral networks.
+        - link "About" [ref=e214] [cursor=pointer]:
+          - /url: /about

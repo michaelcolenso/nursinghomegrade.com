@@ -54,6 +54,8 @@ export function explorePage(): string {
         }).addTo(map);
 
         const markers = L.markerClusterGroup({
+          maxClusterRadius: 40,
+          disableClusteringAtZoom: 13,
           iconCreateFunction: function(cluster) {
             return L.divIcon({ 
               html: cluster.getChildCount(), 
