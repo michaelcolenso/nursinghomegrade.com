@@ -1,6 +1,7 @@
 import { layout, escHtml } from "./layout";
 
 export function subscribePage(facilityName: string, returnPath?: string): string {
+  const safeReturnPath = normalizeReturnPath(returnPath);
   const body = `
     <div style="text-align:center;padding:2rem 0;">
       <div style="width:64px;height:64px;border-radius:50%;background:#2d5a3d;color:#fff;font-size:2rem;line-height:64px;margin:0 auto 1.5rem;font-weight:700;">✓</div>
@@ -11,7 +12,7 @@ export function subscribePage(facilityName: string, returnPath?: string): string
       <p style="color:var(--muted);margin-bottom:2rem;max-width:480px;margin-left:auto;margin-right:auto;">
         This feature is new — if you don't receive an email within a month, check back here or contact us.
       </p>
-      ${returnPath ? `<p style="margin-bottom:0.75rem;"><a href="${escHtml(returnPath)}" class="btn">← Return to ${escHtml(facilityName)}</a></p>` : ""}
+      ${safeReturnPath ? `<p style="margin-bottom:0.75rem;"><a href="${escHtml(safeReturnPath)}" class="btn">← Return to ${escHtml(facilityName)}</a></p>` : ""}
       <p><a href="/" class="btn-secondary">Search another facility</a></p>
     </div>
   `;
@@ -19,7 +20,20 @@ export function subscribePage(facilityName: string, returnPath?: string): string
     `Subscribed — ${facilityName} Alerts`,
     `You'll receive email alerts when ${facilityName}'s nursing home grade changes.`,
     body,
+    { noindex: true },
   );
+}
+
+function normalizeReturnPath(returnPath?: string): string | undefined {
+  if (!returnPath) return undefined;
+
+  try {
+    const parsed = new URL(returnPath, "https://nursinghomegrade.com");
+    if (parsed.origin !== "https://nursinghomegrade.com") return undefined;
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return undefined;
+  }
 }
 
 export function notFoundPage(path: string): string {

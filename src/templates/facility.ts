@@ -43,7 +43,7 @@ function formatDate(dateStr: string | null): string {
 
 function renderDeficiencies(deficiencies: Deficiency[]): string {
   if (deficiencies.length === 0) {
-    return `<p style="color:var(--muted);margin-bottom:2rem;">No detailed deficiency records available for this facility.</p>`;
+    return `<p style="color:var(--muted);margin-bottom:var(--space-l);">No deficiencies reported for this facility.</p>`;
   }
 
   // Group by inspection cycle
@@ -71,27 +71,28 @@ function renderDeficiencies(deficiencies: Deficiency[]): string {
           const tag = d.deficiency_tag_number ? `F${d.deficiency_tag_number}` : "";
           const corrected = d.deficiency_corrected ? ` — ${d.deficiency_corrected}` : "";
           const correctionDate = d.correction_date ? `, corrected ${formatDate(d.correction_date)}` : "";
+          const statusLabel = d.correction_date ? "Status: Corrected" : "Status: Outstanding";
           const source = d.complaint_deficiency === "Y" ? "Complaint inspection" : d.standard_deficiency === "Y" ? "Standard inspection" : "";
 
           return `
-            <div style="border-left:3px solid ${sevColor};padding:0.75rem 1rem;margin-bottom:0.75rem;background:#fff;">
-              <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;margin-bottom:0.35rem;">
-                <span style="display:inline-block;padding:0.15rem 0.5rem;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.02em;background:${sevColor};color:#fff;border-radius:0;">${escHtml(d.scope_severity_code ?? "?")}</span>
-                <span style="font-size:0.8rem;color:var(--muted);">${escHtml(sevLabel)}</span>
-                ${tag ? `<span style="font-size:0.8rem;color:var(--muted);font-weight:600;">${escHtml(tag)}</span>` : ""}
-                ${source ? `<span style="font-size:0.8rem;color:var(--muted);">${escHtml(source)}</span>` : ""}
+            <div class="deficiency-item" style="border-left: 8px solid ${sevColor}">
+              <div style="display:flex;gap:var(--space-xs);align-items:center;flex-wrap:wrap;margin-bottom:var(--space-2xs);">
+                <span style="display:inline-block;padding:0.15rem 0.5rem;font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:0.02em;background:${sevColor};color:#fff;border-radius:0;">${escHtml(d.scope_severity_code ?? "?")}</span>
+                <span style="font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);">${escHtml(sevLabel)}</span>
+                ${tag ? `<span style="font-size:0.8rem;color:var(--ink);font-weight:800;">${escHtml(tag)}</span>` : ""}
+                <span style="font-size:0.8rem;color:var(--accent);font-weight:800;text-transform:uppercase;letter-spacing:0.05em;margin-left:auto;">${escHtml(statusLabel)}</span>
               </div>
-              <p style="font-weight:600;margin-bottom:0.25rem;line-height:1.4;">${escHtml(d.deficiency_description ?? "Unknown deficiency")}</p>
-              <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0;">${escHtml(d.deficiency_category ?? "")}${corrected ? escHtml(corrected + correctionDate) : ""}</p>
+              <p style="font-weight:800;font-family:'Newsreader',serif;font-size:1.4rem;line-height:1.2;margin-bottom:var(--space-2xs);">${escHtml(d.deficiency_description ?? "Unknown deficiency")}</p>
+              <p style="font-size:0.95rem;color:var(--muted);margin-bottom:0;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">${escHtml(d.deficiency_category ?? "")}${corrected ? escHtml(corrected + correctionDate) : ""}</p>
             </div>
           `;
         })
         .join("");
 
       return `
-        <div style="margin-bottom:1.5rem;">
-          <h3 style="font-size:1rem;margin-bottom:0.75rem;color:var(--muted);font-weight:600;">${escHtml(cycleLabel)}${escHtml(dateLabel)}</h3>
-          ${items}
+        <div style="margin-bottom:var(--space-xl);">
+          <h3 style="margin-bottom:var(--space-s);">${escHtml(cycleLabel)}${escHtml(dateLabel)}</h3>
+          <div class="results-list">${items}</div>
         </div>
       `;
     })
@@ -128,16 +129,15 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
     f.complaint_deficiencies_cycle_1 !== null ? String(f.complaint_deficiencies_cycle_1) : "Not reported";
 
   const deficiencySection = `
-    <h2 style="font-size:1.1rem;margin-bottom:1rem;margin-top:2.5rem;">Inspection Deficiencies</h2>
-    <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1.25rem;">
+    <h2 id="inspections">Inspection Deficiencies</h2>
+    <p class="lede" style="font-size:1.125rem;margin-bottom:var(--space-l);">
       Health inspections identify violations of federal standards. Severity ranges from no actual harm (A–F) to immediate jeopardy (J–L).
-      <a href="/about" style="font-size:0.9rem;">How we grade →</a>
     </p>
     ${renderDeficiencies(deficiencies)}
   `;
 
   const body = `
-    <nav class="breadcrumb">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
       <a href="/">Home</a>
       <span class="breadcrumb-sep">›</span>
       ${escHtml(f.state)}
@@ -147,74 +147,121 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
       <span style="color:var(--ink);">${escHtml(f.name)}</span>
     </nav>
 
-    <div style="display:flex;align-items:baseline;gap:1rem;margin-bottom:0.5rem;">
-      <h1>${escHtml(f.name)}</h1>
-      <span class="grade-${f.grade_letter}" style="font-size:3rem;font-weight:800;line-height:1;">${escHtml(f.grade_letter)}</span>
+    <div class="facility-header">
+      <div>
+        <h1>${escHtml(f.name)}</h1>
+        <p style="color:var(--muted);margin-bottom:var(--space-s);font-size:1.1rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">
+          ${escHtml(f.address)}, ${escHtml(f.city)}, ${escHtml(f.state)} ${escHtml(f.zip)}
+        </p>
+        ${f.latitude && f.longitude ? `
+          <div id="facility-map" style="height:200px; width:100%; max-width:400px; border:2px solid var(--ink); margin-bottom:var(--space-m);"></div>
+        ` : ""}
+      </div>
+      <div class="grade-${f.grade_letter} facility-grade-hero" aria-label="Grade ${f.grade_letter}">
+        ${escHtml(f.grade_letter)}
+      </div>
     </div>
 
-    <p style="color:var(--muted);margin-bottom:1.5rem;font-size:0.95rem;">
-      ${escHtml(f.address)}, ${escHtml(f.city)}, ${escHtml(f.state)} ${escHtml(f.zip)}
-    </p>
-
-    <p style="font-size:1.15rem;line-height:1.6;margin-bottom:2rem;font-family:'Newsreader',Georgia,serif;">
+    <p class="lede" style="max-width:800px;margin-bottom:var(--space-xl);">
       ${escHtml(f.grade_summary)}
     </p>
 
-    <h2 style="font-size:1.1rem;margin-bottom:1rem;">Quality Breakdown</h2>
-    <table style="width:100%;border-collapse:collapse;margin-bottom:0.5rem;">
-      <tr style="border-bottom:1px solid var(--rule);">
-        <td style="padding:0.6rem 0;">RN Staffing <span style="font-size:0.8rem;color:var(--muted);font-weight:400;">— registered nurse time each resident receives daily. Federal minimum: 0.55 hrs.</span></td>
-        <td style="padding:0.6rem 0;font-weight:600;color:${meetsMinimum ? "#2d5a3d" : "#9e3a3a"}">
-          ${escHtml(rnDisplay)}
-        </td>
-      </tr>
-      <tr style="border-bottom:1px solid var(--rule);">
-        <td style="padding:0.6rem 0;">Health Inspection Deficiencies</td>
-        <td style="padding:0.6rem 0;font-weight:600;">${f.total_deficiencies ?? "Not reported"}</td>
-      </tr>
-      <tr style="border-bottom:1px solid var(--rule);">
-        <td style="padding:0.6rem 0;">Complaint-based Deficiencies <span style="font-size:0.8rem;color:var(--muted);font-weight:400;">— violations found during the most recent inspection cycle</span></td>
-        <td style="padding:0.6rem 0;font-weight:600;">${complaintDeficienciesCycle1}</td>
-      </tr>
-      <tr style="border-bottom:1px solid var(--rule);">
-        <td style="padding:0.6rem 0;">CMS Quality Rating</td>
-        <td style="padding:0.6rem 0;font-weight:600;">${qualityStars}</td>
-      </tr>
-      <tr style="border-bottom:1px solid var(--rule);">
-        <td style="padding:0.6rem 0;">CMS Staffing Rating</td>
-        <td style="padding:0.6rem 0;font-weight:600;">${staffingStars}</td>
-      </tr>
-      <tr>
-        <td style="padding:0.6rem 0;">NursingHomeGrade Score</td>
-        <td style="padding:0.6rem 0;font-weight:600;">${f.grade_score}/100 (${f.grade_letter})</td>
-      </tr>
-    </table>
-    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:2rem;">Data last updated: ${new Date(f.updated_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+    <h2 id="quality">Quality Breakdown</h2>
+    <div class="table-container">
+      <table>
+        <tr style="border-bottom:1px solid var(--rule);">
+          <td style="padding:var(--space-m) 0;">
+            <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">RN Staffing</div>
+            <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Registered nurse time each resident receives daily. Federal minimum: 0.55 hrs.</div>
+          </td>
+          <td style="padding:var(--space-m) 0;font-weight:700;font-family:'Newsreader',serif;font-size:1.5rem;text-align:right;color:${meetsMinimum ? "var(--grade-A)" : "var(--grade-F)"}">
+            ${escHtml(rnDisplay)}
+          </td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--rule);">
+          <td style="padding:var(--space-m) 0;">
+            <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">Health Deficiencies</div>
+            <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Violations found during federal inspections over the last 3 years.</div>
+          </td>
+          <td style="padding:var(--space-m) 0;font-weight:700;font-family:'Newsreader',serif;font-size:1.5rem;text-align:right;">${f.total_deficiencies ?? "Not reported"}</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--rule);">
+          <td style="padding:var(--space-m) 0;">
+            <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">CMS Ratings</div>
+            <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Overall and Staffing quality ratings from CMS (1-5 stars).</div>
+          </td>
+          <td style="padding:var(--space-m) 0;font-weight:700;font-family:'Newsreader',serif;font-size:1.25rem;text-align:right;">
+            <div style="margin-bottom:var(--space-3xs);">Quality: ${qualityStars}</div>
+            <div>Staffing: ${staffingStars}</div>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:var(--space-m) 0;">
+            <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">NursingHomeGrade Score</div>
+          </td>
+          <td style="padding:var(--space-m) 0;font-weight:700;font-family:'Newsreader',serif;font-size:2.5rem;text-align:right;">${f.grade_score}/100</td>
+        </tr>
+      </table>
+    </div>
+    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:var(--space-xl);">Data last updated: ${new Date(f.updated_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
 
     ${deficiencySection}
 
-    <div class="cta-box" style="margin-top:2.5rem;">
-      <h3 style="margin-bottom:0.5rem;">Need help choosing a facility?</h3>
-      <p style="margin-bottom:1rem;color:var(--muted);">Get free, unbiased guidance from senior living advisors. We earn nothing from this referral.</p>
+    <div class="cta-box">
+      <h3>Need help choosing a facility?</h3>
+      <p>Get free guidance from senior living advisors. We may earn a referral fee from comparison services, but never from nursing facilities and never in ways that affect grades.</p>
       ${primaryCta}
       ${secondaryCta}
     </div>
 
-    <div style="margin-top:2rem;">
-      <h3 style="margin-bottom:0.5rem;">Get score alerts for this facility</h3>
-      <p style="margin-bottom:0.75rem;font-size:0.9rem;color:var(--muted);">We'll email you when ${escHtml(f.name)}'s staffing score changes.</p>
+    <div style="margin-top:var(--space-2xl);">
+      <h3 style="margin-bottom:var(--space-xs);">Get score alerts for this facility</h3>
+      <p style="margin-bottom:var(--space-m);font-size:1rem;color:var(--muted);">We'll email you when ${escHtml(f.name)}'s staffing score changes.</p>
       <form action="/subscribe" method="POST" class="search-bar" style="margin-bottom:0;">
         <input type="hidden" name="cms_id" value="${escHtml(f.cms_id)}">
         <input type="hidden" name="facility_name" value="${escHtml(f.name)}">
         <input type="hidden" name="return_path" value="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}">
-        <input type="email" name="email" placeholder="your@email.com" required style="min-width:200px;">
-        <button type="submit" data-loading-text="Subscribing…">Notify me</button>
+        <label for="sub-email" class="visually-hidden">Email address</label>
+        <input type="email" id="sub-email" name="email" placeholder="your@email.com" required>
+        <button type="submit">Notify me</button>
       </form>
     </div>
   `;
+  const canonicalPath = `/facility/${f.cms_id}-${f.slug}`;
+  const extraHead = f.latitude && f.longitude ? `
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  ` : "";
+
+  const extraScripts = f.latitude && f.longitude ? `
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script>
+      (function() {
+        const map = L.map('facility-map', { zoomControl: false, attributionControl: false }).setView([${f.latitude}, ${f.longitude}], 14);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+          subdomains: 'abcd',
+          maxZoom: 20
+        }).addTo(map);
+        const color = getComputedStyle(document.documentElement).getPropertyValue('--grade-${f.grade_letter}').trim() || '#78716c';
+        L.circleMarker([${f.latitude}, ${f.longitude}], {
+          radius: 8,
+          fillColor: color,
+          color: '#1c1917',
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 1
+        }).addTo(map);
+      })();
+    </script>
+  ` : "";
+
   return layout(
     `${f.name} — NursingHomeGrade ${f.grade_letter} | ${f.city}, ${f.state}`,
     `${f.name} in ${f.city}, ${f.state} earns a grade of ${f.grade_letter} (${f.grade_score}/100). ${f.grade_summary}`,
     body,
+    {
+      canonicalPath,
+      extraHead,
+      extraScripts
+    },
   );
 }

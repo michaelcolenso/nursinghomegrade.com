@@ -3,6 +3,8 @@ import { handleFacility } from "./handlers/facility";
 import { handleHome, handleSearch } from "./handlers/home";
 import { handleAbout } from "./handlers/about";
 import { handleState, handleStatesHub } from "./handlers/state";
+import { handleCity } from "./handlers/city";
+import { handleExplore, handleMapApi } from "./handlers/map";
 import { subscribePage, notFoundPage, errorPage } from "./templates/subscribe";
 
 export default {
@@ -14,6 +16,8 @@ export default {
     if (path === "/about") return handleAbout(request, env);
     if (path === "/states") return handleStatesHub(request, env);
     if (path === "/search") return handleSearch(request, env);
+    if (path === "/explore") return handleExplore(request, env);
+    if (path === "/api/map/facilities") return handleMapApi(request, env);
 
     if (path === "/subscribe" && request.method === "POST") {
       try {
@@ -51,6 +55,9 @@ export default {
 
     const facilityMatch = path.match(/^\/facility\/([a-z0-9-]+)$/);
     if (facilityMatch?.[1]) return handleFacility(request, env, facilityMatch[1]);
+
+    const cityMatch = path.match(/^\/state\/([a-z-]+)\/([a-z-]+)$/);
+    if (cityMatch?.[1] && cityMatch?.[2]) return handleCity(request, env, cityMatch[1], cityMatch[2]);
 
     const stateMatch = path.match(/^\/state\/([a-z-]+)$/);
     if (stateMatch?.[1]) return handleState(request, env, stateMatch[1]);

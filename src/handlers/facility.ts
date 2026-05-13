@@ -1,5 +1,5 @@
 import type { Env } from "../types";
-import { getFacilityBySlugId, getFacilityInspectionDetails, getFacilityDeficiencies } from "../db";
+import { getFacilityBySlugId, getFacilityInspectionDetails, getFacilityDeficiencies, getNearbyFacilities } from "../db";
 import { facilityPage } from "../templates/facility";
 import { notFoundPage, errorPage } from "../templates/subscribe";
 
@@ -20,9 +20,13 @@ export async function handleFacility(request: Request, env: Env, slugId: string)
       return new Response(html, { status: 404, headers: { "Content-Type": "text/html;charset=UTF-8" } });
     }
 
-    const inspectionDetails = await getFacilityInspectionDetails(env, facility.cms_id);
-    const deficiencies = await getFacilityDeficiencies(env, facility.cms_id);
-    const html = facilityPage({ ...facility, ...inspectionDetails }, deficiencies);
+    const [inspectionDetails, deficiencies, nearby] = await Promise.all([
+      getFacilityInspectionDetails(env, facility.cms_id),
+      getFacilityDeficiencies(env, facility.cms_id),
+      getNearbyFacilities(env, facility.cms_id, facility.city, facility.state, 5),
+    ]);
+
+    const html = facilityPage({ ...facility, ...inspectionDetails }, deficiencies, nearby);
     await env.CACHE.put(`facility:${slugId}`, html, { expirationTtl: 86400 });
     return new Response(html, {
       headers: {

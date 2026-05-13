@@ -1,4 +1,5 @@
 import type { Facility } from "../types";
+import { citySlug } from "../states";
 import { layout, escHtml } from "./layout";
 
 export interface StatePageData {
@@ -10,105 +11,6 @@ export interface StatePageData {
   gradeDistribution: Record<string, number>;
   cities: Array<{ city: string; count: number }>;
   facilities: Facility[];
-}
-
-function gradeBar(distribution: Record<string, number>, total: number): string {
-  const letters = ["A", "B", "C", "D", "F"];
-  const colors: Record<string, string> = {
-    A: "#2d5a3d",
-    B: "#3d5a80",
-    C: "#b48a3e",
-    D: "#a65e3e",
-    F: "#9e3a3a",
-  };
-
-  const bars = letters
-    .map((letter) => {
-      const count = distribution[letter] ?? 0;
-      const pct = total > 0 ? ((count / total) * 100).toFixed(1) : "0";
-      const width = total > 0 ? (count / total) * 100 : 0;
-      return `<div style="flex:${count};min-width:${width > 2 ? '2px' : '0'};background:${colors[letter]};height:100%;" title="Grade ${letter}: ${count} (${pct}%)"></div>`;
-    })
-    .join("");
-
-  const labels = letters
-    .map((letter) => {
-      const count = distribution[letter] ?? 0;
-      const pct = total > 0 ? ((count / total) * 100).toFixed(1) : "0";
-      return `<span style="display:flex;align-items:center;gap:0.35rem;font-size:0.875rem;"><span style="display:inline-block;width:10px;height:10px;background:${colors[letter]};"></span> ${letter}: ${count} <span style="color:var(--muted);">(${pct}%)</span></span>`;
-    })
-    .join("");
-
-  return `
-    <div style="display:flex;height:24px;margin-bottom:0.75rem;border-radius:0;overflow:hidden;background:var(--rule);">
-      ${bars}
-    </div>
-    <div style="display:flex;gap:1.25rem 1.5rem;flex-wrap:wrap;margin-bottom:2rem;">
-      ${labels}
-    </div>
-  `;
-}
-
-function cityList(cities: Array<{ city: string; count: number }>, stateSlug: string): string {
-  if (cities.length === 0) return "";
-  const items = cities
-    .slice(0, 24)
-    .map((c) => `<a href="#${escHtml(c.city.toLowerCase().replace(/\s+/g, "-"))}" style="font-size:0.875rem;color:var(--muted);">${escHtml(c.city)} <span style="color:var(--rule);">(${c.count})</span></a>`)
-    .join('<span style="color:var(--rule);"> · </span>');
-
-  return `
-    <div style="margin-bottom:2rem;">
-      <h2 style="font-size:1rem;margin-bottom:0.75rem;color:var(--muted);font-weight:600;">Cities in this state</h2>
-      <div style="display:flex;flex-wrap:wrap;gap:0.35rem 0.75rem;">
-        ${items}
-      </div>
-    </div>
-  `;
-}
-
-function facilityList(facilities: Facility[], stateSlug: string): string {
-  if (facilities.length === 0) {
-    return `<p style="color:var(--muted);">No facilities found in this state.</p>`;
-  }
-
-  const items = facilities
-    .map((f) => {
-      const gradeClass = `result-item-${f.grade_letter}`;
-      const rnText =
-        f.rn_hours_per_resident_day !== null
-          ? `${f.rn_hours_per_resident_day.toFixed(2)} ${f.rn_hours_per_resident_day >= 0.55 ? '<span style="color:#166534;">✓</span>' : '<span style="color:#b91c1c;">✗</span>'}`
-          : "N/A";
-      const stars =
-        f.overall_rating !== null
-          ? `${"★".repeat(f.overall_rating)}${"☆".repeat(5 - f.overall_rating)}`
-          : "N/A";
-
-      return `
-        <div class="result-item ${gradeClass}" id="${escHtml(f.city.toLowerCase().replace(/\s+/g, "-"))}">
-          <div class="result-main">
-            <div class="result-grade">
-              <span class="grade-${f.grade_letter} result-grade-letter">${escHtml(f.grade_letter)}</span>
-              <span class="result-grade-score">${f.grade_score}/100</span>
-            </div>
-            <div class="result-info">
-              <a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}" class="result-name">${escHtml(f.name)}</a>
-              <div class="result-meta">
-                ${escHtml(f.address)}, ${escHtml(f.city)}, ${escHtml(f.state)}
-              </div>
-              <div class="result-stats">
-                <span class="result-stat">RN hours: ${rnText}</span>
-                <span class="result-stat">Deficiencies: ${f.total_deficiencies ?? "N/A"}</span>
-                <span class="result-stat">CMS: ${stars}</span>
-              </div>
-              <p class="result-summary">${escHtml(f.grade_summary)}</p>
-            </div>
-          </div>
-        </div>
-      `;
-    })
-    .join("");
-
-  return items;
 }
 
 export function statePage(data: StatePageData): string {
@@ -123,89 +25,126 @@ export function statePage(data: StatePageData): string {
     facilities,
   } = data;
 
-  const diff = pctFailing - nationalPctFailing;
-  const diffText = diff > 0
-    ? `${diff.toFixed(1)} points higher than the national average`
-    : diff < 0
-      ? `${Math.abs(diff).toFixed(1)} points lower than the national average`
-      : "equal to the national average";
-
   const body = `
-    <nav class="breadcrumb">
-      <a href="/">Home</a>
-      <span class="breadcrumb-sep">›</span>
-      <a href="/states">States</a>
-      <span class="breadcrumb-sep">›</span>
-      <span style="color:var(--ink);">${escHtml(stateName)}</span>
-    </nav>
+    <div style="margin-bottom: 4rem;">
+      <nav style="margin-bottom: 1.5rem; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate);">
+        <a href="/" style="color: var(--slate);">Home</a>
+        <span style="margin: 0 0.5rem; opacity: 0.5;">/</span>
+        <a href="/states" style="color: var(--slate);">States</a>
+      </nav>
+      <h1 style="margin-bottom: 1rem;">Nursing homes in ${escHtml(stateName)}</h1>
+      <p class="lede">
+        <strong>${facilityCount.toLocaleString()} facilities</strong> analyzed. ${pctFailing}% fail the federal staffing minimum, compared to a national average of ${nationalPctFailing}%.
+      </p>
+    </div>
 
-    <h1 class="display">Nursing homes in ${escHtml(stateName)}</h1>
-    <p class="lede">
-      <strong>${facilityCount.toLocaleString()} nursing homes</strong> in ${escHtml(stateName)}.
-      <strong>${pctFailing}%</strong> fail the federal staffing minimum — ${diffText}.
-    </p>
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 4rem; align-items: start; margin-bottom: 6rem;">
+      <div>
+        <h2 style="margin-bottom: 2rem;">Grade Distribution</h2>
+        ${renderGradeDistribution(gradeDistribution, facilityCount)}
+        
+        <h2 style="margin-bottom: 2rem; margin-top: 4rem;">Cities</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem;">
+          ${cities.slice(0, 30).map(c => `
+            <a href="/state/${stateSlug}/${citySlug(c.city)}" class="card" style="padding: 1rem; text-align: center; text-decoration: none; color: var(--navy); font-weight: 600; font-size: 0.9rem;">
+              ${escHtml(c.city)} (${c.count})
+            </a>
+          `).join('')}
+        </div>
+      </div>
+      
+      <div class="card" style="background: var(--navy); color: #fff; border: none; position: sticky; top: 120px;">
+        <h3 style="color: #fff; font-size: 1.25rem; margin-bottom: 1.5rem; font-family: var(--font-sans);">Quick Search</h3>
+        <p style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 1.5rem;">Find a specific facility in ${escHtml(stateName)} by ZIP code.</p>
+        <form action="/search" method="GET" style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <input type="text" name="zip" placeholder="ZIP Code" maxlength="5" required style="padding: 0.75rem 1rem; border-radius: 8px; border: none; font-family: var(--font-sans);">
+          <button type="submit" class="btn" style="background: var(--teal); border-color: var(--teal);">Search</button>
+        </form>
+      </div>
+    </div>
 
-    <h2 style="font-size:1.1rem;margin-bottom:0.75rem;">Grade distribution</h2>
-    ${gradeBar(gradeDistribution, facilityCount)}
-
-    ${cityList(cities, stateSlug)}
-
-    <h2 style="font-size:1.1rem;margin-bottom:0.75rem;">All facilities, ranked by grade</h2>
-    ${facilityList(facilities, stateSlug)}
-
-    <div class="cta-box" style="margin-top:2.5rem;">
-      <h3 style="margin-bottom:0.5rem;">Looking for a specific city?</h3>
-      <p style="margin-bottom:1rem;color:var(--muted);">Search by ZIP code to find nursing homes near you.</p>
-      <form action="/search" method="GET" class="search-bar" style="margin-bottom:0;">
-        <input type="text" name="zip" placeholder="Enter ZIP code" maxlength="5" pattern="[0-9]{5}">
-        <button type="submit" data-loading-text="Searching…">Search</button>
-      </form>
+    <h2 style="margin-bottom: 2rem;">Top Rated Facilities in ${escHtml(stateName)}</h2>
+    <div style="display: grid; gap: 1.5rem;">
+      ${facilities.length > 0 
+        ? facilities.slice(0, 10).map(f => renderFacilityItem(f)).join('')
+        : `<p style="color: var(--slate);">No facilities found in this state.</p>`
+      }
+    </div>
+    <div style="margin-top: 3rem; text-align: center;">
+       <a href="/search?state=${stateSlug}" class="btn btn-secondary">View all ranked facilities</a>
     </div>
   `;
 
   return layout(
     `Nursing Homes in ${stateName} — Grades & Ratings`,
-    `${facilityCount} nursing homes in ${stateName}. ${pctFailing}% fail the federal staffing minimum. Independent grades based on CMS data — no commissions.`,
+    `${facilityCount} nursing homes in ${stateName}. ${pctFailing}% fail the federal staffing minimum. Independent grades based on CMS data.`,
     body,
+    { canonicalPath: `/state/${stateSlug}` }
   );
 }
 
-export function statesHubPage(
-  states: Array<{ state: string; count: number; slug: string }>,
-): string {
-  const columns = 4;
-  const perColumn = Math.ceil(states.length / columns);
-  const colGroups: Array<Array<{ state: string; count: number; slug: string }>> = [];
-  for (let i = 0; i < columns; i++) {
-    colGroups.push(states.slice(i * perColumn, (i + 1) * perColumn));
-  }
+function renderGradeDistribution(dist: Record<string, number>, total: number): string {
+  const letters = ["A", "B", "C", "D", "F"];
+  return `
+    <div style="display: flex; gap: 2px; height: 40px; border-radius: 8px; overflow: hidden; margin-bottom: 2rem;">
+      ${letters.map(l => {
+        const count = dist[l] ?? 0;
+        const pct = (count / total) * 100;
+        return `<div class="grade-${l}" style="width: ${pct}%;" title="${l}: ${count} facilities"></div>`;
+      }).join('')}
+    </div>
+    <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem;">
+      ${letters.map(l => `
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <div class="grade-${l}" style="width: 12px; height: 12px; border-radius: 2px;"></div>
+          <span style="font-weight: 700; font-size: 0.9rem;">Grade ${l}</span>
+          <span style="color: var(--slate); font-size: 0.9rem;">${dist[l] ?? 0}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
 
-  const colsHtml = colGroups
-    .map((group) => {
-      const items = group
-        .map(
-          (s) =>
-            `<li style="margin-bottom:0.4rem;"><a href="/state/${escHtml(s.slug)}" style="font-size:0.95rem;">${escHtml(s.state)} <span style="color:var(--muted);font-size:0.85rem;">(${s.count.toLocaleString()})</span></a></li>`,
-        )
-        .join("");
-      return `<ul style="list-style:none;padding:0;margin:0;min-width:160px;">${items}</ul>`;
-    })
-    .join("");
+function renderFacilityItem(f: Facility): string {
+  return `
+    <div class="card" style="padding: 1.5rem;">
+      <div style="display: grid; grid-template-columns: 60px 1fr auto; gap: 2rem; align-items: center;">
+        <div class="grade-badge grade-${f.grade_letter}" style="width: 60px; height: 60px; border-radius: 8px;">
+          <div class="grade-badge-letter" style="font-size: 1.75rem;">${f.grade_letter}</div>
+          <div class="grade-badge-score" style="font-size: 0.6rem;">${f.grade_score}</div>
+        </div>
+        <div>
+          <a href="/facility/${f.cms_id}-${f.slug}" style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 800; color: var(--navy); text-decoration: none;">${escHtml(f.name)}</a>
+          <div style="font-size: 0.85rem; color: var(--slate); margin-top: 0.25rem;">${escHtml(f.city)}, ${escHtml(f.state)}</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: var(--slate); margin-bottom: 0.25rem;">Staffing</div>
+          <div style="font-weight: 700;">${f.rn_hours_per_resident_day?.toFixed(2) ?? 'N/A'} hrs</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
 
+export function statesHubPage(states: Array<{ state: string; count: number; slug: string }>): string {
   const body = `
-    <nav class="breadcrumb">
-      <a href="/">Home</a>
-      <span class="breadcrumb-sep">›</span>
-      <span style="color:var(--ink);">States</span>
-    </nav>
+    <div style="margin-bottom: 4rem;">
+      <nav style="margin-bottom: 1.5rem; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate);">
+        <a href="/" style="color: var(--slate);">Home</a>
+      </nav>
+      <h1 style="margin-bottom: 1rem;">Nursing home grades by state</h1>
+      <p class="lede">
+        Independent ratings for every U.S. state. Derived from federal CMS data.
+      </p>
+    </div>
 
-    <h1 class="display">Nursing home grades by state</h1>
-    <p class="lede">
-      Browse independent nursing home ratings for every U.S. state. All grades are derived from CMS data — no commissions, no conflicts.
-    </p>
-
-    <div style="display:flex;gap:2rem;flex-wrap:wrap;margin-top:2rem;">
-      ${colsHtml}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.5rem;">
+      ${states.map(s => `
+        <a href="/state/${s.slug}" class="card" style="padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; text-decoration: none; color: var(--navy); transition: transform 0.2s;">
+          <span style="font-weight: 700; font-size: 1.1rem;">${escHtml(s.state)}</span>
+          <span style="font-size: 0.85rem; color: var(--slate); font-weight: 600;">${s.count.toLocaleString()} facilities</span>
+        </a>
+      `).join('')}
     </div>
   `;
 
@@ -213,5 +152,6 @@ export function statesHubPage(
     "Nursing Home Grades by State — NursingHomeGrade",
     "Browse independent nursing home ratings for every U.S. state. Grades based on federal CMS data.",
     body,
+    { canonicalPath: "/states" }
   );
 }

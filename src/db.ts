@@ -1,4 +1,5 @@
 import type { Facility, FacilityInspectionDetails, Deficiency, Env } from "./types";
+import { cityDisplayName, citySlug } from "./states";
 
 export async function getFacilityById(env: Env, cmsId: string): Promise<Facility | null> {
   const result = await env.DB.prepare("SELECT * FROM facilities WHERE cms_id = ?").bind(cmsId).first<Facility>();
@@ -41,6 +42,19 @@ export async function getFacilityInspectionDetails(env: Env, cmsId: string): Pro
   }
 }
 
+export async function getFacilitiesByBounds(
+  env: Env,
+  bounds: { minLat: number; maxLat: number; minLng: number; maxLatLng: number },
+  limit = 500,
+): Promise<Facility[]> {
+  const results = await env.DB.prepare(
+    "SELECT * FROM facilities WHERE latitude > ? AND latitude < ? AND longitude > ? AND longitude < ? LIMIT ?",
+  )
+    .bind(bounds.minLat, bounds.maxLat, bounds.minLng, bounds.maxLatLng, limit)
+    .all<Facility>();
+  return results.results ?? [];
+}
+
 export async function searchByZipExact(env: Env, zip: string, limit = 25): Promise<Facility[]> {
   const results = await env.DB.prepare("SELECT * FROM facilities WHERE zip = ? ORDER BY grade_score DESC LIMIT ?")
     .bind(zip, limit)
@@ -53,6 +67,15 @@ export async function searchNearby(env: Env, state: string, limit = 200): Promis
     "SELECT * FROM facilities WHERE state = ? AND latitude IS NOT NULL AND longitude IS NOT NULL ORDER BY grade_score DESC LIMIT ?",
   )
     .bind(state, limit)
+    .all<Facility>();
+  return results.results ?? [];
+}
+
+export async function getTopRatedFacilities(env: Env, limit = 8): Promise<Facility[]> {
+  const results = await env.DB.prepare(
+    "SELECT * FROM facilities WHERE grade_letter IN ('A', 'B') AND latitude IS NOT NULL AND longitude IS NOT NULL ORDER BY grade_score DESC LIMIT ?",
+  )
+    .bind(limit)
     .all<Facility>();
   return results.results ?? [];
 }
@@ -83,10 +106,14 @@ export async function getNationalPctFailing(env: Env): Promise<number> {
 }
 
 export async function getFacilityDeficiencies(env: Env, cmsId: string): Promise<Deficiency[]> {
-  const results = await env.DB.prepare(
-    `SELECT * FROM facility_deficiencies WHERE cms_id = ? ORDER BY inspection_cycle ASC, deficiency_category ASC`
-  ).bind(cmsId).all<Deficiency>();
-  return results.results ?? [];
+  try {
+    const results = await env.DB.prepare(
+      `SELECT * FROM facility_deficiencies WHERE cms_id = ? ORDER BY inspection_cycle ASC, deficiency_category ASC`
+    ).bind(cmsId).all<Deficiency>();
+    return results.results ?? [];
+  } catch {
+    return [];
+  }
 }
 
 export async function getFacilitiesByState(env: Env, state: string, limit = 200): Promise<Facility[]> {
@@ -124,5 +151,95 @@ export async function getStateCityList(
   )
     .bind(state)
     .all<{ city: string; count: number }>();
+
+  const merged = new Map<string, { city: string; count: number }>();
+  for (const row of results.results ?? []) {
+    const slug = citySlug(row.city);
+    const existing = merged.get(slug);
+    if (existing) {
+      existing.count += row.count;
+      if (shouldPreferCityDisplayName(existing.city, row.city)) {
+        existing.city = cityDisplayName(row.city);
+      }
+      continue;
+    }
+
+    merged.set(slug, { city: cityDisplayName(row.city), count: row.count });
+  }
+
+  return [...merged.values()].sort((a, b) => b.count - a.count || a.city.localeCompare(b.city));
+}
+
+export async function getNearbyFacilities(
+  env: Env,
+  cmsId: string,
+  city: string,
+  state: string,
+  limit = 5,
+): Promise<Facility[]> {
+  const results = await env.DB.prepare(
+    "SELECT * FROM facilities WHERE state = ? AND city = ? AND cms_id != ? ORDER BY grade_score DESC LIMIT ?"
+  )
+    .bind(state, city, cmsId, limit)
+    .all<Facility>();
   return results.results ?? [];
+}
+
+export interface CitySnapshot {
+  cityName: string;
+  facilityCount: number;
+  pctFailing: number;
+  gradeDistribution: Record<string, number>;
+  facilities: Facility[];
+}
+
+export async function getCitySnapshot(
+  env: Env,
+  state: string,
+  slug: string,
+  limit = 200,
+): Promise<CitySnapshot | null> {
+  const results = await env.DB.prepare(
+    "SELECT * FROM facilities WHERE state = ? ORDER BY grade_score DESC"
+  )
+    .bind(state)
+    .all<Facility>();
+
+  const matchingFacilities = (results.results ?? []).filter((facility) => citySlug(facility.city) === slug);
+  if (matchingFacilities.length === 0) {
+    return null;
+  }
+
+  const cityName = matchingFacilities.reduce((preferred, facility) => {
+    return shouldPreferCityDisplayName(preferred, facility.city) ? facility.city : preferred;
+  }, matchingFacilities[0].city);
+
+  const gradeDistribution: Record<string, number> = { A: 0, B: 0, C: 0, D: 0, F: 0 };
+  let failingCount = 0;
+
+  for (const facility of matchingFacilities) {
+    gradeDistribution[facility.grade_letter] = (gradeDistribution[facility.grade_letter] ?? 0) + 1;
+    if (facility.rn_hours_per_resident_day !== null && facility.rn_hours_per_resident_day < 0.55) {
+      failingCount += 1;
+    }
+  }
+
+  const pctFailing = Number(((failingCount / matchingFacilities.length) * 100).toFixed(1));
+
+  return {
+    cityName: cityDisplayName(cityName),
+    facilityCount: matchingFacilities.length,
+    pctFailing,
+    gradeDistribution,
+    facilities: matchingFacilities.slice(0, limit),
+  };
+}
+
+function shouldPreferCityDisplayName(current: string, candidate: string): boolean {
+  const currentHasLower = /[a-z]/.test(current);
+  const candidateHasLower = /[a-z]/.test(candidate);
+
+  if (candidateHasLower && !currentHasLower) return true;
+  if (currentHasLower && !candidateHasLower) return false;
+  return candidate.length < current.length;
 }

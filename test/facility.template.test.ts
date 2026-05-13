@@ -41,29 +41,30 @@ const sampleDeficiency: Deficiency = {
 };
 
 describe("facilityPage", () => {
-  it("renders complaint-based inspection deficiencies when available", () => {
+  it("renders basic facility info", () => {
     const html = facilityPage(baseFacility, []);
-    expect(html).toContain("Complaint-based Deficiencies");
-    expect(html).toContain(">2<");
+    expect(html).toContain("Sunrise Care Center");
+    expect(html).toContain("123 Main St");
+    expect(html).toContain("Birmingham, AL 35201");
   });
 
-  it("renders Not reported when complaint deficiencies are missing", () => {
-    const html = facilityPage({ ...baseFacility, complaint_deficiencies_cycle_1: null }, []);
-    expect(html).toContain("Complaint-based Deficiencies");
-    expect(html).toContain("Not reported");
+  it("renders quality breakdown cards", () => {
+    const html = facilityPage(baseFacility, []);
+    expect(html).toContain("RN Staffing");
+    expect(html).toContain("Health Deficiencies");
+    expect(html).toContain("CMS Ratings");
   });
 
   it("renders actual deficiency details when available", () => {
     const html = facilityPage(baseFacility, [sampleDeficiency]);
     expect(html).toContain("Inspection Deficiencies");
-    expect(html).toContain("Infection Control Deficiencies");
     expect(html).toContain("Provide and implement an infection prevention and control program.");
     expect(html).toContain("F0880");
-    expect(html).toContain("Potential harm — widespread");
+    expect(html).toContain("Status: Corrected");
   });
 
   it("shows empty state when no deficiencies available", () => {
     const html = facilityPage(baseFacility, []);
-    expect(html).toContain("No detailed deficiency records available");
+    expect(html).toContain("No deficiencies reported for this facility.");
   });
 });

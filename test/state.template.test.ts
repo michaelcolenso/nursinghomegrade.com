@@ -63,22 +63,24 @@ describe("statePage", () => {
   it("renders state name and facility count", () => {
     const html = statePage(baseStateData);
     expect(html).toContain("Nursing homes in California");
-    expect(html).toContain("1,162 nursing homes");
+    expect(html).toContain("1,162 facilities");
   });
 
   it("renders grade distribution", () => {
     const html = statePage(baseStateData);
-    expect(html).toContain("Grade distribution");
-    expect(html).toContain("Grade A: 120");
-    expect(html).toContain("Grade F: 102");
+    expect(html).toContain("Grade Distribution");
+    expect(html).toContain("Grade A");
+    expect(html).toContain("120");
+    expect(html).toContain("Grade F");
+    expect(html).toContain("102");
   });
 
   it("renders facility list with grades", () => {
     const html = statePage(baseStateData);
     expect(html).toContain("Golden State Care Center");
     expect(html).toContain("Pacific Pines Nursing Home");
-    expect(html).toContain("result-item-A");
-    expect(html).toContain("result-item-F");
+    expect(html).toContain("grade-A");
+    expect(html).toContain("grade-F");
   });
 
   it("renders city list", () => {
@@ -90,7 +92,7 @@ describe("statePage", () => {
   it("shows pct failing comparison", () => {
     const html = statePage(baseStateData);
     expect(html).toContain("62.5%");
-    expect(html).toContain("4.5 points higher than the national average");
+    expect(html).toContain("58%");
   });
 
   it("renders empty facility list gracefully", () => {

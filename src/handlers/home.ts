@@ -1,6 +1,6 @@
 import type { Env } from "../types";
 import type { Facility } from "../types";
-import { getNationalPctFailing, searchByZipExact, searchNearby, getStatesWithCounts } from "../db";
+import { getNationalPctFailing, searchByZipExact, searchNearby, getStatesWithCounts, getTopRatedFacilities } from "../db";
 import { homePage, searchResultsPage } from "../templates/home";
 import { errorPage } from "../templates/subscribe";
 
@@ -16,7 +16,8 @@ export async function handleHome(request: Request, env: Env): Promise<Response> 
       });
 
     const pctFailing = await getNationalPctFailing(env);
-    const html = homePage(pctFailing);
+    const topFacilities = await getTopRatedFacilities(env, 8);
+    const html = homePage(pctFailing, topFacilities);
     await env.CACHE.put("page:home", html, { expirationTtl: 3600 });
     return new Response(html, {
       headers: {
@@ -80,7 +81,7 @@ async function geocodeZip(env: Env, zip: string): Promise<{ lat: number; lng: nu
 export async function handleSearch(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const zip = (url.searchParams.get("zip") ?? "").replace(/\D/g, "").slice(0, 5);
-  if (zip.length !== 5) return Response.redirect("/", 302);
+  if (zip.length !== 5) return Response.redirect(new URL("/", request.url).toString(), 302);
 
   const sort = url.searchParams.get("sort") ?? "grade";
   const minGrade = url.searchParams.get("min_grade") ?? "";

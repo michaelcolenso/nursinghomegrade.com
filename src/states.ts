@@ -117,3 +117,24 @@ export function getStateInfo(abbreviation: string): { name: string; slug: string
 export function getAllStateSlugs(): string[] {
   return Object.keys(STATE_ABBREVIATIONS);
 }
+
+export function citySlug(city: string): string {
+  return city
+    .toLowerCase()
+    .replace(/\./g, "")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}
+
+export function cityDisplayName(city: string): string {
+  const normalizedSpacing = city.trim().replace(/\s+/g, " ");
+  if (/[a-z]/.test(normalizedSpacing) || !/[A-Z]/.test(normalizedSpacing)) {
+    return normalizedSpacing;
+  }
+
+  return normalizedSpacing
+    .toLowerCase()
+    .replace(/(^|[\s-'])[a-z]/g, (match) => match.toUpperCase());
+}
