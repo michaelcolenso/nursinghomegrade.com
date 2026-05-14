@@ -194,6 +194,17 @@ export function layout(
       margin-bottom: var(--space-xl);
       box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);
     }
+
+    .card {
+      background: #fff;
+      border: 1px solid var(--rule);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 20px -5px rgba(0,0,0,0.05);
+    }
+
     .search-bar input {
       flex: 1;
       min-width: 240px;
@@ -467,6 +478,9 @@ export function layout(
       :root { --space-page: var(--space-m); }
       .facility-header { flex-direction: column-reverse; gap: var(--space-s); }
       .facility-grade-hero { font-size: 6rem; }
+      .search-bar { flex-direction: column; }
+      .search-bar input { border-bottom: none; }
+      .search-bar button { border-top: none; }
       .search-bar .geo-btn { border-left: 2px solid var(--ink); border-top: none; }
       .cta-box { padding: var(--space-m); }
       .result-main { grid-template-columns: 1fr; gap: var(--space-m); }
@@ -567,6 +581,29 @@ export function layout(
     })();
   </script>
   ${extraScripts || ""}
+  <div id="comparison-bar" style="display:none; position:fixed; bottom:0; left:0; width:100%; background:var(--ink); color:#fff; padding:var(--space-s) var(--space-m); justify-content:space-between; align-items:center; z-index:1000;">
+    <div id="comparison-count" style="font-weight:700;"></div>
+    <a href="/compare" class="btn" style="background:#fff; color:var(--ink); border:none;">Compare Selected →</a>
+  </div>
+  <script>
+    (function() {
+      const bar = document.getElementById('comparison-bar');
+      const count = document.getElementById('comparison-count');
+      
+      function update() {
+        const data = JSON.parse(localStorage.getItem('nhg_saved_facilities') || '[]');
+        if (data.length > 0) {
+          bar.style.display = 'flex';
+          count.textContent = data.length + ' facilities selected';
+        } else {
+          bar.style.display = 'none';
+        }
+      }
+      
+      window.addEventListener('storage', update);
+      update();
+    })();
+  </script>
 </body>
 </html>`;
 }

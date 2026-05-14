@@ -28,8 +28,9 @@ export async function handleState(request: Request, env: Env, stateSlug: string)
       return new Response(html, { status: 404, headers: { "Content-Type": "text/html;charset=UTF-8" } });
     }
 
-    const [facilities, gradeDistribution, cities, pctFailing, nationalPctFailing] = await Promise.all([
+    const [facilities, totalFacilityCount, gradeDistribution, cities, pctFailing, nationalPctFailing] = await Promise.all([
       getFacilitiesByState(env, stateAbbr, 200),
+      countFacilitiesByState(env, stateAbbr),
       getStateGradeDistribution(env, stateAbbr),
       getStateCityList(env, stateAbbr),
       getStatePctFailing(env, stateAbbr),
@@ -40,6 +41,7 @@ export async function handleState(request: Request, env: Env, stateSlug: string)
       stateName: stateInfo.name,
       stateSlug: stateInfo.slug,
       facilityCount: facilities.length,
+      totalFacilityCount,
       pctFailing,
       nationalPctFailing,
       gradeDistribution,

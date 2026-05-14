@@ -1,5 +1,6 @@
 import type { FacilityPageData, Deficiency } from "../types";
 import { layout, escHtml } from "./layout";
+import { renderTrustModule } from "./trust";
 
 function severityLabel(code: string | null): string {
   if (!code) return "Unknown";
@@ -72,7 +73,6 @@ function renderDeficiencies(deficiencies: Deficiency[]): string {
           const corrected = d.deficiency_corrected ? ` — ${d.deficiency_corrected}` : "";
           const correctionDate = d.correction_date ? `, corrected ${formatDate(d.correction_date)}` : "";
           const statusLabel = d.correction_date ? "Status: Corrected" : "Status: Outstanding";
-          const source = d.complaint_deficiency === "Y" ? "Complaint inspection" : d.standard_deficiency === "Y" ? "Standard inspection" : "";
 
           return `
             <div class="deficiency-item" style="border-left: 8px solid ${sevColor}">
@@ -125,9 +125,6 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
     ? `<a href="https://www.senioradvisor.com/nursing-homes" rel="nofollow noopener" target="_blank" class="btn-secondary">Compare nearby →</a>`
     : `<a href="https://www.caring.com/local/nursing-homes" rel="nofollow noopener" target="_blank" class="btn-secondary">Get free help →</a>`;
 
-  const complaintDeficienciesCycle1 =
-    f.complaint_deficiencies_cycle_1 !== null ? String(f.complaint_deficiencies_cycle_1) : "Not reported";
-
   const deficiencySection = `
     <h2 id="inspections">Inspection Deficiencies</h2>
     <p class="lede" style="font-size:1.125rem;margin-bottom:var(--space-l);">
@@ -140,9 +137,9 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
     <nav class="breadcrumb" aria-label="Breadcrumb">
       <a href="/">Home</a>
       <span class="breadcrumb-sep">›</span>
-      ${escHtml(f.state)}
+      <a href="/states/${f.state.toLowerCase()}">${escHtml(f.state)}</a>
       <span class="breadcrumb-sep">›</span>
-      ${escHtml(f.city)}
+      <a href="/city/${f.state.toLowerCase()}/${f.city.toLowerCase().replace(/ /g, '-')}">${escHtml(f.city)}</a>
       <span class="breadcrumb-sep">›</span>
       <span style="color:var(--ink);">${escHtml(f.name)}</span>
     </nav>
@@ -153,6 +150,9 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
         <p style="color:var(--muted);margin-bottom:var(--space-s);font-size:1.1rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">
           ${escHtml(f.address)}, ${escHtml(f.city)}, ${escHtml(f.state)} ${escHtml(f.zip)}
         </p>
+        <div style="display:inline-block; margin-bottom:var(--space-m); padding: 0.5rem; background: var(--bg); border: 1px solid var(--rule); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);">
+          Independent ratings: No payments from facilities
+        </div>
         ${f.latitude && f.longitude ? `
           <div id="facility-map" style="height:200px; width:100%; max-width:400px; border:2px solid var(--ink); margin-bottom:var(--space-m);"></div>
         ` : ""}
@@ -206,6 +206,7 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
     <p style="font-size:0.85rem;color:var(--muted);margin-bottom:var(--space-xl);">Data last updated: ${new Date(f.updated_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
 
     ${deficiencySection}
+    ${renderTrustModule()}
 
     <div class="cta-box">
       <h3>Need help choosing a facility?</h3>
@@ -254,6 +255,59 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
     </script>
   ` : "";
 
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "NursingHome",
+      "name": f.name,
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": f.address,
+        "addressLocality": f.city,
+        "addressRegion": f.state,
+        "postalCode": f.zip,
+        "addressCountry": "US"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": f.grade_score,
+        "bestRating": "100",
+        "worstRating": "0",
+        "ratingCount": 1
+      }
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://nursinghomegrade.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": f.state,
+          "item": `https://nursinghomegrade.com/states/${f.state.toLowerCase()}`
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": f.city,
+          "item": `https://nursinghomegrade.com/city/${f.state.toLowerCase()}/${f.city.toLowerCase().replace(/ /g, '-')}`
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "name": f.name,
+          "item": `https://nursinghomegrade.com${canonicalPath}`
+        }
+      ]
+    }
+  ];
+
   return layout(
     `${f.name} — NursingHomeGrade ${f.grade_letter} | ${f.city}, ${f.state}`,
     `${f.name} in ${f.city}, ${f.state} earns a grade of ${f.grade_letter} (${f.grade_score}/100). ${f.grade_summary}`,
@@ -261,7 +315,8 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
     {
       canonicalPath,
       extraHead,
-      extraScripts
+      extraScripts,
+      jsonLd
     },
   );
 }

@@ -28,10 +28,10 @@ export function cityPage(data: CityPageData): string {
 
   const body = `
     <div style="margin-bottom: 4rem;">
-      <nav style="margin-bottom: 1.5rem; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate);">
-        <a href="/" style="color: var(--slate);">Home</a>
+      <nav style="margin-bottom: 1.5rem; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);">
+        <a href="/" style="color: var(--muted);">Home</a>
         <span style="margin: 0 0.5rem; opacity: 0.5;">/</span>
-        <a href="/state/${stateSlug}" style="color: var(--slate);">${escHtml(stateName)}</a>
+        <a href="/state/${stateSlug}" style="color: var(--muted);">${escHtml(stateName)}</a>
       </nav>
       <h1 style="margin-bottom: 1rem;">Nursing homes in ${escHtml(cityName)}, ${escHtml(stateName)}</h1>
       <p class="lede">
@@ -48,16 +48,16 @@ export function cityPage(data: CityPageData): string {
               <div class="grade-badge-score">${f.grade_score}/100</div>
             </div>
             <div>
-              <a href="/facility/${f.cms_id}-${f.slug}" style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; color: var(--navy); text-decoration: none; display: block; margin-bottom: 0.5rem;">${escHtml(f.name)}</a>
-              <div style="font-size: 0.95rem; color: var(--slate); font-weight: 500; margin-bottom: 1rem;">${escHtml(f.address)}, ${escHtml(f.city)}, ${escHtml(f.state)}</div>
+              <a href="/facility/${f.cms_id}-${f.slug}" style="font-family: 'Newsreader', Georgia, serif; font-size: 1.5rem; font-weight: 800; color: var(--ink); text-decoration: none; display: block; margin-bottom: 0.5rem;">${escHtml(f.name)}</a>
+              <div style="font-size: 0.95rem; color: var(--muted); font-weight: 500; margin-bottom: 1rem;">${escHtml(f.address)}, ${escHtml(f.city)}, ${escHtml(f.state)}</div>
               
               <div style="display: flex; gap: 2rem;">
                 <div>
-                  <div style="font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--slate); margin-bottom: 0.25rem;">Staffing</div>
+                  <div style="font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--muted); margin-bottom: 0.25rem;">Staffing</div>
                   <div style="font-weight: 700;">${f.rn_hours_per_resident_day?.toFixed(2) ?? 'N/A'} hrs</div>
                 </div>
                 <div>
-                  <div style="font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--slate); margin-bottom: 0.25rem;">CMS Rating</div>
+                  <div style="font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--muted); margin-bottom: 0.25rem;">CMS Rating</div>
                   <div style="font-weight: 700;">${f.overall_rating ? '★'.repeat(f.overall_rating) : 'N/A'}</div>
                 </div>
               </div>
@@ -66,15 +66,15 @@ export function cityPage(data: CityPageData): string {
           </div>
         </div>
       `).join('')}
-      ${facilities.length === 0 ? `<p style="color: var(--slate);">No facilities found in this city.</p>` : ''}
+      ${facilities.length === 0 ? `<p style="color: var(--muted);">No facilities found in this city.</p>` : ''}
     </div>
 
-    <div class="card" style="background: var(--navy); color: #fff; padding: 4rem; text-align: center; border: none;">
+    <div style="background: var(--ink); color: #fff; padding: 4rem; text-align: center; border: none;">
       <h2 style="color: #fff; margin-bottom: 1.5rem;">Don't see a facility?</h2>
       <p style="font-size: 1.1rem; opacity: 0.9; max-width: 600px; margin: 0 auto 2.5rem;">Search by ZIP code to find all facilities within 25 miles of ${escHtml(cityName)}.</p>
       <form action="/search" method="GET" style="display: flex; gap: 0.5rem; max-width: 500px; margin: 0 auto;">
-        <input type="text" name="zip" placeholder="Enter ZIP code" required style="flex: 1; padding: 1rem; border-radius: 8px; border: none; font-family: var(--font-sans);">
-        <button type="submit" class="btn" style="background: var(--teal); border-color: var(--teal);">Find Near Me</button>
+        <input type="text" name="zip" placeholder="Enter ZIP code" pattern="[0-9]{5}" title="Enter a 5-digit ZIP code" maxlength="5" required style="flex: 1; padding: 1rem; border-radius: 0; border: none; font-family: 'Source Sans 3', sans-serif;">
+        <button type="submit" class="btn" style="background: #fff; color: var(--ink); border: none;">Find Near Me</button>
       </form>
     </div>
   `;

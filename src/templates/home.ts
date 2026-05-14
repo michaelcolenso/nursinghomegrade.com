@@ -25,10 +25,32 @@ export function homePage(pctFailing: number): string {
       <a href="/about" style="font-weight:800;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;display:inline-block;margin-top:var(--space-s);border:none;">Read more →</a>
     </blockquote>
   `;
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "NursingHomeGrade",
+      "url": "https://nursinghomegrade.com/",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://nursinghomegrade.com/search?zip={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "NursingHomeGrade",
+      "url": "https://nursinghomegrade.com/",
+      "description": "Independent ratings for U.S. nursing homes based on federal CMS data."
+    }
+  ];
+
   return layout(
     "NursingHomeGrade — Honest Nursing Home Ratings",
     `${pctFailing}% of U.S. nursing homes fail the federal staffing minimum. Find unbiased nursing home grades based on CMS data — no commissions.`,
     body,
+    { jsonLd }
   );
 }
 
@@ -126,7 +148,14 @@ export function searchResultsPage(
               <span class="result-grade-score">${f.grade_score}/100</span>
             </div>
             <div class="result-info">
-              <a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}" class="result-name">${escHtml(f.name)}</a>
+              <div style="display:flex; justify-content:space-between; align-items:start;">
+                <a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}" class="result-name">${escHtml(f.name)}</a>
+                <button onclick="toggleSave('${escHtml(f.cms_id)}', '${escHtml(f.name.replace(/'/g, "\\'"))}', '${f.grade_letter}', ${f.grade_score})" 
+                        id="save-${escHtml(f.cms_id)}"
+                        style="background:none; border:1px solid var(--rule); padding:0.25rem 0.5rem; font-size:0.7rem; font-weight:700; text-transform:uppercase; cursor:pointer;">
+                  Save
+                </button>
+              </div>
               <div class="result-meta">${escHtml(f.address)}, ${escHtml(f.city)}, ${escHtml(f.state)}</div>
               
               <div class="result-stats">
@@ -171,6 +200,29 @@ const extraScripts = `
     (function() {
       const facilities = ${JSON.stringify(mapData)};
       let map = null;
+
+      window.toggleSave = function(id, name, grade, score) {
+        let data = JSON.parse(localStorage.getItem('nhg_saved_facilities') || '[]');
+        const idx = data.findIndex(f => f.cms_id === id);
+        const btn = document.getElementById('save-' + id);
+        
+        if (idx > -1) {
+          data.splice(idx, 1);
+          btn.textContent = 'Save';
+        } else {
+          data.push({ cms_id: id, name, grade_letter: grade, grade_score: score });
+          btn.textContent = 'Saved';
+        }
+        localStorage.setItem('nhg_saved_facilities', JSON.stringify(data));
+        window.dispatchEvent(new Event('storage'));
+      };
+
+      // Set initial state
+      const saved = JSON.parse(localStorage.getItem('nhg_saved_facilities') || '[]');
+      saved.forEach(f => {
+        const btn = document.getElementById('save-' + f.cms_id);
+        if (btn) btn.textContent = 'Saved';
+      });
 
       window.toggleMap = function() {
         const body = document.body;

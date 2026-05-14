@@ -27,15 +27,16 @@ export function explorePage(): string {
         display: inline-block;
       }
       .cluster-icon {
-        background: var(--ink);
-        color: #fff;
+        background: rgba(28, 25, 23, 0.1);
+        color: var(--ink);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: 800;
-        font-size: 0.85rem;
-        border: 2px solid #fff;
+        font-size: 0.75rem;
+        border: 1px solid var(--ink);
+        backdrop-filter: blur(2px);
       }
     </style>
   `;
@@ -54,8 +55,8 @@ export function explorePage(): string {
         }).addTo(map);
 
         const markers = L.markerClusterGroup({
-          maxClusterRadius: 40,
-          disableClusteringAtZoom: 13,
+          maxClusterRadius: 15,
+          disableClusteringAtZoom: 11,
           iconCreateFunction: function(cluster) {
             return L.divIcon({ 
               html: cluster.getChildCount(), 

@@ -4,6 +4,7 @@ import { handleHome, handleSearch } from "./handlers/home";
 import { handleAbout } from "./handlers/about";
 import { handleState, handleStatesHub } from "./handlers/state";
 import { handleCity } from "./handlers/city";
+import { handleCompare } from "./handlers/comparison";
 import { handleExplore, handleMapApi } from "./handlers/map";
 import { subscribePage, notFoundPage, errorPage } from "./templates/subscribe";
 
@@ -15,6 +16,7 @@ export default {
     if (path === "/") return handleHome(request, env);
     if (path === "/about") return handleAbout(request, env);
     if (path === "/states") return handleStatesHub(request, env);
+    if (path === "/compare") return handleCompare(request, env);
     if (path === "/search") return handleSearch(request, env);
     if (path === "/explore") return handleExplore(request, env);
     if (path === "/api/map/facilities") return handleMapApi(request, env);

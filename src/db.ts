@@ -125,6 +125,13 @@ export async function getFacilitiesByState(env: Env, state: string, limit = 200)
   return results.results ?? [];
 }
 
+export async function countFacilitiesByState(env: Env, state: string): Promise<number> {
+  const result = await env.DB.prepare("SELECT COUNT(*) as count FROM facilities WHERE state = ?")
+    .bind(state)
+    .first<{ count: number }>();
+  return result?.count ?? 0;
+}
+
 export async function getStateGradeDistribution(
   env: Env,
   state: string,

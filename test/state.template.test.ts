@@ -5,7 +5,8 @@ import type { StatePageData } from "../src/templates/state";
 const baseStateData: StatePageData = {
   stateName: "California",
   stateSlug: "california",
-  facilityCount: 1162,
+  facilityCount: 2,
+  totalFacilityCount: 1162,
   pctFailing: 62.5,
   nationalPctFailing: 58.0,
   gradeDistribution: { A: 120, B: 340, C: 400, D: 200, F: 102 },
