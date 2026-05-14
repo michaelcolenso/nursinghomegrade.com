@@ -241,11 +241,11 @@ const extraScripts = `
 
             const group = L.featureGroup();
             facilities.forEach(f => {
-              const color = getComputedStyle(document.documentElement).getPropertyValue('--grade-' + f.g).trim() || '#78716c';
+              const color = getComputedStyle(document.documentElement).getPropertyValue('--grade-' + f.g).trim() || '#607D8B';
               const m = L.circleMarker([f.lt, f.lg], {
                 radius: 7,
                 fillColor: color,
-                color: '#1c1917',
+                color: '#0B1D33',
                 weight: 2,
                 opacity: 1,
                 fillOpacity: 1
