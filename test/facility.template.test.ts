@@ -67,4 +67,14 @@ describe("facilityPage", () => {
     const html = facilityPage(baseFacility, []);
     expect(html).toContain("No deficiencies reported for this facility.");
   });
+
+  it("uses live route shapes for breadcrumb links and structured data", () => {
+    const html = facilityPage(baseFacility, []);
+    expect(html).toContain('href="/state/alabama"');
+    expect(html).toContain('href="/state/alabama/birmingham"');
+    expect(html).toContain('"item":"https://nursinghomegrade.com/state/alabama"');
+    expect(html).toContain('"item":"https://nursinghomegrade.com/state/alabama/birmingham"');
+    expect(html).not.toContain("/states/al");
+    expect(html).not.toContain("/city/al/birmingham");
+  });
 });

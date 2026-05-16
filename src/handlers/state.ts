@@ -1,6 +1,14 @@
 import type { Env } from "../types";
 import { getStateAbbreviation, getStateInfo, getAllStateSlugs } from "../states";
-import { getFacilitiesByState, getStateGradeDistribution, getStateCityList, getStatePctFailing, getNationalPctFailing, getStatesWithCounts } from "../db";
+import {
+  countFacilitiesByState,
+  getFacilitiesByState,
+  getStateGradeDistribution,
+  getStateCityList,
+  getStatePctFailing,
+  getNationalPctFailing,
+  getStatesWithCounts,
+} from "../db";
 import { statePage, statesHubPage } from "../templates/state";
 import { notFoundPage, errorPage } from "../templates/subscribe";
 

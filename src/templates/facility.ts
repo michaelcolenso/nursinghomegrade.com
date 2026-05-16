@@ -1,4 +1,5 @@
 import type { FacilityPageData, Deficiency } from "../types";
+import { citySlug, getStateInfo } from "../states";
 import { layout, escHtml } from "./layout";
 import { renderTrustModule } from "./trust";
 
@@ -100,6 +101,10 @@ function renderDeficiencies(deficiencies: Deficiency[]): string {
 }
 
 export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = []): string {
+  const stateInfo = getStateInfo(f.state);
+  const stateSlug = stateInfo?.slug ?? f.state.toLowerCase();
+  const statePath = `/state/${stateSlug}`;
+  const cityPath = `${statePath}/${citySlug(f.city)}`;
   const rnHours = f.rn_hours_per_resident_day;
   const meetsMinimum = rnHours !== null && rnHours >= 0.55;
   const rnDisplay =
@@ -137,9 +142,9 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
     <nav class="breadcrumb" aria-label="Breadcrumb">
       <a href="/">Home</a>
       <span class="breadcrumb-sep">›</span>
-      <a href="/states/${f.state.toLowerCase()}">${escHtml(f.state)}</a>
+      <a href="${statePath}">${escHtml(f.state)}</a>
       <span class="breadcrumb-sep">›</span>
-      <a href="/city/${f.state.toLowerCase()}/${f.city.toLowerCase().replace(/ /g, '-')}">${escHtml(f.city)}</a>
+      <a href="${cityPath}">${escHtml(f.city)}</a>
       <span class="breadcrumb-sep">›</span>
       <span style="color:var(--ink);">${escHtml(f.name)}</span>
     </nav>
@@ -290,13 +295,13 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
           "@type": "ListItem",
           "position": 2,
           "name": f.state,
-          "item": `https://nursinghomegrade.com/states/${f.state.toLowerCase()}`
+          "item": `https://nursinghomegrade.com${statePath}`
         },
         {
           "@type": "ListItem",
           "position": 3,
           "name": f.city,
-          "item": `https://nursinghomegrade.com/city/${f.state.toLowerCase()}/${f.city.toLowerCase().replace(/ /g, '-')}`
+          "item": `https://nursinghomegrade.com${cityPath}`
         },
         {
           "@type": "ListItem",
