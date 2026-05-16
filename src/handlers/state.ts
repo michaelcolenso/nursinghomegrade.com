@@ -1,4 +1,5 @@
 import type { Env } from "../types";
+import { htmlCacheKey } from "../cache";
 import { getStateAbbreviation, getStateInfo, getAllStateSlugs } from "../states";
 import {
   countFacilitiesByState,
@@ -20,7 +21,7 @@ export async function handleState(request: Request, env: Env, stateSlug: string)
       return new Response(html, { status: 404, headers: { "Content-Type": "text/html;charset=UTF-8" } });
     }
 
-    const cacheKey = `state:${stateSlug}`;
+    const cacheKey = htmlCacheKey(`state:${stateSlug}`);
     const cached = await env.CACHE.get(cacheKey);
     if (cached)
       return new Response(cached, {
@@ -73,7 +74,7 @@ export async function handleState(request: Request, env: Env, stateSlug: string)
 
 export async function handleStatesHub(request: Request, env: Env): Promise<Response> {
   try {
-    const cacheKey = "page:states";
+    const cacheKey = htmlCacheKey("page:states");
     const cached = await env.CACHE.get(cacheKey);
     if (cached)
       return new Response(cached, {

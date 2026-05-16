@@ -1,4 +1,5 @@
 import type { Env } from "./types";
+import { htmlCacheKey } from "./cache";
 import { handleFacility } from "./handlers/facility";
 import { handleHome, handleSearch } from "./handlers/home";
 import { handleAbout } from "./handlers/about";
@@ -73,8 +74,8 @@ export default {
 
   async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
     // Weekly: invalidate cached pages so stats refresh
-    await env.CACHE.delete("page:home");
-    await env.CACHE.delete("page:states");
+    await env.CACHE.delete(htmlCacheKey("page:home"));
+    await env.CACHE.delete(htmlCacheKey("page:states"));
     console.log("Scheduled: home and states cache cleared");
   },
 } satisfies ExportedHandler<Env>;

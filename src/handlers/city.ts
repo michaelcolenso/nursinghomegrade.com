@@ -1,4 +1,5 @@
 import type { Env } from "../types";
+import { htmlCacheKey } from "../cache";
 import { getStateAbbreviation, getStateInfo } from "../states";
 import {
   getCitySnapshot,
@@ -21,7 +22,7 @@ export async function handleCity(request: Request, env: Env, stateSlug: string, 
       return new Response(html, { status: 404, headers: { "Content-Type": "text/html;charset=UTF-8" } });
     }
 
-    const cacheKey = `city:v2:${stateSlug}:${citySlugParam}`;
+    const cacheKey = htmlCacheKey(`city:${stateSlug}:${citySlugParam}`);
     const cached = await env.CACHE.get(cacheKey);
     if (cached)
       return new Response(cached, {

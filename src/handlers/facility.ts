@@ -1,11 +1,13 @@
 import type { Env } from "../types";
+import { htmlCacheKey } from "../cache";
 import { getFacilityBySlugId, getFacilityInspectionDetails, getFacilityDeficiencies, getNearbyFacilities } from "../db";
 import { facilityPage } from "../templates/facility";
 import { notFoundPage, errorPage } from "../templates/subscribe";
 
 export async function handleFacility(request: Request, env: Env, slugId: string): Promise<Response> {
   try {
-    const cached = await env.CACHE.get(`facility:${slugId}`);
+    const cacheKey = htmlCacheKey(`facility:${slugId}`);
+    const cached = await env.CACHE.get(cacheKey);
     if (cached)
       return new Response(cached, {
         headers: {
@@ -27,7 +29,7 @@ export async function handleFacility(request: Request, env: Env, slugId: string)
     ]);
 
     const html = facilityPage({ ...facility, ...inspectionDetails }, deficiencies, nearby);
-    await env.CACHE.put(`facility:${slugId}`, html, { expirationTtl: 86400 });
+    await env.CACHE.put(cacheKey, html, { expirationTtl: 86400 });
     return new Response(html, {
       headers: {
         "Content-Type": "text/html;charset=UTF-8",
