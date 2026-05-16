@@ -107,6 +107,7 @@ describe("comparePage", () => {
     const html = comparePage();
 
     expect(html).toContain("/api/compare?ids=");
+    expect(html).toContain("new URLSearchParams(window.location.search).get('ids')");
     expect(html).toContain("RN Staffing");
     expect(html).toContain("Deficiencies");
     expect(html).toContain("View report");

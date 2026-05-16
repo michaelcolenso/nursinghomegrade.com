@@ -489,6 +489,75 @@ export function layout(
       margin-bottom: var(--space-s);
       border: 1px solid var(--rule);
     }
+    .nearby-section {
+      margin: var(--space-2xl) 0;
+      padding-top: var(--space-l);
+      border-top: 2px solid var(--ink);
+    }
+    .nearby-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--space-l);
+      margin-bottom: var(--space-l);
+    }
+    .nearby-header h2 { margin-bottom: var(--space-2xs); }
+    .nearby-header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+    .nearby-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: var(--space-m);
+    }
+    .nearby-card {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: var(--space-m);
+      padding: var(--space-m);
+      border: 1px solid var(--rule);
+      background: #fff;
+    }
+    .nearby-grade {
+      font-family: 'Newsreader', serif;
+      font-size: 3rem;
+      font-weight: 800;
+      line-height: 0.9;
+      min-width: 2.25rem;
+    }
+    .nearby-name {
+      font-size: 1.35rem;
+      line-height: 1.1;
+      margin-bottom: var(--space-2xs);
+    }
+    .nearby-name a { border: none; }
+    .nearby-meta {
+      margin-bottom: var(--space-s);
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .nearby-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-xs);
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    .nearby-stats span {
+      padding: 0.25rem 0.45rem;
+      border: 1px solid var(--rule);
+      background: var(--bg);
+    }
+    .nearby-stats strong {
+      color: var(--ink);
+      font-family: 'Newsreader', serif;
+      font-size: 1.05rem;
+    }
 
     @media (max-width: 768px) {
       :root { --space-page: var(--space-m); }
@@ -558,6 +627,19 @@ export function layout(
       }
       .quality-value-cell div {
         margin-bottom: var(--space-3xs);
+      }
+      .nearby-header {
+        display: block;
+      }
+      .nearby-header .btn-secondary {
+        margin-top: var(--space-s);
+      }
+      .nearby-grid {
+        grid-template-columns: 1fr;
+      }
+      .nearby-card {
+        grid-template-columns: 1fr;
+        gap: var(--space-s);
       }
       .pull-quote a, main > p a, .card a[href="/about"], footer a {
         display: inline-flex !important;

@@ -1,4 +1,4 @@
-import type { FacilityPageData, Deficiency } from "../types";
+import type { FacilityPageData, Deficiency, Facility } from "../types";
 import { citySlug, getStateInfo } from "../states";
 import { layout, escHtml } from "./layout";
 import { renderTrustModule } from "./trust";
@@ -100,7 +100,52 @@ function renderDeficiencies(deficiencies: Deficiency[]): string {
     .join("");
 }
 
-export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = []): string {
+function renderNearbyFacilities(current: FacilityPageData, nearby: Facility[]): string {
+  if (nearby.length === 0) return "";
+
+  const compareIds = [current.cms_id, ...nearby.map((f) => f.cms_id)].slice(0, 5).join(",");
+  const cards = nearby
+    .map((f) => {
+      const rnText =
+        f.rn_hours_per_resident_day !== null
+          ? `${f.rn_hours_per_resident_day.toFixed(2)} hrs`
+          : "Not reported";
+      const deficiencyText = f.total_deficiencies !== null ? `${f.total_deficiencies}` : "Not reported";
+
+      return `
+        <article class="nearby-card">
+          <div class="nearby-grade grade-${f.grade_letter}" aria-label="Grade ${f.grade_letter}">${escHtml(f.grade_letter)}</div>
+          <div class="nearby-body">
+            <h3 class="nearby-name"><a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}">${escHtml(f.name)}</a></h3>
+            <p class="nearby-meta">${escHtml(f.address)}, ${escHtml(f.city)}, ${escHtml(f.state)} ${escHtml(f.zip)}</p>
+            <div class="nearby-stats" aria-label="Nearby facility quality metrics">
+              <span><strong>${f.grade_score}/100</strong> score</span>
+              <span><strong>${escHtml(rnText)}</strong> RN staffing</span>
+              <span><strong>${escHtml(deficiencyText)}</strong> deficiencies</span>
+            </div>
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+
+  return `
+    <section class="nearby-section" aria-labelledby="nearby-heading">
+      <div class="nearby-header">
+        <div>
+          <h2 id="nearby-heading">Nearby facilities in ${escHtml(current.city)}</h2>
+          <p>Compare local nursing homes using the same CMS-backed grading method.</p>
+        </div>
+        <a class="btn-secondary" href="/compare?ids=${encodeURIComponent(compareIds)}">Compare nearby →</a>
+      </div>
+      <div class="nearby-grid">
+        ${cards}
+      </div>
+    </section>
+  `;
+}
+
+export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [], nearby: Facility[] = []): string {
   const stateInfo = getStateInfo(f.state);
   const stateSlug = stateInfo?.slug ?? f.state.toLowerCase();
   const statePath = `/state/${stateSlug}`;
@@ -212,6 +257,7 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
 
     ${deficiencySection}
     ${renderTrustModule()}
+    ${renderNearbyFacilities(f, nearby)}
 
     <div class="cta-box">
       <h3>Need help choosing a facility?</h3>

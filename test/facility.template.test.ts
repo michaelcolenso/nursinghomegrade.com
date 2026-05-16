@@ -40,6 +40,18 @@ const sampleDeficiency: Deficiency = {
   complaint_deficiency: "N",
 };
 
+const nearbyFacility = {
+  ...baseFacility,
+  cms_id: "015002",
+  name: "Birmingham Skilled Nursing",
+  address: "456 Oak Ave",
+  grade_score: 84,
+  grade_letter: "B",
+  slug: "birmingham-skilled-nursing",
+  rn_hours_per_resident_day: 0.72,
+  total_deficiencies: 3,
+};
+
 describe("facilityPage", () => {
   it("renders basic facility info", () => {
     const html = facilityPage(baseFacility, []);
@@ -69,6 +81,16 @@ describe("facilityPage", () => {
   it("shows empty state when no deficiencies available", () => {
     const html = facilityPage(baseFacility, []);
     expect(html).toContain("No deficiencies reported for this facility.");
+  });
+
+  it("renders nearby facilities with internal links and compare entry point", () => {
+    const html = facilityPage(baseFacility, [], [nearbyFacility]);
+    expect(html).toContain("Nearby facilities in Birmingham");
+    expect(html).toContain("Compare local nursing homes");
+    expect(html).toContain('href="/facility/015002-birmingham-skilled-nursing"');
+    expect(html).toContain('href="/compare?ids=015001%2C015002"');
+    expect(html).toContain("0.72 hrs");
+    expect(html).toContain("3</strong> deficiencies");
   });
 
   it("uses live route shapes for breadcrumb links and structured data", () => {

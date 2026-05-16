@@ -4,7 +4,7 @@ import { htmlCacheKey } from "../src/cache";
 describe("htmlCacheKey", () => {
   it("versions rendered HTML cache keys", () => {
     expect(htmlCacheKey("facility:055258-community-subacute-and-transitional-care-center")).toBe(
-      "html:v7:facility:055258-community-subacute-and-transitional-care-center",
+      "html:v8:facility:055258-community-subacute-and-transitional-care-center",
     );
   });
 });

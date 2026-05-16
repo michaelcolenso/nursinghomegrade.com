@@ -26,6 +26,12 @@ export function comparePage(): string {
           }
         }
 
+        function queryIds() {
+          const ids = new URLSearchParams(window.location.search).get('ids');
+          if (!ids) return [];
+          return ids.split(',').map(function(id) { return id.trim(); }).filter(Boolean);
+        }
+
         function esc(value) {
           return String(value ?? '').replace(/[&<>"']/g, function(char) {
             return {
@@ -48,8 +54,11 @@ export function comparePage(): string {
           window.location.reload();
         }
 
-        const saved = savedFacilities();
-        const ids = saved.map(function(f) { return f.cms_id; }).filter(Boolean);
+        const ids = queryIds();
+        if (ids.length === 0) {
+          const saved = savedFacilities();
+          ids.push.apply(ids, saved.map(function(f) { return f.cms_id; }).filter(Boolean));
+        }
 
         if (ids.length === 0) {
           container.innerHTML = '<p>No facilities saved for comparison yet.</p>';
