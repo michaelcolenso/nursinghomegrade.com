@@ -68,7 +68,7 @@ export function comparePage(): string {
             }
 
             container.innerHTML = \`
-          <table style="width: 100%; border-collapse: collapse; min-width: 600px;">
+          <table class="comparison-table" style="width: 100%; border-collapse: collapse; min-width: 600px;">
             <thead>
               <tr style="border-bottom: 2px solid var(--ink);">
                 <th style="padding: 1rem; text-align: left;">Facility</th>

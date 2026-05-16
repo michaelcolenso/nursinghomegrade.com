@@ -29,7 +29,7 @@ export function statePage(data: StatePageData): string {
 
   const body = `
     <div style="margin-bottom: 4rem;">
-      <nav style="margin-bottom: 1.5rem; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);">
+      <nav class="breadcrumb" style="margin-bottom: 1.5rem; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);">
         <a href="/" style="color: var(--muted);">Home</a>
         <span style="margin: 0 0.5rem; opacity: 0.5;">/</span>
         <a href="/states" style="color: var(--muted);">States</a>
@@ -132,7 +132,7 @@ function renderFacilityItem(f: Facility): string {
     export function statesHubPage(states: Array<{ state: string; count: number; slug: string }>): string {
   const body = `
     <div style="margin-bottom: 4rem;">
-      <nav style="margin-bottom: 1.5rem; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);">
+      <nav class="breadcrumb" style="margin-bottom: 1.5rem; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);">
         <a href="/" style="color: var(--muted);">Home</a>
       </nav>
       <h1 style="margin-bottom: 1rem;">Nursing home grades by state</h1>

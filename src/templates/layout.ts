@@ -122,12 +122,15 @@ export function layout(
     .masthead { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: var(--space-xs); }
     .masthead-name {
       font-family: 'Newsreader', Georgia, serif;
-      font-size: 1.6rem;
+      font-size: clamp(1.2rem, 5vw, 1.6rem);
       font-weight: 800;
       color: var(--ink);
       text-decoration: none;
-      letter-spacing: -0.03em;
+      letter-spacing: 0;
       text-transform: uppercase;
+      display: inline-flex;
+      min-height: 44px;
+      align-items: center;
     }
     .masthead-tagline { 
       font-size: 0.75rem; 
@@ -143,7 +146,7 @@ export function layout(
       font-size: clamp(3rem, 10vw, 5.5rem);
       font-weight: 800;
       line-height: 0.9;
-      letter-spacing: -0.04em;
+      letter-spacing: 0;
       margin-bottom: var(--space-l);
       color: var(--ink);
     }
@@ -151,7 +154,7 @@ export function layout(
       font-family: 'Newsreader', Georgia, serif;
       font-weight: 800;
       line-height: 1.1;
-      letter-spacing: -0.02em;
+      letter-spacing: 0;
     }
     h1 { font-size: clamp(2.25rem, 6vw, 3.5rem); margin-bottom: var(--space-m); }
     h2 { font-size: clamp(1.6rem, 4vw, 2.25rem); margin-bottom: var(--space-s); margin-top: var(--space-2xl); border-top: 1px solid var(--rule); padding-top: var(--space-m); }
@@ -239,7 +242,9 @@ export function layout(
 
     /* Buttons */
     .btn {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       background: var(--ink);
       color: #fff;
       padding: var(--space-xs) var(--space-l);
@@ -252,11 +257,13 @@ export function layout(
       transition: all 0.2s ease-out;
       text-transform: uppercase;
       letter-spacing: 0.05em;
+      min-height: 44px;
     }
     .btn:hover { background: transparent; color: var(--ink); text-decoration: none; }
     
     .btn-secondary {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
       color: var(--ink);
       padding: var(--space-xs) 0;
       text-decoration: none;
@@ -268,6 +275,7 @@ export function layout(
       text-transform: uppercase;
       letter-spacing: 0.1em;
       transition: color 0.2s ease-out;
+      min-height: 44px;
     }
     .btn-secondary:hover { color: var(--accent); text-decoration: underline; }
 
@@ -283,6 +291,7 @@ export function layout(
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
       margin-bottom: var(--space-l);
+      max-width: 100%;
     }
     table { width: 100%; border-collapse: collapse; min-width: 600px; }
 
@@ -325,7 +334,14 @@ export function layout(
       font-weight: 700; 
       letter-spacing: 0.1em;
     }
-    .breadcrumb a { border: none; }
+    .breadcrumb a {
+      border: none;
+      display: inline-flex;
+      min-height: 44px;
+      min-width: 44px;
+      align-items: center;
+      justify-content: center;
+    }
     .breadcrumb-sep { margin: 0 var(--space-2xs); color: var(--rule); }
 
     /* Search results */
@@ -349,7 +365,7 @@ export function layout(
       font-weight: 800;
       color: var(--ink);
       line-height: 0.9;
-      letter-spacing: -0.03em;
+      letter-spacing: 0;
     }
     .results-intro {
       font-size: 1.25rem;
@@ -442,7 +458,7 @@ export function layout(
       font-size: clamp(6rem, 20vw, 12rem);
       line-height: 0.8;
       font-weight: 900;
-      letter-spacing: -0.05em;
+      letter-spacing: 0;
     }
 
     /* Deficiency & Snapshot */
@@ -476,6 +492,24 @@ export function layout(
 
     @media (max-width: 768px) {
       :root { --space-page: var(--space-m); }
+      header { padding: var(--space-s) 0; }
+      .container { padding-left: var(--space-m); padding-right: var(--space-m); }
+      .masthead { align-items: flex-start; gap: var(--space-s); }
+      .masthead-tagline { display: block; line-height: 1.3; }
+      header nav {
+        width: 100%;
+        gap: var(--space-2xs) !important;
+        flex-wrap: wrap;
+      }
+      header nav a {
+        display: inline-flex;
+        min-height: 44px;
+        align-items: center;
+        padding: 0 var(--space-xs);
+        border: 1px solid var(--rule) !important;
+        background: #fff;
+      }
+      main.container { padding-top: var(--space-l) !important; }
       .facility-header { flex-direction: column-reverse; gap: var(--space-s); }
       .facility-grade-hero { font-size: 6rem; }
       .search-bar { flex-direction: column; }
@@ -483,10 +517,46 @@ export function layout(
       .search-bar button { border-top: none; }
       .search-bar .geo-btn { border-left: 2px solid var(--ink); border-top: none; }
       .cta-box { padding: var(--space-m); }
+      .results-count { line-height: 1; }
+      .results-controls { gap: var(--space-s); padding: var(--space-s); }
+      .results-controls label { width: 100%; }
+      .results-controls select { min-height: 44px; width: 100%; }
+      .result-item { padding: var(--space-m); }
       .result-main { grid-template-columns: 1fr; gap: var(--space-m); }
       .result-grade { text-align: left; display: flex; align-items: baseline; gap: var(--space-s); }
       .result-grade-letter { font-size: 4rem; margin-bottom: 0; }
       .result-rank { margin-bottom: 0; }
+      .result-info > div:first-child { flex-direction: column; gap: var(--space-s); }
+      .result-info button { min-height: 44px; padding: 0.55rem 0.8rem !important; align-self: flex-start; }
+      .pull-quote a, main > p a, .card a[href="/about"], footer a {
+        display: inline-flex !important;
+        min-height: 44px;
+        align-items: center;
+      }
+      .city-result-card { padding: var(--space-m) !important; }
+      .city-result-grid { grid-template-columns: 1fr !important; gap: var(--space-m) !important; }
+      .city-result-metrics { flex-wrap: wrap; gap: var(--space-m) !important; }
+      .city-result-card a:not(.btn) {
+        min-height: 44px;
+        display: flex !important;
+        align-items: center;
+      }
+      .city-result-card .grade-badge { width: 72px; }
+      .city-zip-cta { padding: var(--space-l) var(--space-m) !important; text-align: left !important; }
+      .city-zip-form { flex-direction: column; }
+      .city-zip-form input, .city-zip-form button { width: 100%; min-height: 44px; }
+      #comparison-bar {
+        align-items: stretch !important;
+        flex-direction: column;
+        gap: var(--space-xs);
+      }
+      #comparison-bar .btn { text-align: center; }
+      .comparison-table { min-width: 560px !important; }
+      .leaflet-control-zoom a {
+        width: 44px !important;
+        height: 44px !important;
+        line-height: 44px !important;
+      }
     }
 
     @media print {

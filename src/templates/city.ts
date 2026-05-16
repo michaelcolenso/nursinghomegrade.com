@@ -28,7 +28,7 @@ export function cityPage(data: CityPageData): string {
 
   const body = `
     <div style="margin-bottom: 4rem;">
-      <nav style="margin-bottom: 1.5rem; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);">
+      <nav class="breadcrumb" style="margin-bottom: 1.5rem; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);">
         <a href="/" style="color: var(--muted);">Home</a>
         <span style="margin: 0 0.5rem; opacity: 0.5;">/</span>
         <a href="/state/${stateSlug}" style="color: var(--muted);">${escHtml(stateName)}</a>
@@ -41,8 +41,8 @@ export function cityPage(data: CityPageData): string {
 
     <div style="display: grid; gap: 1.5rem; margin-bottom: 6rem;">
       ${facilities.map(f => `
-        <div class="card" style="padding: 1.5rem;">
-          <div style="display: grid; grid-template-columns: 80px 1fr auto; gap: 2rem; align-items: start;">
+        <div class="card city-result-card" style="padding: 1.5rem;">
+          <div class="city-result-grid" style="display: grid; grid-template-columns: 80px 1fr auto; gap: 2rem; align-items: start;">
             <div class="grade-badge grade-${f.grade_letter}">
               <div class="grade-badge-letter">${f.grade_letter}</div>
               <div class="grade-badge-score">${f.grade_score}/100</div>
@@ -51,7 +51,7 @@ export function cityPage(data: CityPageData): string {
               <a href="/facility/${f.cms_id}-${f.slug}" style="font-family: 'Newsreader', Georgia, serif; font-size: 1.5rem; font-weight: 800; color: var(--ink); text-decoration: none; display: block; margin-bottom: 0.5rem;">${escHtml(f.name)}</a>
               <div style="font-size: 0.95rem; color: var(--muted); font-weight: 500; margin-bottom: 1rem;">${escHtml(f.address)}, ${escHtml(f.city)}, ${escHtml(f.state)}</div>
               
-              <div style="display: flex; gap: 2rem;">
+              <div class="city-result-metrics" style="display: flex; gap: 2rem;">
                 <div>
                   <div style="font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--muted); margin-bottom: 0.25rem;">Staffing</div>
                   <div style="font-weight: 700;">${f.rn_hours_per_resident_day?.toFixed(2) ?? 'N/A'} hrs</div>
@@ -69,10 +69,10 @@ export function cityPage(data: CityPageData): string {
       ${facilities.length === 0 ? `<p style="color: var(--muted);">No facilities found in this city.</p>` : ''}
     </div>
 
-    <div style="background: var(--ink); color: #fff; padding: 4rem; text-align: center; border: none;">
+    <div class="city-zip-cta" style="background: var(--ink); color: #fff; padding: 4rem; text-align: center; border: none;">
       <h2 style="color: #fff; margin-bottom: 1.5rem;">Don't see a facility?</h2>
       <p style="font-size: 1.1rem; opacity: 0.9; max-width: 600px; margin: 0 auto 2.5rem;">Search by ZIP code to find all facilities within 25 miles of ${escHtml(cityName)}.</p>
-      <form action="/search" method="GET" style="display: flex; gap: 0.5rem; max-width: 500px; margin: 0 auto;">
+      <form action="/search" method="GET" class="city-zip-form" style="display: flex; gap: 0.5rem; max-width: 500px; margin: 0 auto;">
         <input type="text" name="zip" placeholder="Enter ZIP code" pattern="[0-9]{5}" title="Enter a 5-digit ZIP code" maxlength="5" required style="flex: 1; padding: 1rem; border-radius: 0; border: none; font-family: 'Source Sans 3', sans-serif;">
         <button type="submit" class="btn" style="background: #fff; color: var(--ink); border: none;">Find Near Me</button>
       </form>
