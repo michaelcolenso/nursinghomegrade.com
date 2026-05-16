@@ -172,39 +172,39 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
     </p>
 
     <h2 id="quality">Quality Breakdown</h2>
-    <div class="table-container">
-      <table>
-        <tr style="border-bottom:1px solid var(--rule);">
-          <td style="padding:var(--space-m) 0;">
+    <div class="table-container quality-breakdown">
+      <table class="quality-table">
+        <tr class="quality-row" style="border-bottom:1px solid var(--rule);">
+          <td class="quality-label-cell" style="padding:var(--space-m) 0;">
             <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">RN Staffing</div>
             <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Registered nurse time each resident receives daily. Federal minimum: 0.55 hrs.</div>
           </td>
-          <td style="padding:var(--space-m) 0;font-weight:700;font-family:'Newsreader',serif;font-size:1.5rem;text-align:right;color:${meetsMinimum ? "var(--grade-A)" : "var(--grade-F)"}">
+          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Newsreader',serif;font-size:1.5rem;text-align:right;color:${meetsMinimum ? "var(--grade-A)" : "var(--grade-F)"}">
             ${escHtml(rnDisplay)}
           </td>
         </tr>
-        <tr style="border-bottom:1px solid var(--rule);">
-          <td style="padding:var(--space-m) 0;">
+        <tr class="quality-row" style="border-bottom:1px solid var(--rule);">
+          <td class="quality-label-cell" style="padding:var(--space-m) 0;">
             <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">Health Deficiencies</div>
             <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Violations found during federal inspections over the last 3 years.</div>
           </td>
-          <td style="padding:var(--space-m) 0;font-weight:700;font-family:'Newsreader',serif;font-size:1.5rem;text-align:right;">${f.total_deficiencies ?? "Not reported"}</td>
+          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Newsreader',serif;font-size:1.5rem;text-align:right;">${f.total_deficiencies ?? "Not reported"}</td>
         </tr>
-        <tr style="border-bottom:1px solid var(--rule);">
-          <td style="padding:var(--space-m) 0;">
+        <tr class="quality-row" style="border-bottom:1px solid var(--rule);">
+          <td class="quality-label-cell" style="padding:var(--space-m) 0;">
             <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">CMS Ratings</div>
             <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Overall and Staffing quality ratings from CMS (1-5 stars).</div>
           </td>
-          <td style="padding:var(--space-m) 0;font-weight:700;font-family:'Newsreader',serif;font-size:1.25rem;text-align:right;">
+          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Newsreader',serif;font-size:1.25rem;text-align:right;">
             <div style="margin-bottom:var(--space-3xs);">Quality: ${qualityStars}</div>
             <div>Staffing: ${staffingStars}</div>
           </td>
         </tr>
-        <tr>
-          <td style="padding:var(--space-m) 0;">
+        <tr class="quality-row">
+          <td class="quality-label-cell" style="padding:var(--space-m) 0;">
             <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">NursingHomeGrade Score</div>
           </td>
-          <td style="padding:var(--space-m) 0;font-weight:700;font-family:'Newsreader',serif;font-size:2.5rem;text-align:right;">${f.grade_score}/100</td>
+          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Newsreader',serif;font-size:2.5rem;text-align:right;">${f.grade_score}/100</td>
         </tr>
       </table>
     </div>

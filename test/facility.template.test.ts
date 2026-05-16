@@ -50,6 +50,9 @@ describe("facilityPage", () => {
 
   it("renders quality breakdown cards", () => {
     const html = facilityPage(baseFacility, []);
+    expect(html).toContain('class="table-container quality-breakdown"');
+    expect(html).toContain('class="quality-table"');
+    expect(html).toContain('class="quality-value-cell"');
     expect(html).toContain("RN Staffing");
     expect(html).toContain("Health Deficiencies");
     expect(html).toContain("CMS Ratings");

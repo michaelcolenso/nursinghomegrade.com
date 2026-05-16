@@ -528,6 +528,37 @@ export function layout(
       .result-rank { margin-bottom: 0; }
       .result-info > div:first-child { flex-direction: column; gap: var(--space-s); }
       .result-info button { min-height: 44px; padding: 0.55rem 0.8rem !important; align-self: flex-start; }
+      .quality-breakdown {
+        overflow-x: visible;
+      }
+      .quality-table {
+        min-width: 0;
+        width: 100%;
+      }
+      .quality-table tbody,
+      .quality-table tr,
+      .quality-table td {
+        display: block;
+        width: 100%;
+      }
+      .quality-row {
+        padding: var(--space-m) 0;
+      }
+      .quality-table td {
+        padding: 0 !important;
+      }
+      .quality-label-cell {
+        margin-bottom: var(--space-xs);
+      }
+      .quality-value-cell {
+        text-align: left !important;
+        font-size: 1.35rem !important;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+      }
+      .quality-value-cell div {
+        margin-bottom: var(--space-3xs);
+      }
       .pull-quote a, main > p a, .card a[href="/about"], footer a {
         display: inline-flex !important;
         min-height: 44px;
