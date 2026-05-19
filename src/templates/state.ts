@@ -59,10 +59,10 @@ export function statePage(data: StatePageData): string {
       </div>
       
       <div class="card" style="background: var(--ink); color: #fff; border: none; position: sticky; top: 120px;">
-        <h3 style="color: #fff; font-size: 1.25rem; margin-bottom: 1.5rem; font-family: 'Newsreader', Georgia, serif;">Quick Search</h3>
+        <h3 style="color: #fff; font-size: 1.25rem; margin-bottom: 1.5rem; font-family: 'Playfair Display', Georgia, serif;">Quick Search</h3>
         <p style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 1.5rem;">Find a specific facility in ${escHtml(stateName)} by ZIP code.</p>
         <form action="/search" method="GET" style="display: flex; flex-direction: column; gap: 0.75rem;">
-          <input type="text" name="zip" placeholder="ZIP Code" pattern="[0-9]{5}" title="Enter a 5-digit ZIP code" maxlength="5" required style="padding: 0.75rem 1rem; border-radius: 0; border: none; font-family: 'Source Sans 3', sans-serif;">
+          <input type="text" name="zip" placeholder="ZIP Code" pattern="[0-9]{5}" title="Enter a 5-digit ZIP code" maxlength="5" required style="padding: 0.75rem 1rem; border-radius: 0; border: none; font-family: 'Inter', system-ui, sans-serif;">
           <button type="submit" class="btn" style="background: #fff; color: var(--ink); border: none;">Search</button>
         </form>
       </div>
@@ -130,7 +130,7 @@ function renderFacilityItem(f: Facility): string {
           <div class="grade-badge-score" style="font-size: 0.6rem;">${f.grade_score}</div>
         </div>
         <div>
-          <a href="/facility/${f.cms_id}-${f.slug}" style="font-family: 'Newsreader', Georgia, serif; font-size: 1.25rem; font-weight: 800; color: var(--ink); text-decoration: none;">${escHtml(f.name)}</a>
+          <a href="/facility/${f.cms_id}-${f.slug}" style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.25rem; font-weight: 800; color: var(--ink); text-decoration: none;">${escHtml(f.name)}</a>
           <div style="font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem;">${escHtml(f.city)}, ${escHtml(f.state)}</div>
         </div>
         <div style="text-align: right;">
