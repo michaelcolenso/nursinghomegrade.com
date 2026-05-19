@@ -43,7 +43,7 @@ export function statePage(data: StatePageData): string {
     </div>
 
 
-    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 4rem; align-items: start; margin-bottom: 6rem;">
+    <div class="state-layout" style="display: grid; grid-template-columns: 2fr 1fr; gap: 4rem; align-items: start; margin-bottom: 6rem;">
       <div>
         <h2 style="margin-bottom: 2rem;">Grade Distribution</h2>
         ${renderGradeDistribution(gradeDistribution, totalFacilityCount)}
@@ -95,7 +95,7 @@ export function statePage(data: StatePageData): string {
     `Nursing Homes in ${stateName} — Grades & Ratings`,
     `${facilityCount} nursing homes in ${stateName}. ${pctFailing}% fail the federal staffing minimum. Independent grades based on CMS data.`,
     body,
-    { canonicalPath: `/state/${stateSlug}`, jsonLd }
+    { canonicalPath: `/state/${stateSlug}`, jsonLd, extraHead: `<style>@media(max-width:768px){.state-layout{grid-template-columns:1fr!important;gap:2rem!important}.state-layout .card[style*="sticky"]{position:static!important;order:2}}</style>` }
   );
 }
 
