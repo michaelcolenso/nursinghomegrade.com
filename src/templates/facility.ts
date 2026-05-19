@@ -306,27 +306,38 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
     </script>
   ` : "";
 
-  const jsonLd = [
-    {
-      "@context": "https://schema.org",
-      "@type": "NursingHome",
-      "name": f.name,
-      "address": {
-        "@type": "PostalAddress",
-        "streetAddress": f.address,
-        "addressLocality": f.city,
-        "addressRegion": f.state,
-        "postalCode": f.zip,
-        "addressCountry": "US"
-      },
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": f.grade_score,
-        "bestRating": "100",
-        "worstRating": "0",
-        "ratingCount": 1
-      }
+  const nursingHomeSchema: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "NursingHome",
+    "name": f.name,
+    "url": `https://nursinghomegrade.com${canonicalPath}`,
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": f.address,
+      "addressLocality": f.city,
+      "addressRegion": f.state,
+      "postalCode": f.zip,
+      "addressCountry": "US"
     },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": f.grade_score,
+      "bestRating": "100",
+      "worstRating": "0",
+      "ratingCount": 1
+    }
+  };
+
+  if (f.latitude !== null && f.longitude !== null) {
+    nursingHomeSchema.geo = {
+      "@type": "GeoCoordinates",
+      "latitude": f.latitude,
+      "longitude": f.longitude
+    };
+  }
+
+  const jsonLd = [
+    nursingHomeSchema,
     {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",

@@ -102,4 +102,20 @@ describe("facilityPage", () => {
     expect(html).not.toContain("/states/al");
     expect(html).not.toContain("/city/al/birmingham");
   });
+
+  it("renders enhanced NursingHome schema with geo and url", () => {
+    const html = facilityPage(baseFacility, []);
+    expect(html).toContain('"@type":"NursingHome"');
+    expect(html).toContain('"url":"https://nursinghomegrade.com/facility/015001-sunrise-care-center"');
+    expect(html).toContain('"@type":"GeoCoordinates"');
+    expect(html).toContain('"latitude":33.5186');
+    expect(html).toContain('"longitude":-86.8104');
+  });
+
+  it("omits geo from schema when coordinates are unavailable", () => {
+    const noGeo = { ...baseFacility, latitude: null, longitude: null };
+    const html = facilityPage(noGeo, []);
+    expect(html).toContain('"@type":"NursingHome"');
+    expect(html).not.toContain('"@type":"GeoCoordinates"');
+  });
 });

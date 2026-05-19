@@ -27,6 +27,33 @@ export function statePage(data: StatePageData): string {
     facilities,
   } = data;
 
+  const baseUrl = "https://nursinghomegrade.com";
+  const stateUrl = `${baseUrl}/state/${stateSlug}`;
+
+  const itemListSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": `Top Rated Nursing Homes in ${stateName}`,
+    "itemListElement": facilities.slice(0, 10).map((f, i) => ({
+      "@type": "ListItem",
+      "position": i + 1,
+      "name": f.name,
+      "url": `${baseUrl}/facility/${f.cms_id}-${f.slug}`,
+    })),
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": `${baseUrl}/` },
+      { "@type": "ListItem", "position": 2, "name": "States", "item": `${baseUrl}/states` },
+      { "@type": "ListItem", "position": 3, "name": stateName, "item": stateUrl },
+    ],
+  };
+
+  const jsonLd = [itemListSchema, breadcrumbSchema];
+
   const body = `
     <div style="margin-bottom: 4rem;">
       <nav class="breadcrumb" style="margin-bottom: 1.5rem; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);">
@@ -82,7 +109,7 @@ export function statePage(data: StatePageData): string {
     `Nursing Homes in ${stateName} — Grades & Ratings`,
     `${facilityCount} nursing homes in ${stateName}. ${pctFailing}% fail the federal staffing minimum. Independent grades based on CMS data.`,
     body,
-    { canonicalPath: `/state/${stateSlug}` }
+    { canonicalPath: `/state/${stateSlug}`, jsonLd }
   );
 }
 
@@ -151,10 +178,23 @@ function renderFacilityItem(f: Facility): string {
     </div>
   `;
 
+  const baseUrl = "https://nursinghomegrade.com";
+  const hubJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Nursing Home Grades by State",
+    "itemListElement": states.map((s, i) => ({
+      "@type": "ListItem",
+      "position": i + 1,
+      "name": s.state,
+      "url": `${baseUrl}/state/${s.slug}`,
+    })),
+  };
+
   return layout(
     "Nursing Home Grades by State — NursingHomeGrade",
     "Browse independent nursing home ratings for every U.S. state. Grades based on federal CMS data.",
     body,
-    { canonicalPath: "/states" }
+    { canonicalPath: "/states", jsonLd: [hubJsonLd] }
   );
 }

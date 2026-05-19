@@ -26,6 +26,33 @@ export function cityPage(data: CityPageData): string {
     facilities,
   } = data;
 
+  const baseUrl = "https://nursinghomegrade.com";
+  const cityUrl = `${baseUrl}/state/${stateSlug}/${citySlug}`;
+
+  const itemListSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": `Nursing Homes in ${cityName}, ${stateName}`,
+    "itemListElement": facilities.map((f, i) => ({
+      "@type": "ListItem",
+      "position": i + 1,
+      "name": f.name,
+      "url": `${baseUrl}/facility/${f.cms_id}-${f.slug}`,
+    })),
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": `${baseUrl}/` },
+      { "@type": "ListItem", "position": 2, "name": stateName, "item": `${baseUrl}/state/${stateSlug}` },
+      { "@type": "ListItem", "position": 3, "name": cityName, "item": cityUrl },
+    ],
+  };
+
+  const jsonLd = [itemListSchema, breadcrumbSchema];
+
   const body = `
     <div style="margin-bottom: 4rem;">
       <nav class="breadcrumb" style="margin-bottom: 1.5rem; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);">
@@ -83,6 +110,6 @@ export function cityPage(data: CityPageData): string {
     `Nursing Homes in ${cityName}, ${stateName} — Grades & Ratings`,
     `Find independent grades for ${facilityCount} nursing homes in ${cityName}, ${stateName}. Based on official CMS staffing and inspection data.`,
     body,
-    { canonicalPath: `/state/${stateSlug}/${citySlug}` },
+    { canonicalPath: `/state/${stateSlug}/${citySlug}`, jsonLd },
   );
 }

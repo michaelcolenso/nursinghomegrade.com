@@ -2,6 +2,7 @@ export interface LayoutOptions {
   canonicalPath?: string;
   noindex?: boolean;
   ogType?: string;
+  ogImage?: string;
   jsonLd?: object[];
   extraHead?: string;
   extraScripts?: string;
@@ -13,7 +14,7 @@ export function layout(
   body: string,
   options: LayoutOptions = {},
 ): string {
-  const { canonicalPath, noindex, ogType = "website", jsonLd, extraHead, extraScripts } = options;
+  const { canonicalPath, noindex, ogType = "website", ogImage, jsonLd, extraHead, extraScripts } = options;
   const canonicalUrl = canonicalPath
     ? `https://nursinghomegrade.com${canonicalPath}`
     : undefined;
@@ -25,12 +26,17 @@ export function layout(
     ? `<meta name="robots" content="noindex, follow">`
     : "";
   const ogUrl = canonicalUrl ?? "https://nursinghomegrade.com";
+  const ogImageTag = ogImage
+    ? `<meta property="og:image" content="${escHtml(ogImage)}"><meta name="twitter:image" content="${escHtml(ogImage)}">`
+    : "";
+  const twitterCard = ogImage ? "summary_large_image" : "summary";
   const ogTags = `
     <meta property="og:title" content="${escHtml(title)}">
     <meta property="og:description" content="${escHtml(description)}">
     <meta property="og:url" content="${escHtml(ogUrl)}">
     <meta property="og:type" content="${escHtml(ogType)}">
-    <meta name="twitter:card" content="summary">
+    ${ogImageTag}
+    <meta name="twitter:card" content="${twitterCard}">
   `;
   const jsonLdTags = jsonLd?.length
     ? jsonLd
@@ -53,7 +59,7 @@ export function layout(
   ${ogTags}
   ${jsonLdTags}
   ${extraHead || ""}
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%231c1917'/%3E%3Ctext x='50' y='68' font-family='Georgia,serif' font-size='55' fill='%23f7f5f2' text-anchor='middle' font-weight='700'%3EN%3C/text%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='16' fill='%231c1917'/%3E%3Ctext x='50' y='38' font-family='Arial,system-ui,sans-serif' font-size='26' fill='%23f7f5f2' text-anchor='middle' font-weight='800' letter-spacing='-1'%3ENHG%3C/text%3E%3Crect x='14' y='48' width='72' height='7' rx='2' fill='%23f7f5f2'/%3E%3Crect x='14' y='59' width='50' height='7' rx='2' fill='%23f7f5f2' opacity='0.5'/%3E%3Crect x='14' y='70' width='62' height='7' rx='2' fill='%23f7f5f2' opacity='0.25'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
@@ -131,6 +137,14 @@ export function layout(
       display: inline-flex;
       min-height: 44px;
       align-items: center;
+      gap: 0.4em;
+    }
+    .masthead-mark {
+      display: inline-flex;
+      align-items: center;
+      flex-shrink: 0;
+      height: 1.1em;
+      width: auto;
     }
     .masthead-tagline { 
       font-size: 0.75rem; 
@@ -690,7 +704,7 @@ export function layout(
     <div class="container">
       <div class="masthead">
         <div>
-          <a href="/" class="masthead-name">NursingHomeGrade</a>
+          <a href="/" class="masthead-name"><span class="masthead-mark" aria-hidden="true"><svg viewBox="0 0 44 36" height="100%" preserveAspectRatio="xMidYMid meet"><text x="0" y="14" fill="currentColor" font-family="Arial,system-ui,sans-serif" font-size="16" font-weight="800" letter-spacing="-0.5">NHG</text><rect x="0" y="19" width="32" height="4" rx="1" fill="currentColor"/><rect x="0" y="25" width="22" height="4" rx="1" fill="currentColor" opacity="0.5"/><rect x="0" y="31" width="27" height="4" rx="1" fill="currentColor" opacity="0.3"/></svg></span>NursingHomeGrade</a>
           <span class="masthead-tagline">Independent ratings from CMS data</span>
         </div>
         <nav style="display:flex; gap:var(--space-m); font-weight:700; text-transform:uppercase; font-size:0.8rem; letter-spacing:0.05em;">
@@ -708,7 +722,7 @@ export function layout(
     <div class="container">
       <div class="footer-inner">
         <div>
-          <div style="font-weight:800;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.1em;margin-bottom:var(--space-s);color:var(--ink);">About NursingHomeGrade</div>
+          <div style="display:flex;align-items:center;gap:0.4em;margin-bottom:var(--space-s);"><span aria-hidden="true" style="display:inline-flex;height:1.2em;width:auto;"><svg viewBox="0 0 44 36" height="100%" preserveAspectRatio="xMidYMid meet"><text x="0" y="14" fill="currentColor" font-family="Arial,system-ui,sans-serif" font-size="16" font-weight="800" letter-spacing="-0.5">NHG</text><rect x="0" y="19" width="32" height="4" rx="1" fill="currentColor"/><rect x="0" y="25" width="22" height="4" rx="1" fill="currentColor" opacity="0.5"/><rect x="0" y="31" width="27" height="4" rx="1" fill="currentColor" opacity="0.3"/></svg></span><span style="font-weight:800;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.1em;color:var(--ink);">NursingHomeGrade</span></div>
           <p style="color:var(--muted);font-size:0.95rem;line-height:1.5;">Independent ratings sourced from federal CMS Nursing Home Compare data. Updated monthly. We accept no payments from facilities.</p>
         </div>
         <div>

@@ -126,6 +126,6 @@ export function comparePage(): string {
     "Compare Facilities — NursingHomeGrade",
     "Side-by-side comparison of your saved nursing home facilities.",
     body,
-    { extraScripts: scripts }
+    { canonicalPath: "/compare", extraScripts: scripts }
   );
 }

@@ -59,4 +59,26 @@ describe("cityPage", () => {
     expect(html).toContain('href="/state/california"');
     expect(html).toContain("No facilities found in this city.");
   });
+
+  it("renders JSON-LD ItemList and BreadcrumbList schema", () => {
+    const html = cityPage({
+      cityName: "Los Angeles",
+      citySlug: "los-angeles",
+      stateName: "California",
+      stateSlug: "california",
+      facilityCount: 78,
+      pctFailing: 71.8,
+      nationalPctFailing: 58,
+      gradeDistribution: { A: 5, B: 10, C: 20, D: 18, F: 25 },
+      facilities: [],
+    });
+
+    expect(html).toContain('"@type":"ItemList"');
+    expect(html).toContain('"@type":"BreadcrumbList"');
+    expect(html).toContain('"name":"Nursing Homes in Los Angeles, California"');
+    expect(html).toContain('"name":"California"');
+    expect(html).toContain('"name":"Los Angeles"');
+    expect(html).toContain('"item":"https://nursinghomegrade.com/state/california"');
+    expect(html).toContain('"item":"https://nursinghomegrade.com/state/california/los-angeles"');
+  });
 });

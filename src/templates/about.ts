@@ -1,6 +1,21 @@
 import { layout } from "./layout";
 
 export function aboutPage(): string {
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "AboutPage",
+      "name": "About NursingHomeGrade",
+      "url": "https://nursinghomegrade.com/about",
+      "mainEntity": {
+        "@type": "Organization",
+        "name": "NursingHomeGrade",
+        "url": "https://nursinghomegrade.com/",
+        "description": "Independent ratings for U.S. nursing homes based on federal CMS data.",
+      },
+    },
+  ];
+
   const body = `
     <h1 class="display">About NursingHomeGrade</h1>
 
@@ -56,5 +71,6 @@ export function aboutPage(): string {
     "About NursingHomeGrade — No Commissions, No Conflicts",
     "How NursingHomeGrade grades nursing homes and why we take no commissions from facilities.",
     body,
+    { canonicalPath: "/about", jsonLd }
   );
 }

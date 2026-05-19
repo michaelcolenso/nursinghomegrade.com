@@ -100,6 +100,28 @@ describe("statePage", () => {
     const html = statePage({ ...baseStateData, facilities: [] });
     expect(html).toContain("No facilities found in this state");
   });
+
+  it("renders JSON-LD ItemList and BreadcrumbList schema", () => {
+    const html = statePage(baseStateData);
+    expect(html).toContain('"@type":"ItemList"');
+    expect(html).toContain('"@type":"BreadcrumbList"');
+    expect(html).toContain('"name":"Top Rated Nursing Homes in California"');
+    expect(html).toContain('"name":"California"');
+    expect(html).toContain('"item":"https://nursinghomegrade.com/states"');
+    expect(html).toContain('"item":"https://nursinghomegrade.com/state/california"');
+  });
+
+  it("renders JSON-LD ItemList schema on states hub", () => {
+    const html = statesHubPage([
+      { state: "California", count: 1162, slug: "california" },
+      { state: "Texas", count: 1177, slug: "texas" },
+    ]);
+    expect(html).toContain('"@type":"ItemList"');
+    expect(html).toContain('"name":"Nursing Home Grades by State"');
+    expect(html).toContain('"name":"California"');
+    expect(html).toContain('"name":"Texas"');
+    expect(html).toContain('"url":"https://nursinghomegrade.com/state/california"');
+  });
 });
 
 describe("statesHubPage", () => {
