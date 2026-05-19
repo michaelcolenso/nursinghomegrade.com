@@ -285,7 +285,7 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
   ` : "";
 
   const extraScripts = f.latitude && f.longitude ? `
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script>
       (function() {
         const map = L.map('facility-map', { zoomControl: false, attributionControl: false }).setView([${f.latitude}, ${f.longitude}], 14);
@@ -318,6 +318,14 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
         "addressRegion": f.state,
         "postalCode": f.zip,
         "addressCountry": "US"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": f.grade_score,
+        "bestRating": 100,
+        "worstRating": 0,
+        "ratingCount": 1,
+        "reviewCount": 1
       }
     },
     {
