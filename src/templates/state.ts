@@ -85,12 +85,12 @@ export function statePage(data: StatePageData): string {
         </div>
       </div>
       
-      <div class="card" style="background: var(--ink); color: #fff; border: none; position: sticky; top: 120px;">
-        <h3 style="color: #fff; font-size: 1.25rem; margin-bottom: 1.5rem; font-family: 'Playfair Display', Georgia, serif;">Quick Search</h3>
-        <p style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 1.5rem;">Find a specific facility in ${escHtml(stateName)} by ZIP code.</p>
+      <div class="card" style="background: var(--ink); color: #fff; border: none; position: sticky; top: 120px; padding: var(--space-l);">
+        <h3 style="color: #fff; font-size: 1.25rem; margin-bottom: 1rem; font-family: 'Playfair Display', Georgia, serif;">Quick Search</h3>
+        <p style="font-size: 0.9rem; opacity: 0.7; margin-bottom: 1.25rem;">Find a specific facility in ${escHtml(stateName)} by ZIP code.</p>
         <form action="/search" method="GET" style="display: flex; flex-direction: column; gap: 0.75rem;">
-          <input type="text" name="zip" placeholder="ZIP Code" pattern="[0-9]{5}" title="Enter a 5-digit ZIP code" maxlength="5" required style="padding: 0.75rem 1rem; border-radius: 0; border: none; font-family: 'Inter', system-ui, sans-serif;">
-          <button type="submit" class="btn" style="background: #fff; color: var(--ink); border: none;">Search</button>
+          <input type="text" name="zip" placeholder="ZIP code" pattern="[0-9]{5}" title="Enter a 5-digit ZIP code" maxlength="5" required style="padding: 0.75rem 1rem; border-radius: 0; border: none; background: #fff; color: var(--ink); font-family: 'Inter', system-ui, sans-serif; font-size: 1rem;">
+          <button type="submit" style="padding: 0.75rem 1rem; background: #fff; color: var(--ink); border: 2px solid #fff; font-family: 'Inter', system-ui, sans-serif; font-weight: 700; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; transition: all 0.2s ease; min-height: 44px;" onmouseover="this.style.background='transparent';this.style.color='#fff'" onmouseout="this.style.background='#fff';this.style.color='var(--ink)'">Search</button>
         </form>
       </div>
     </div>
