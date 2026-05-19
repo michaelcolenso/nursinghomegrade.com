@@ -165,6 +165,6 @@ export function explorePage(): string {
     "National Nursing Home Exploration Map",
     "Interact with our national map to find nursing home grades in your area and across the country.",
     body,
-    { extraHead, extraScripts }
+    { extraHead, extraScripts, canonicalPath: "/explore" }
   );
 }

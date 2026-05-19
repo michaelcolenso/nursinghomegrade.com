@@ -28,10 +28,12 @@ export function cityPage(data: CityPageData): string {
 
   const body = `
     <div style="margin-bottom: 4rem;">
-      <nav class="breadcrumb" style="margin-bottom: 1.5rem; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);">
-        <a href="/" style="color: var(--muted);">Home</a>
-        <span style="margin: 0 0.5rem; opacity: 0.5;">/</span>
-        <a href="/state/${stateSlug}" style="color: var(--muted);">${escHtml(stateName)}</a>
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a>
+        <span class="breadcrumb-sep">›</span>
+        <a href="/state/${stateSlug}">${escHtml(stateName)}</a>
+        <span class="breadcrumb-sep">›</span>
+        <span style="color:var(--ink);">${escHtml(cityName)}</span>
       </nav>
       <h1 style="margin-bottom: 1rem;">Nursing homes in ${escHtml(cityName)}, ${escHtml(stateName)}</h1>
       <p class="lede">
@@ -79,10 +81,21 @@ export function cityPage(data: CityPageData): string {
     </div>
   `;
 
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://nursinghomegrade.com/" },
+        { "@type": "ListItem", "position": 2, "name": stateName, "item": `https://nursinghomegrade.com/state/${stateSlug}` },
+        { "@type": "ListItem", "position": 3, "name": `Nursing Homes in ${cityName}, ${stateName}`, "item": `https://nursinghomegrade.com/state/${stateSlug}/${citySlug}` }
+      ]
+    }
+  ];
   return layout(
     `Nursing Homes in ${cityName}, ${stateName} — Grades & Ratings`,
     `Find independent grades for ${facilityCount} nursing homes in ${cityName}, ${stateName}. Based on official CMS staffing and inspection data.`,
     body,
-    { canonicalPath: `/state/${stateSlug}/${citySlug}` },
+    { canonicalPath: `/state/${stateSlug}/${citySlug}`, jsonLd },
   );
 }

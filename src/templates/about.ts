@@ -1,5 +1,52 @@
 import { layout } from "./layout";
 
+const FAQ_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How does NursingHomeGrade calculate facility scores?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The NursingHomeGrade Score (0–100) is a weighted composite of four CMS data points: Staffing compliance (35%) based on RN hours vs the federal minimum of 0.55 hrs/resident/day, Inspection clean rate (30%) based on health inspection deficiencies and severity, Quality measures (20%) based on CMS quality star rating, and Staffing consistency (15%) based on CMS staffing star rating."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does NursingHomeGrade take payments from nursing facilities?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. NursingHomeGrade never receives payments from nursing facilities. We display contextual advertising and earn small referral fees when users click through to comparison services, but these relationships never affect our grades."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Where does the nursing home data come from?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "All data comes from CMS Nursing Home Compare, a public dataset updated monthly by the Centers for Medicare & Medicaid Services. We apply no editorial adjustments to the underlying data."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How often is the nursing home data updated?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Our data is updated monthly, aligned with the CMS Nursing Home Compare monthly release cycle."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the federal staffing minimum for nursing homes?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The federal minimum is 0.55 registered nurse (RN) hours per resident per day. NursingHomeGrade flags any facility that falls below this threshold."
+      }
+    }
+  ]
+};
+
 export function aboutPage(): string {
   const body = `
     <h1 class="display">About NursingHomeGrade</h1>
@@ -56,5 +103,6 @@ export function aboutPage(): string {
     "About NursingHomeGrade — No Commissions, No Conflicts",
     "How NursingHomeGrade grades nursing homes and why we take no commissions from facilities.",
     body,
+    { canonicalPath: "/about", jsonLd: [FAQ_JSON_LD] },
   );
 }

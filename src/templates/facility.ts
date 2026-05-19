@@ -159,11 +159,11 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
 
   const qualityStars =
     f.quality_rating !== null
-      ? `${"★".repeat(f.quality_rating)}${"☆".repeat(5 - f.quality_rating)} (${f.quality_rating}/5)`
+      ? `<span role="img" aria-label="${f.quality_rating} out of 5 stars">${"★".repeat(f.quality_rating)}${"☆".repeat(5 - f.quality_rating)}</span> (${f.quality_rating}/5)`
       : "Not rated";
   const staffingStars =
     f.staffing_rating !== null
-      ? `${"★".repeat(f.staffing_rating)}${"☆".repeat(5 - f.staffing_rating)} (${f.staffing_rating}/5)`
+      ? `<span role="img" aria-label="${f.staffing_rating} out of 5 stars">${"★".repeat(f.staffing_rating)}${"☆".repeat(5 - f.staffing_rating)}</span> (${f.staffing_rating}/5)`
       : "Not rated";
 
   // Contextual CTA based on grade
@@ -318,13 +318,6 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
         "addressRegion": f.state,
         "postalCode": f.zip,
         "addressCountry": "US"
-      },
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": f.grade_score,
-        "bestRating": "100",
-        "worstRating": "0",
-        "ratingCount": 1
       }
     },
     {
@@ -365,6 +358,7 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
     body,
     {
       canonicalPath,
+      ogType: "article",
       extraHead,
       extraScripts,
       jsonLd
