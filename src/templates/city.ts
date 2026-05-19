@@ -45,9 +45,9 @@ export function cityPage(data: CityPageData): string {
       ${facilities.map(f => `
         <div class="card city-result-card" style="padding: 1.5rem;">
           <div class="city-result-grid" style="display: grid; grid-template-columns: 80px 1fr auto; gap: 2rem; align-items: start;">
-            <div class="grade-badge grade-${f.grade_letter}">
-              <div class="grade-badge-letter">${f.grade_letter}</div>
-              <div class="grade-badge-score">${f.grade_score}/100</div>
+            <div class="grade-badge grade-${f.grade_letter}" style="width:80px;height:80px;border-radius:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+              <div class="grade-badge-letter" style="font-size:2.5rem;font-weight:900;line-height:1;">${f.grade_letter}</div>
+              <div class="grade-badge-score" style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-top:2px;">${f.grade_score}/100</div>
             </div>
             <div>
               <a href="/facility/${f.cms_id}-${f.slug}" style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.5rem; font-weight: 800; color: var(--ink); text-decoration: none; display: block; margin-bottom: 0.5rem;">${escHtml(f.name)}</a>

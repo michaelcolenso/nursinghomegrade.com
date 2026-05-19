@@ -59,11 +59,13 @@ export default {
 
     if (path === "/og.svg") {
       const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
-  <rect width="1200" height="630" fill="#1c1917"/>
-  <text x="80" y="310" font-family="Georgia,serif" font-size="200" fill="#f7f5f2" font-weight="700">N</text>
-  <text x="300" y="240" font-family="Georgia,serif" font-size="62" fill="#f7f5f2" font-weight="700">NursingHome</text>
-  <text x="300" y="320" font-family="Georgia,serif" font-size="62" fill="#f7f5f2" font-weight="700">Grade</text>
-  <text x="300" y="395" font-family="Georgia,serif" font-size="26" fill="#a8a29e">Honest ratings from CMS data · No commissions</text>
+  <rect width="1200" height="630" fill="#0B1D33"/>
+  <rect x="80" y="200" width="70" height="200" rx="6" fill="#E6EBEF"/>
+  <rect x="200" y="200" width="70" height="200" rx="6" fill="#E6EBEF"/>
+  <line x1="80" y1="400" x2="270" y2="200" stroke="#16897A" stroke-width="22" stroke-linecap="round"/>
+  <line x1="110" y1="400" x2="300" y2="200" stroke="#16897A" stroke-width="22" stroke-linecap="round"/>
+  <text x="360" y="310" font-family="Georgia,serif" font-size="96" fill="#F7F9FA" font-weight="700">NursingHomeGrade</text>
+  <text x="362" y="390" font-family="Georgia,serif" font-size="32" fill="#16897A">Independent ratings · CMS data · No conflicts of interest</text>
 </svg>`;
       return new Response(svg, {
         headers: {

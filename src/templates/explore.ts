@@ -27,7 +27,7 @@ export function explorePage(): string {
         display: inline-block;
       }
       .cluster-icon {
-        background: rgba(28, 25, 23, 0.1);
+        background: rgba(11, 29, 51, 0.12);
         color: var(--ink);
         border-radius: 50%;
         display: flex;
@@ -42,8 +42,8 @@ export function explorePage(): string {
   `;
 
   const extraScripts = `
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script defer src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
     <script>
       (function() {
         const map = L.map('explore-map').setView([39.8283, -98.5795], 4);
