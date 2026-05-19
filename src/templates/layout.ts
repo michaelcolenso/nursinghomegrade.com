@@ -267,7 +267,7 @@ export function layout(
       font-family: 'Inter', system-ui, sans-serif;
       background: #fff;
     }
-    .search-bar input:focus { outline: none; background: var(--bg); }
+    .search-bar input:focus { outline: 2px solid var(--accent); outline-offset: -2px; background: var(--bg); }
     .search-bar button {
       background: var(--accent);
       color: #fff;
@@ -672,7 +672,7 @@ export function layout(
       background: #fff;
     }
     .nearby-grade {
-      font-family: 'Newsreader', serif;
+      font-family: 'Playfair Display', Georgia, serif;
       font-size: 3rem;
       font-weight: 800;
       line-height: 0.9;
@@ -706,7 +706,7 @@ export function layout(
     }
     .nearby-stats strong {
       color: var(--ink);
-      font-family: 'Newsreader', serif;
+      font-family: 'Playfair Display', Georgia, serif;
       font-size: 1.05rem;
     }
 
@@ -881,10 +881,9 @@ export function layout(
 
         <nav class="footer-col" aria-label="Explore">
           <div class="footer-col-head">Explore</div>
-          <a href="/search" class="footer-link">Find Facilities</a>
-          <a href="/states" class="footer-link">Ratings</a>
-          <a href="/explore" class="footer-link">Top Facilities</a>
-          <a href="/states" class="footer-link">States</a>
+          <a href="/explore" class="footer-link">Find Facilities</a>
+          <a href="/states" class="footer-link">Browse by State</a>
+          <a href="/search" class="footer-link">Search</a>
         </nav>
 
         <nav class="footer-col" aria-label="Resources">
