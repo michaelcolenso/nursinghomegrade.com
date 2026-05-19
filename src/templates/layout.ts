@@ -77,10 +77,10 @@ export function layout(
       /* Brand Colors */
       --bg: #F7F9FA;
       --ink: #0B1D33;
-      --muted: #607D8B;
+      --muted: #4A6272;
       --rule: #E6EBEF;
-      --accent: #16897A;
-      --accent-hover: #0e6b60;
+      --accent: #0e6b60;
+      --accent-hover: #0a5249;
 
       /* Grade Palette */
       --grade-A: #12805D;
@@ -204,8 +204,9 @@ export function layout(
       font-weight: 800;
       line-height: 1.1;
       letter-spacing: 0;
+      overflow-wrap: break-word;
     }
-    h1 { font-size: clamp(2.25rem, 6vw, 3.5rem); margin-bottom: var(--space-m); }
+    h1 { font-size: clamp(1.75rem, 6vw, 3.5rem); margin-bottom: var(--space-m); }
     h2 { font-size: clamp(1.6rem, 4vw, 2.25rem); margin-bottom: var(--space-s); margin-top: var(--space-2xl); border-top: 1px solid var(--rule); padding-top: var(--space-m); }
     h3 { font-size: clamp(1.25rem, 3vw, 1.5rem); margin-bottom: var(--space-xs); margin-top: var(--space-l); }
     p { margin-bottom: var(--space-s); }
@@ -989,7 +990,7 @@ export function layout(
       
       function update() {
         const data = JSON.parse(localStorage.getItem('nhg_saved_facilities') || '[]');
-        if (data.length > 0) {
+        if (data.length > 0 && window.location.pathname !== '/compare') {
           bar.style.display = 'flex';
           count.textContent = data.length + ' facilities selected';
         } else {
