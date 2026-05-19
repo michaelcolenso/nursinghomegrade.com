@@ -22,21 +22,28 @@ export function layout(
   const canonicalTag = canonicalUrl
     ? `<link rel="canonical" href="${escHtml(canonicalUrl)}">`
     : "";
-  const noindexTag = noindex
+  const robotsMeta = noindex
     ? `<meta name="robots" content="noindex, follow">`
+    : `<meta name="robots" content="max-snippet:-1, max-image-preview:large, max-video-preview:-1">`;
+  const hreflangTags = canonicalUrl
+    ? `<link rel="alternate" hreflang="en-US" href="${escHtml(canonicalUrl)}">
+  <link rel="alternate" hreflang="x-default" href="${escHtml(canonicalUrl)}">`
     : "";
+  const resolvedOgImage = ogImage ?? "https://nursinghomegrade.com/og.svg";
   const ogUrl = canonicalUrl ?? "https://nursinghomegrade.com";
-  const ogImageTag = ogImage
-    ? `<meta property="og:image" content="${escHtml(ogImage)}"><meta name="twitter:image" content="${escHtml(ogImage)}">`
-    : "";
-  const twitterCard = ogImage ? "summary_large_image" : "summary";
   const ogTags = `
     <meta property="og:title" content="${escHtml(title)}">
     <meta property="og:description" content="${escHtml(description)}">
     <meta property="og:url" content="${escHtml(ogUrl)}">
     <meta property="og:type" content="${escHtml(ogType)}">
-    ${ogImageTag}
-    <meta name="twitter:card" content="${twitterCard}">
+    <meta property="og:image" content="${escHtml(resolvedOgImage)}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="NursingHomeGrade">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="${escHtml(title)}">
+    <meta name="twitter:description" content="${escHtml(description)}">
+    <meta name="twitter:image" content="${escHtml(resolvedOgImage)}">
   `;
   const jsonLdTags = jsonLd?.length
     ? jsonLd
@@ -55,30 +62,32 @@ export function layout(
   <title>${escHtml(title)}</title>
   <meta name="description" content="${escHtml(description)}">
   ${canonicalTag}
-  ${noindexTag}
+  ${robotsMeta}
+  ${hreflangTags}
   ${ogTags}
   ${jsonLdTags}
   ${extraHead || ""}
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='16' fill='%231c1917'/%3E%3Ctext x='50' y='38' font-family='Arial,system-ui,sans-serif' font-size='26' fill='%23f7f5f2' text-anchor='middle' font-weight='800' letter-spacing='-1'%3ENHG%3C/text%3E%3Crect x='14' y='48' width='72' height='7' rx='2' fill='%23f7f5f2'/%3E%3Crect x='14' y='59' width='50' height='7' rx='2' fill='%23f7f5f2' opacity='0.5'/%3E%3Crect x='14' y='70' width='62' height='7' rx='2' fill='%23f7f5f2' opacity='0.25'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 48'%3E%3Crect width='60' height='48' rx='3' fill='%230B1D33'/%3E%3Crect x='8' y='8' width='10' height='28' fill='%23E6EBEF' rx='1'/%3E%3Crect x='28' y='8' width='10' height='28' fill='%23E6EBEF' rx='1'/%3E%3Cline x1='8' y1='36' x2='38' y2='8' stroke='%2316897A' stroke-width='3.5' stroke-linecap='round'/%3E%3Cline x1='14' y1='36' x2='44' y2='8' stroke='%2316897A' stroke-width='3.5' stroke-linecap='round'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Inter:wght@400;500;600;700;800&display=swap">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      /* Base Colors (OKLCH for perceptual uniformity) */
-      --bg: oklch(97% 0.01 60);       /* Warm paper white */
-      --ink: oklch(15% 0.01 60);      /* Deep ink black */
-      --muted: oklch(55% 0.01 60);    /* Soft slate gray */
-      --rule: oklch(92% 0.01 60);     /* Light paper rule */
-      --accent: oklch(45% 0.15 25);   /* Authoritative burgundy */
-      --accent-hover: oklch(35% 0.15 25);
+      /* Brand Colors */
+      --bg: #F7F9FA;
+      --ink: #0B1D33;
+      --muted: #4A6272;
+      --rule: #E6EBEF;
+      --accent: #0e6b60;
+      --accent-hover: #0a5249;
 
       /* Grade Palette */
-      --grade-A: oklch(50% 0.12 150); /* Credible green */
-      --grade-B: oklch(50% 0.12 250); /* Stable blue */
-      --grade-C: oklch(70% 0.15 80);  /* Warning gold */
-      --grade-D: oklch(60% 0.15 45);  /* Danger orange */
-      --grade-F: oklch(50% 0.2 25);   /* Alarm red */
+      --grade-A: #12805D;
+      --grade-B: #1FA38C;
+      --grade-C: #F5B23D;
+      --grade-D: #E4573D;
+      --grade-F: #B91C1C;
 
       /* Severity Colors */
       --sev-low: var(--muted);
@@ -95,13 +104,13 @@ export function layout(
       --space-xl: 3.5rem;
       --space-2xl: 5rem;
       --space-3xl: 7.5rem;
-      
+
       --space-page: clamp(var(--space-l), 8vw, var(--space-3xl));
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Source Sans 3', system-ui, sans-serif;
+      font-family: 'Inter', system-ui, sans-serif;
       color: var(--ink);
       background: var(--bg);
       line-height: 1.6;
@@ -124,39 +133,65 @@ export function layout(
     }
 
     /* Masthead */
-    header { border-bottom: 2px solid var(--ink); padding: var(--space-m) 0; }
-    .masthead { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: var(--space-xs); }
-    .masthead-name {
-      font-family: 'Newsreader', Georgia, serif;
-      font-size: clamp(1.2rem, 5vw, 1.6rem);
-      font-weight: 800;
-      color: var(--ink);
+    header { border-bottom: 1px solid var(--rule); padding: var(--space-s) 0; background: #fff; }
+    .masthead { display: flex; align-items: center; justify-content: space-between; gap: var(--space-m); }
+    .masthead-lockup {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
       text-decoration: none;
-      letter-spacing: 0;
-      text-transform: uppercase;
+      border: none;
+    }
+    .masthead-lockup:hover { border: none; }
+    .masthead-icon { flex-shrink: 0; }
+    .masthead-name {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(1.1rem, 4vw, 1.35rem);
+      font-weight: 700;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+      line-height: 1;
       display: inline-flex;
       min-height: 44px;
       align-items: center;
-      gap: 0.4em;
     }
-    .masthead-mark {
-      display: inline-flex;
+    .masthead-nav {
+      display: flex;
       align-items: center;
-      flex-shrink: 0;
-      height: 1.1em;
-      width: auto;
+      gap: var(--space-m);
     }
-    .masthead-tagline { 
-      font-size: 0.75rem; 
-      color: var(--muted); 
-      font-weight: 700; 
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
+    .masthead-nav-link {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--ink);
+      text-decoration: none;
+      border: none;
+      transition: color 0.2s ease;
+    }
+    .masthead-nav-link:hover { color: var(--accent); border: none; }
+    .masthead-search-btn {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #fff;
+      background: var(--accent);
+      padding: 0.4rem 1rem;
+      border-radius: 4px;
+      text-decoration: none;
+      border: none;
+      transition: background 0.2s ease;
+      white-space: nowrap;
+    }
+    .masthead-search-btn:hover { background: var(--accent-hover); border: none; }
+    @media (max-width: 640px) {
+      .masthead-nav-link { display: none; }
+      .masthead-search-btn { padding: 0.45rem 1rem; font-size: 0.9rem; }
     }
 
     /* Typography */
     .display {
-      font-family: 'Newsreader', Georgia, serif;
+      font-family: 'Playfair Display', Georgia, serif;
       font-size: clamp(3rem, 10vw, 5.5rem);
       font-weight: 800;
       line-height: 0.9;
@@ -165,12 +200,13 @@ export function layout(
       color: var(--ink);
     }
     h1, h2, h3 {
-      font-family: 'Newsreader', Georgia, serif;
+      font-family: 'Playfair Display', Georgia, serif;
       font-weight: 800;
       line-height: 1.1;
       letter-spacing: 0;
+      overflow-wrap: break-word;
     }
-    h1 { font-size: clamp(2.25rem, 6vw, 3.5rem); margin-bottom: var(--space-m); }
+    h1 { font-size: clamp(1.75rem, 6vw, 3.5rem); margin-bottom: var(--space-m); }
     h2 { font-size: clamp(1.6rem, 4vw, 2.25rem); margin-bottom: var(--space-s); margin-top: var(--space-2xl); border-top: 1px solid var(--rule); padding-top: var(--space-m); }
     h3 { font-size: clamp(1.25rem, 3vw, 1.5rem); margin-bottom: var(--space-xs); margin-top: var(--space-l); }
     p { margin-bottom: var(--space-s); }
@@ -179,7 +215,7 @@ export function layout(
 
     /* Editorial components */
     .lede {
-      font-family: 'Newsreader', Georgia, serif;
+      font-family: 'Playfair Display', Georgia, serif;
       font-size: clamp(1.35rem, 3vw, 1.75rem);
       line-height: 1.4;
       color: var(--ink);
@@ -194,7 +230,7 @@ export function layout(
       border-bottom: 1px solid var(--rule);
       padding: var(--space-xl) 0;
       margin: var(--space-2xl) 0;
-      font-family: 'Newsreader', Georgia, serif;
+      font-family: 'Playfair Display', Georgia, serif;
       font-size: clamp(1.25rem, 3vw, 1.6rem);
       line-height: 1.4;
       color: var(--ink);
@@ -229,23 +265,23 @@ export function layout(
       border: 2px solid var(--ink);
       border-radius: 0;
       font-size: 1.125rem;
-      font-family: 'Source Sans 3', system-ui, sans-serif;
+      font-family: 'Inter', system-ui, sans-serif;
       background: #fff;
     }
-    .search-bar input:focus { outline: none; background: var(--bg); }
+    .search-bar input:focus { outline: 2px solid var(--accent); outline-offset: -2px; background: var(--bg); }
     .search-bar button {
-      background: var(--ink);
+      background: var(--accent);
       color: #fff;
       padding: var(--space-s) var(--space-l);
-      border: 2px solid var(--ink);
+      border: 2px solid var(--accent);
       border-radius: 0;
       cursor: pointer;
       font-weight: 700;
       font-size: 1.125rem;
-      font-family: 'Source Sans 3', system-ui, sans-serif;
+      font-family: 'Inter', system-ui, sans-serif;
       transition: background 0.2s ease-out, color 0.2s ease-out;
     }
-    .search-bar button:hover { background: var(--bg); color: var(--ink); }
+    .search-bar button:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
     .search-bar .geo-btn {
       background: #fff;
       color: var(--ink);
@@ -317,7 +353,7 @@ export function layout(
       margin: var(--space-2xl) 0;
     }
     .cta-box h3 { color: #fff; margin-top: 0; border: none; padding: 0; font-size: 2rem; }
-    .cta-box p { color: oklch(90% 0.01 60); margin-bottom: var(--space-m); }
+    .cta-box p { color: #c8d6e0; margin-bottom: var(--space-m); }
     .cta-box .btn { background: #fff; color: var(--ink); border-color: #fff; margin-right: var(--space-s); }
     .cta-box .btn:hover { background: transparent; color: #fff; }
     .cta-box .btn-secondary { color: #fff; }
@@ -333,11 +369,113 @@ export function layout(
       gap: var(--space-xs);
     }
     .metric-label { font-weight: 700; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.05em; }
-    .metric-value { font-family: 'Newsreader', serif; font-size: 1.25rem; font-weight: 700; }
+    .metric-value { font-family: 'Playfair Display', Georgia, serif; font-size: 1.25rem; font-weight: 700; }
 
     /* Footer */
-    footer { border-top: 2px solid var(--ink); margin-top: var(--space-3xl); padding: var(--space-xl) 0; font-size: 0.9rem; }
-    .footer-inner { display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--space-l); }
+    footer {
+      border-top: 1px solid var(--rule);
+      margin-top: var(--space-3xl);
+      background: #fff;
+      padding: var(--space-2xl) 0 var(--space-l);
+      font-size: 0.875rem;
+    }
+    .footer-upper {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr 1.5fr;
+      gap: var(--space-2xl);
+      margin-bottom: var(--space-xl);
+    }
+    .footer-brand { display: flex; flex-direction: column; gap: var(--space-m); }
+    .footer-lockup {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+      border: none;
+    }
+    .footer-lockup:hover { border: none; }
+    .footer-wordmark {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+    }
+    .footer-tagline { font-size: 0.8rem; color: var(--muted); line-height: 1.6; margin: 0; }
+    .footer-col { display: flex; flex-direction: column; gap: var(--space-2xs); }
+    .footer-col-head {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--ink);
+      margin-bottom: var(--space-2xs);
+    }
+    .footer-link {
+      color: var(--muted);
+      text-decoration: none;
+      border: none;
+      font-size: 0.875rem;
+      transition: color 0.2s ease;
+      line-height: 1.8;
+    }
+    .footer-link:hover { color: var(--accent); border: none; }
+    .footer-newsletter-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.5; margin: 0 0 var(--space-xs); }
+    .footer-newsletter-form { display: flex; flex-direction: column; gap: var(--space-2xs); }
+    .footer-newsletter-input {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      font-size: 0.875rem;
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+    }
+    .footer-newsletter-input:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+    .footer-newsletter-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      font-family: 'Inter', system-ui, sans-serif;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    .footer-newsletter-btn:hover { background: var(--accent-hover); }
+    .footer-social { display: flex; gap: var(--space-s); margin-top: var(--space-xs); }
+    .footer-social-link {
+      color: var(--muted);
+      border: none;
+      display: flex;
+      align-items: center;
+      transition: color 0.2s ease;
+    }
+    .footer-social-link:hover { color: var(--accent); border: none; }
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--space-s);
+      padding-top: var(--space-m);
+      border-top: 1px solid var(--rule);
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .footer-bottom-links { display: flex; gap: var(--space-m); flex-wrap: wrap; }
+    .footer-bottom-link { color: var(--muted); text-decoration: none; border: none; font-size: 0.8rem; }
+    .footer-bottom-link:hover { color: var(--accent); }
+    @media (max-width: 900px) {
+      .footer-upper { grid-template-columns: 1fr 1fr; gap: var(--space-l); }
+      .footer-brand { grid-column: 1 / -1; }
+    }
+    @media (max-width: 600px) {
+      .footer-upper { grid-template-columns: 1fr; }
+      .footer-bottom { flex-direction: column; align-items: flex-start; }
+    }
 
     /* Breadcrumb */
     .breadcrumb { 
@@ -374,7 +512,7 @@ export function layout(
       font-weight: 800;
     }
     .results-count {
-      font-family: 'Newsreader', Georgia, serif;
+      font-family: 'Playfair Display', Georgia, serif;
       font-size: clamp(2.5rem, 8vw, 4.5rem);
       font-weight: 800;
       color: var(--ink);
@@ -409,7 +547,7 @@ export function layout(
       border-radius: 0;
       font-size: 1rem;
       background: #fff;
-      font-family: 'Source Sans 3', sans-serif;
+      font-family: 'Inter', system-ui, sans-serif;
       font-weight: 700;
     }
     .results-list { display: grid; gap: var(--space-l); }
@@ -440,7 +578,7 @@ export function layout(
     .result-rank { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); display: block; margin-bottom: var(--space-s); }
 
     .result-name {
-      font-family: 'Newsreader', Georgia, serif;
+      font-family: 'Playfair Display', Georgia, serif;
       font-size: 2rem;
       font-weight: 800;
       color: var(--ink);
@@ -455,8 +593,8 @@ export function layout(
     .result-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--space-s); margin-bottom: var(--space-m); }
     .result-stat { padding: var(--space-s); background: var(--bg); border: 1px solid var(--rule); }
     .result-stat-label { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); display: block; margin-bottom: var(--space-3xs); }
-    .result-stat-value { font-family: 'Newsreader', serif; font-size: 1.25rem; font-weight: 700; }
-    .result-summary { font-family: 'Newsreader', serif; font-style: italic; font-size: 1.25rem; line-height: 1.4; color: var(--ink); }
+    .result-stat-value { font-family: 'Playfair Display', Georgia, serif; font-size: 1.25rem; font-weight: 700; }
+    .result-summary { font-family: 'Playfair Display', Georgia, serif; font-style: italic; font-size: 1.25rem; line-height: 1.4; color: var(--ink); }
 
     /* Facility Specific */
     .facility-header {
@@ -496,7 +634,7 @@ export function layout(
       font-weight: 800;
       margin-bottom: var(--space-3xs);
     }
-    .snapshot-value { font-size: 1.25rem; font-weight: 700; line-height: 1.2; font-family: 'Newsreader', serif; }
+    .snapshot-value { font-size: 1.25rem; font-weight: 700; line-height: 1.2; font-family: 'Playfair Display', Georgia, serif; }
 
     .deficiency-item {
       padding: var(--space-m);
@@ -535,7 +673,7 @@ export function layout(
       background: #fff;
     }
     .nearby-grade {
-      font-family: 'Newsreader', serif;
+      font-family: 'Playfair Display', Georgia, serif;
       font-size: 3rem;
       font-weight: 800;
       line-height: 0.9;
@@ -569,7 +707,7 @@ export function layout(
     }
     .nearby-stats strong {
       color: var(--ink);
-      font-family: 'Newsreader', serif;
+      font-family: 'Playfair Display', Georgia, serif;
       font-size: 1.05rem;
     }
 
@@ -703,14 +841,21 @@ export function layout(
   <header>
     <div class="container">
       <div class="masthead">
-        <div>
-          <a href="/" class="masthead-name"><span class="masthead-mark" aria-hidden="true"><svg viewBox="0 0 44 36" height="100%" preserveAspectRatio="xMidYMid meet"><text x="0" y="14" fill="currentColor" font-family="Arial,system-ui,sans-serif" font-size="16" font-weight="800" letter-spacing="-0.5">NHG</text><rect x="0" y="19" width="32" height="4" rx="1" fill="currentColor"/><rect x="0" y="25" width="22" height="4" rx="1" fill="currentColor" opacity="0.5"/><rect x="0" y="31" width="27" height="4" rx="1" fill="currentColor" opacity="0.3"/></svg></span>NursingHomeGrade</a>
-          <span class="masthead-tagline">Independent ratings from CMS data</span>
-        </div>
-        <nav style="display:flex; gap:var(--space-m); font-weight:700; text-transform:uppercase; font-size:0.8rem; letter-spacing:0.05em;">
-          <a href="/explore" style="color:var(--ink); border:none;">Explore Map</a>
-          <a href="/states" style="color:var(--ink); border:none;">By State</a>
-          <a href="/about" style="color:var(--ink); border:none;">About</a>
+        <a href="/" class="masthead-lockup" aria-label="NursingHomeGrade home">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 48" width="36" height="29" aria-hidden="true" class="masthead-icon">
+            <rect width="60" height="48" rx="3" fill="#0B1D33"/>
+            <rect x="8" y="8" width="10" height="28" fill="#E6EBEF" rx="1"/>
+            <rect x="28" y="8" width="10" height="28" fill="#E6EBEF" rx="1"/>
+            <line x1="8" y1="36" x2="38" y2="8" stroke="#16897A" stroke-width="3.5" stroke-linecap="round"/>
+            <line x1="14" y1="36" x2="44" y2="8" stroke="#16897A" stroke-width="3.5" stroke-linecap="round"/>
+          </svg>
+          <span class="masthead-name">NursingHomeGrade</span>
+        </a>
+        <nav class="masthead-nav" aria-label="Main navigation">
+          <a href="/explore" class="masthead-nav-link">Find Facilities</a>
+          <a href="/states" class="masthead-nav-link">Ratings</a>
+          <a href="/about" class="masthead-nav-link">About</a>
+          <a href="/search" class="masthead-search-btn">Search</a>
         </nav>
       </div>
     </div>
@@ -720,15 +865,71 @@ export function layout(
   </main>
   <footer>
     <div class="container">
-      <div class="footer-inner">
-        <div>
-          <div style="display:flex;align-items:center;gap:0.4em;margin-bottom:var(--space-s);"><span aria-hidden="true" style="display:inline-flex;height:1.2em;width:auto;"><svg viewBox="0 0 44 36" height="100%" preserveAspectRatio="xMidYMid meet"><text x="0" y="14" fill="currentColor" font-family="Arial,system-ui,sans-serif" font-size="16" font-weight="800" letter-spacing="-0.5">NHG</text><rect x="0" y="19" width="32" height="4" rx="1" fill="currentColor"/><rect x="0" y="25" width="22" height="4" rx="1" fill="currentColor" opacity="0.5"/><rect x="0" y="31" width="27" height="4" rx="1" fill="currentColor" opacity="0.3"/></svg></span><span style="font-weight:800;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.1em;color:var(--ink);">NursingHomeGrade</span></div>
-          <p style="color:var(--muted);font-size:0.95rem;line-height:1.5;">Independent ratings sourced from federal CMS Nursing Home Compare data. Updated monthly. We accept no payments from facilities.</p>
+      <div class="footer-upper">
+        <div class="footer-brand">
+          <a href="/" class="footer-lockup" aria-label="NursingHomeGrade home">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 48" width="32" height="26" aria-hidden="true">
+              <rect width="60" height="48" rx="3" fill="#0B1D33"/>
+              <rect x="8" y="8" width="10" height="28" fill="#E6EBEF" rx="1"/>
+              <rect x="28" y="8" width="10" height="28" fill="#E6EBEF" rx="1"/>
+              <line x1="8" y1="36" x2="38" y2="8" stroke="#16897A" stroke-width="3.5" stroke-linecap="round"/>
+              <line x1="14" y1="36" x2="44" y2="8" stroke="#16897A" stroke-width="3.5" stroke-linecap="round"/>
+            </svg>
+            <span class="footer-wordmark">NursingHomeGrade</span>
+          </a>
+          <p class="footer-tagline">Independent ratings of nursing homes<br>using official CMS data. No facility<br>payments. No conflicts of interest.</p>
         </div>
-        <div>
-          <div style="font-weight:800;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.1em;margin-bottom:var(--space-s);color:var(--ink);">Integrity</div>
-          <p style="color:var(--muted);font-size:0.95rem;line-height:1.5;">Referral relationships never affect grades. <a href="/about">Learn more about our methodology</a>.</p>
+
+        <nav class="footer-col" aria-label="Explore">
+          <div class="footer-col-head">Explore</div>
+          <a href="/explore" class="footer-link">Find Facilities</a>
+          <a href="/states" class="footer-link">Browse by State</a>
+          <a href="/search" class="footer-link">Search</a>
+        </nav>
+
+        <nav class="footer-col" aria-label="Resources">
+          <div class="footer-col-head">Resources</div>
+          <a href="/about" class="footer-link">How We Grade</a>
+          <a href="/about" class="footer-link">FAQ</a>
+          <a href="/about" class="footer-link">Glossary</a>
+        </nav>
+
+        <nav class="footer-col" aria-label="Company">
+          <div class="footer-col-head">Company</div>
+          <a href="/about" class="footer-link">About Us</a>
+          <a href="/about" class="footer-link">Methodology</a>
+          <a href="/about" class="footer-link">Contact</a>
+        </nav>
+
+        <div class="footer-col">
+          <div class="footer-col-head">Stay Informed</div>
+          <p class="footer-newsletter-desc">Get updates on ratings, data releases, and important news.</p>
+          <form action="/subscribe" method="POST" class="footer-newsletter-form">
+            <input type="hidden" name="facility_name" value="newsletter">
+            <input type="email" name="email" placeholder="Enter your email" required class="footer-newsletter-input">
+            <button type="submit" class="footer-newsletter-btn">Subscribe</button>
+          </form>
+          <div class="footer-social">
+            <a href="https://twitter.com/nursinghomegrade" rel="noopener" aria-label="Twitter/X" class="footer-social-link">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L2.1 2.25h6.944l4.262 5.638 4.938-5.638zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </a>
+            <a href="https://linkedin.com/company/nursinghomegrade" rel="noopener" aria-label="LinkedIn" class="footer-social-link">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+            </a>
+            <a href="mailto:info@nursinghomegrade.com" aria-label="Email" class="footer-social-link">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+            </a>
+          </div>
         </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span>&copy; ${new Date().getFullYear()} NursingHomeGrade.com. All rights reserved.</span>
+        <nav class="footer-bottom-links" aria-label="Legal">
+          <a href="/about" class="footer-bottom-link">Terms of Use</a>
+          <a href="/about" class="footer-bottom-link">Privacy Policy</a>
+          <a href="/about" class="footer-bottom-link">Data Sources</a>
+        </nav>
       </div>
     </div>
   </footer>
@@ -789,7 +990,7 @@ export function layout(
       
       function update() {
         const data = JSON.parse(localStorage.getItem('nhg_saved_facilities') || '[]');
-        if (data.length > 0) {
+        if (data.length > 0 && window.location.pathname !== '/compare') {
           bar.style.display = 'flex';
           count.textContent = data.length + ' facilities selected';
         } else {

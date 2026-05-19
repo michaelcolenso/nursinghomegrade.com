@@ -13,7 +13,7 @@ export function explorePage(): string {
         background: var(--bg);
       }
       .map-tooltip {
-        font-family: 'Source Sans 3', sans-serif;
+        font-family: 'Inter', system-ui, sans-serif;
         padding: 0.5rem;
         border: 2px solid var(--ink);
         border-radius: 0;
@@ -27,7 +27,7 @@ export function explorePage(): string {
         display: inline-block;
       }
       .cluster-icon {
-        background: rgba(28, 25, 23, 0.1);
+        background: rgba(11, 29, 51, 0.12);
         color: var(--ink);
         border-radius: 50%;
         display: flex;
@@ -42,8 +42,8 @@ export function explorePage(): string {
   `;
 
   const extraScripts = `
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script defer src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
     <script>
       (function() {
         const map = L.map('explore-map').setView([39.8283, -98.5795], 4);
@@ -65,8 +65,8 @@ export function explorePage(): string {
             });
           },
           polygonOptions: {
-            fillColor: '#1c1917',
-            color: '#1c1917',
+            fillColor: '#0B1D33',
+            color: '#0B1D33',
             weight: 1,
             opacity: 1,
             fillOpacity: 0.1
@@ -94,11 +94,11 @@ export function explorePage(): string {
             .then(data => {
               markers.clearLayers();
               data.forEach(f => {
-                const color = getComputedStyle(document.documentElement).getPropertyValue('--grade-' + f.g).trim() || '#78716c';
+                const color = getComputedStyle(document.documentElement).getPropertyValue('--grade-' + f.g).trim() || '#607D8B';
                 const marker = L.circleMarker([f.lt, f.lg], {
                   radius: 6,
                   fillColor: color,
-                  color: '#1c1917',
+                  color: '#0B1D33',
                   weight: 2,
                   opacity: 1,
                   fillOpacity: 1
@@ -107,7 +107,7 @@ export function explorePage(): string {
                 marker.bindPopup(\`
                   <div class="map-tooltip">
                     <div style="font-weight:800;text-transform:uppercase;font-size:0.7rem;letter-spacing:0.1em;color:var(--muted);margin-bottom:0.25rem;">Grade \${f.g} (\${f.s}/100)</div>
-                    <a href="/facility/\${f.id}-\${f.sl}" style="font-family:'Newsreader', serif;font-weight:800;font-size:1.1rem;color:var(--ink);text-decoration:none;display:block;line-height:1.2;margin-bottom:0.5rem;">\${f.n}</a>
+                    <a href="/facility/\${f.id}-\${f.sl}" style="font-family:'Playfair Display', Georgia, serif;font-weight:800;font-size:1.1rem;color:var(--ink);text-decoration:none;display:block;line-height:1.2;margin-bottom:0.5rem;">\${f.n}</a>
                     <a href="/facility/\${f.id}-\${f.sl}" class="btn" style="padding:0.4rem 0.8rem;font-size:0.75rem;display:inline-block;">View Report →</a>
                   </div>
                 \`, { closeButton: false, minWidth: 200 });
@@ -165,6 +165,6 @@ export function explorePage(): string {
     "National Nursing Home Exploration Map",
     "Interact with our national map to find nursing home grades in your area and across the country.",
     body,
-    { canonicalPath: "/explore", extraHead, extraScripts }
+    { extraHead, extraScripts, canonicalPath: "/explore" }
   );
 }

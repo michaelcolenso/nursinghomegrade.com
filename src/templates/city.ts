@@ -55,10 +55,12 @@ export function cityPage(data: CityPageData): string {
 
   const body = `
     <div style="margin-bottom: 4rem;">
-      <nav class="breadcrumb" style="margin-bottom: 1.5rem; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);">
-        <a href="/" style="color: var(--muted);">Home</a>
-        <span style="margin: 0 0.5rem; opacity: 0.5;">/</span>
-        <a href="/state/${stateSlug}" style="color: var(--muted);">${escHtml(stateName)}</a>
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a>
+        <span class="breadcrumb-sep">›</span>
+        <a href="/state/${stateSlug}">${escHtml(stateName)}</a>
+        <span class="breadcrumb-sep">›</span>
+        <span style="color:var(--ink);">${escHtml(cityName)}</span>
       </nav>
       <h1 style="margin-bottom: 1rem;">Nursing homes in ${escHtml(cityName)}, ${escHtml(stateName)}</h1>
       <p class="lede">
@@ -70,12 +72,12 @@ export function cityPage(data: CityPageData): string {
       ${facilities.map(f => `
         <div class="card city-result-card" style="padding: 1.5rem;">
           <div class="city-result-grid" style="display: grid; grid-template-columns: 80px 1fr auto; gap: 2rem; align-items: start;">
-            <div class="grade-badge grade-${f.grade_letter}">
-              <div class="grade-badge-letter">${f.grade_letter}</div>
-              <div class="grade-badge-score">${f.grade_score}/100</div>
+            <div class="grade-badge grade-${f.grade_letter}" style="width:80px;height:80px;border-radius:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+              <div class="grade-badge-letter" style="font-size:2.5rem;font-weight:900;line-height:1;">${f.grade_letter}</div>
+              <div class="grade-badge-score" style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-top:2px;">${f.grade_score}/100</div>
             </div>
             <div>
-              <a href="/facility/${f.cms_id}-${f.slug}" style="font-family: 'Newsreader', Georgia, serif; font-size: 1.5rem; font-weight: 800; color: var(--ink); text-decoration: none; display: block; margin-bottom: 0.5rem;">${escHtml(f.name)}</a>
+              <a href="/facility/${f.cms_id}-${f.slug}" style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.5rem; font-weight: 800; color: var(--ink); text-decoration: none; display: block; margin-bottom: 0.5rem;">${escHtml(f.name)}</a>
               <div style="font-size: 0.95rem; color: var(--muted); font-weight: 500; margin-bottom: 1rem;">${escHtml(f.address)}, ${escHtml(f.city)}, ${escHtml(f.state)}</div>
               
               <div class="city-result-metrics" style="display: flex; gap: 2rem;">
@@ -100,7 +102,7 @@ export function cityPage(data: CityPageData): string {
       <h2 style="color: #fff; margin-bottom: 1.5rem;">Don't see a facility?</h2>
       <p style="font-size: 1.1rem; opacity: 0.9; max-width: 600px; margin: 0 auto 2.5rem;">Search by ZIP code to find all facilities within 25 miles of ${escHtml(cityName)}.</p>
       <form action="/search" method="GET" class="city-zip-form" style="display: flex; gap: 0.5rem; max-width: 500px; margin: 0 auto;">
-        <input type="text" name="zip" placeholder="Enter ZIP code" pattern="[0-9]{5}" title="Enter a 5-digit ZIP code" maxlength="5" required style="flex: 1; padding: 1rem; border-radius: 0; border: none; font-family: 'Source Sans 3', sans-serif;">
+        <input type="text" name="zip" placeholder="Enter ZIP code" pattern="[0-9]{5}" title="Enter a 5-digit ZIP code" maxlength="5" required style="flex: 1; padding: 1rem; border-radius: 0; border: none; font-family: 'Inter', system-ui, sans-serif;">
         <button type="submit" class="btn" style="background: #fff; color: var(--ink); border: none;">Find Near Me</button>
       </form>
     </div>

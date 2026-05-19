@@ -23,11 +23,11 @@ function severityLabel(code: string | null): string {
 }
 
 function severityColor(code: string | null): string {
-  if (!code) return "#78716c";
-  if (code >= "A" && code <= "F") return "#78716c";
+  if (!code) return "#607D8B";
+  if (code >= "A" && code <= "F") return "#607D8B";
   if (code >= "G" && code <= "I") return "#b48a3e";
   if (code >= "J" && code <= "L") return "#9e3a3a";
-  return "#78716c";
+  return "#607D8B";
 }
 
 function formatDate(dateStr: string | null): string {
@@ -83,7 +83,7 @@ function renderDeficiencies(deficiencies: Deficiency[]): string {
                 ${tag ? `<span style="font-size:0.8rem;color:var(--ink);font-weight:800;">${escHtml(tag)}</span>` : ""}
                 <span style="font-size:0.8rem;color:var(--accent);font-weight:800;text-transform:uppercase;letter-spacing:0.05em;margin-left:auto;">${escHtml(statusLabel)}</span>
               </div>
-              <p style="font-weight:800;font-family:'Newsreader',serif;font-size:1.4rem;line-height:1.2;margin-bottom:var(--space-2xs);">${escHtml(d.deficiency_description ?? "Unknown deficiency")}</p>
+              <p style="font-weight:800;font-family:'Playfair Display',Georgia,serif;font-size:1.4rem;line-height:1.2;margin-bottom:var(--space-2xs);">${escHtml(d.deficiency_description ?? "Unknown deficiency")}</p>
               <p style="font-size:0.95rem;color:var(--muted);margin-bottom:0;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">${escHtml(d.deficiency_category ?? "")}${corrected ? escHtml(corrected + correctionDate) : ""}</p>
             </div>
           `;
@@ -159,11 +159,11 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
 
   const qualityStars =
     f.quality_rating !== null
-      ? `${"★".repeat(f.quality_rating)}${"☆".repeat(5 - f.quality_rating)} (${f.quality_rating}/5)`
+      ? `<span role="img" aria-label="${f.quality_rating} out of 5 stars">${"★".repeat(f.quality_rating)}${"☆".repeat(5 - f.quality_rating)}</span> (${f.quality_rating}/5)`
       : "Not rated";
   const staffingStars =
     f.staffing_rating !== null
-      ? `${"★".repeat(f.staffing_rating)}${"☆".repeat(5 - f.staffing_rating)} (${f.staffing_rating}/5)`
+      ? `<span role="img" aria-label="${f.staffing_rating} out of 5 stars">${"★".repeat(f.staffing_rating)}${"☆".repeat(5 - f.staffing_rating)}</span> (${f.staffing_rating}/5)`
       : "Not rated";
 
   // Contextual CTA based on grade
@@ -224,7 +224,7 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
             <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">RN Staffing</div>
             <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Registered nurse time each resident receives daily. Federal minimum: 0.55 hrs.</div>
           </td>
-          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Newsreader',serif;font-size:1.5rem;text-align:right;color:${meetsMinimum ? "var(--grade-A)" : "var(--grade-F)"}">
+          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Playfair Display',Georgia,serif;font-size:1.5rem;text-align:right;color:${meetsMinimum ? "var(--grade-A)" : "var(--grade-F)"}">
             ${escHtml(rnDisplay)}
           </td>
         </tr>
@@ -233,14 +233,14 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
             <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">Health Deficiencies</div>
             <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Violations found during federal inspections over the last 3 years.</div>
           </td>
-          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Newsreader',serif;font-size:1.5rem;text-align:right;">${f.total_deficiencies ?? "Not reported"}</td>
+          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Playfair Display',Georgia,serif;font-size:1.5rem;text-align:right;">${f.total_deficiencies ?? "Not reported"}</td>
         </tr>
         <tr class="quality-row" style="border-bottom:1px solid var(--rule);">
           <td class="quality-label-cell" style="padding:var(--space-m) 0;">
             <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">CMS Ratings</div>
             <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Overall and Staffing quality ratings from CMS (1-5 stars).</div>
           </td>
-          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Newsreader',serif;font-size:1.25rem;text-align:right;">
+          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Playfair Display',Georgia,serif;font-size:1.25rem;text-align:right;">
             <div style="margin-bottom:var(--space-3xs);">Quality: ${qualityStars}</div>
             <div>Staffing: ${staffingStars}</div>
           </td>
@@ -249,7 +249,7 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
           <td class="quality-label-cell" style="padding:var(--space-m) 0;">
             <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">NursingHomeGrade Score</div>
           </td>
-          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Newsreader',serif;font-size:2.5rem;text-align:right;">${f.grade_score}/100</td>
+          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Playfair Display',Georgia,serif;font-size:2.5rem;text-align:right;">${f.grade_score}/100</td>
         </tr>
       </table>
     </div>
@@ -285,7 +285,7 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
   ` : "";
 
   const extraScripts = f.latitude && f.longitude ? `
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script>
       (function() {
         const map = L.map('facility-map', { zoomControl: false, attributionControl: false }).setView([${f.latitude}, ${f.longitude}], 14);
@@ -293,11 +293,11 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
           subdomains: 'abcd',
           maxZoom: 20
         }).addTo(map);
-        const color = getComputedStyle(document.documentElement).getPropertyValue('--grade-${f.grade_letter}').trim() || '#78716c';
+        const color = getComputedStyle(document.documentElement).getPropertyValue('--grade-${f.grade_letter}').trim() || '#607D8B';
         L.circleMarker([${f.latitude}, ${f.longitude}], {
           radius: 8,
           fillColor: color,
-          color: '#1c1917',
+          color: '#0B1D33',
           weight: 2,
           opacity: 1,
           fillOpacity: 1
@@ -322,9 +322,10 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
     "aggregateRating": {
       "@type": "AggregateRating",
       "ratingValue": f.grade_score,
-      "bestRating": "100",
-      "worstRating": "0",
-      "ratingCount": 1
+      "bestRating": 100,
+      "worstRating": 0,
+      "ratingCount": 1,
+      "reviewCount": 1
     }
   };
 
@@ -376,6 +377,7 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
     body,
     {
       canonicalPath,
+      ogType: "article",
       extraHead,
       extraScripts,
       jsonLd

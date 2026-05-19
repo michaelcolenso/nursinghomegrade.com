@@ -56,10 +56,12 @@ export function statePage(data: StatePageData): string {
 
   const body = `
     <div style="margin-bottom: 4rem;">
-      <nav class="breadcrumb" style="margin-bottom: 1.5rem; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);">
-        <a href="/" style="color: var(--muted);">Home</a>
-        <span style="margin: 0 0.5rem; opacity: 0.5;">/</span>
-        <a href="/states" style="color: var(--muted);">States</a>
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a>
+        <span class="breadcrumb-sep">›</span>
+        <a href="/states">States</a>
+        <span class="breadcrumb-sep">›</span>
+        <span style="color:var(--ink);">${escHtml(stateName)}</span>
       </nav>
       <h1 style="margin-bottom: 1rem;">Nursing homes in ${escHtml(stateName)}</h1>
       <p class="lede">
@@ -68,7 +70,7 @@ export function statePage(data: StatePageData): string {
     </div>
 
 
-    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 4rem; align-items: start; margin-bottom: 6rem;">
+    <div class="state-layout" style="display: grid; grid-template-columns: 2fr 1fr; gap: 4rem; align-items: start; margin-bottom: 6rem;">
       <div>
         <h2 style="margin-bottom: 2rem;">Grade Distribution</h2>
         ${renderGradeDistribution(gradeDistribution, totalFacilityCount)}
@@ -84,10 +86,10 @@ export function statePage(data: StatePageData): string {
       </div>
       
       <div class="card" style="background: var(--ink); color: #fff; border: none; position: sticky; top: 120px;">
-        <h3 style="color: #fff; font-size: 1.25rem; margin-bottom: 1.5rem; font-family: 'Newsreader', Georgia, serif;">Quick Search</h3>
+        <h3 style="color: #fff; font-size: 1.25rem; margin-bottom: 1.5rem; font-family: 'Playfair Display', Georgia, serif;">Quick Search</h3>
         <p style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 1.5rem;">Find a specific facility in ${escHtml(stateName)} by ZIP code.</p>
         <form action="/search" method="GET" style="display: flex; flex-direction: column; gap: 0.75rem;">
-          <input type="text" name="zip" placeholder="ZIP Code" pattern="[0-9]{5}" title="Enter a 5-digit ZIP code" maxlength="5" required style="padding: 0.75rem 1rem; border-radius: 0; border: none; font-family: 'Source Sans 3', sans-serif;">
+          <input type="text" name="zip" placeholder="ZIP Code" pattern="[0-9]{5}" title="Enter a 5-digit ZIP code" maxlength="5" required style="padding: 0.75rem 1rem; border-radius: 0; border: none; font-family: 'Inter', system-ui, sans-serif;">
           <button type="submit" class="btn" style="background: #fff; color: var(--ink); border: none;">Search</button>
         </form>
       </div>
@@ -109,7 +111,7 @@ export function statePage(data: StatePageData): string {
     `Nursing Homes in ${stateName} — Grades & Ratings`,
     `${facilityCount} nursing homes in ${stateName}. ${pctFailing}% fail the federal staffing minimum. Independent grades based on CMS data.`,
     body,
-    { canonicalPath: `/state/${stateSlug}`, jsonLd }
+    { canonicalPath: `/state/${stateSlug}`, jsonLd, extraHead: `<style>@media(max-width:768px){.state-layout{grid-template-columns:1fr!important;gap:2rem!important}.state-layout .card[style*="sticky"]{position:static!important;order:2}}</style>` }
   );
 }
 
@@ -144,7 +146,7 @@ function renderFacilityItem(f: Facility): string {
           <div class="grade-badge-score" style="font-size: 0.6rem;">${f.grade_score}</div>
         </div>
         <div>
-          <a href="/facility/${f.cms_id}-${f.slug}" style="font-family: 'Newsreader', Georgia, serif; font-size: 1.25rem; font-weight: 800; color: var(--ink); text-decoration: none;">${escHtml(f.name)}</a>
+          <a href="/facility/${f.cms_id}-${f.slug}" style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.25rem; font-weight: 800; color: var(--ink); text-decoration: none;">${escHtml(f.name)}</a>
           <div style="font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem;">${escHtml(f.city)}, ${escHtml(f.state)}</div>
         </div>
         <div style="text-align: right;">
@@ -159,8 +161,10 @@ function renderFacilityItem(f: Facility): string {
     export function statesHubPage(states: Array<{ state: string; count: number; slug: string }>): string {
   const body = `
     <div style="margin-bottom: 4rem;">
-      <nav class="breadcrumb" style="margin-bottom: 1.5rem; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);">
-        <a href="/" style="color: var(--muted);">Home</a>
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a>
+        <span class="breadcrumb-sep">›</span>
+        <span style="color:var(--ink);">States</span>
       </nav>
       <h1 style="margin-bottom: 1rem;">Nursing home grades by state</h1>
       <p class="lede">
@@ -179,22 +183,31 @@ function renderFacilityItem(f: Facility): string {
   `;
 
   const baseUrl = "https://nursinghomegrade.com";
-  const hubJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    "name": "Nursing Home Grades by State",
-    "itemListElement": states.map((s, i) => ({
-      "@type": "ListItem",
-      "position": i + 1,
-      "name": s.state,
-      "url": `${baseUrl}/state/${s.slug}`,
-    })),
-  };
-
+  const hubJsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": `${baseUrl}/` },
+        { "@type": "ListItem", "position": 2, "name": "All States", "item": `${baseUrl}/states` }
+      ]
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      "name": "Nursing Home Grades by State",
+      "itemListElement": states.map((s, i) => ({
+        "@type": "ListItem",
+        "position": i + 1,
+        "name": s.state,
+        "url": `${baseUrl}/state/${s.slug}`,
+      })),
+    }
+  ];
   return layout(
     "Nursing Home Grades by State — NursingHomeGrade",
     "Browse independent nursing home ratings for every U.S. state. Grades based on federal CMS data.",
     body,
-    { canonicalPath: "/states", jsonLd: [hubJsonLd] }
+    { canonicalPath: "/states", jsonLd: hubJsonLd }
   );
 }

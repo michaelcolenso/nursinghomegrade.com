@@ -50,7 +50,7 @@ export function homePage(pctFailing: number): string {
     "NursingHomeGrade — Honest Nursing Home Ratings",
     `${pctFailing}% of U.S. nursing homes fail the federal staffing minimum. Find unbiased nursing home grades based on CMS data — no commissions.`,
     body,
-    { jsonLd, ogImage: "https://nursinghomegrade.com/NHG.png" }
+    { jsonLd, canonicalPath: "/", ogImage: "https://nursinghomegrade.com/NHG.png" }
   );
 }
 
@@ -90,6 +90,7 @@ export function searchResultsPage(
       `No Results for ${zip} — NursingHomeGrade`,
       `No nursing homes found near ZIP code ${zip}.`,
       body,
+      { noindex: true },
     );
   }
 
@@ -195,7 +196,7 @@ const extraHead = `
 `;
 
 const extraScripts = `
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script>
     (function() {
       const facilities = ${JSON.stringify(mapData)};
@@ -240,11 +241,11 @@ const extraScripts = `
 
             const group = L.featureGroup();
             facilities.forEach(f => {
-              const color = getComputedStyle(document.documentElement).getPropertyValue('--grade-' + f.g).trim() || '#78716c';
+              const color = getComputedStyle(document.documentElement).getPropertyValue('--grade-' + f.g).trim() || '#607D8B';
               const m = L.circleMarker([f.lt, f.lg], {
                 radius: 7,
                 fillColor: color,
-                color: '#1c1917',
+                color: '#0B1D33',
                 weight: 2,
                 opacity: 1,
                 fillOpacity: 1
