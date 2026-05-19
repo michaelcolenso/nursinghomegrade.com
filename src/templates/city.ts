@@ -98,12 +98,12 @@ export function cityPage(data: CityPageData): string {
       ${facilities.length === 0 ? `<p style="color: var(--muted);">No facilities found in this city.</p>` : ''}
     </div>
 
-    <div class="city-zip-cta" style="background: var(--ink); color: #fff; padding: 4rem; text-align: center; border: none;">
-      <h2 style="color: #fff; margin-bottom: 1.5rem;">Don't see a facility?</h2>
-      <p style="font-size: 1.1rem; opacity: 0.9; max-width: 600px; margin: 0 auto 2.5rem;">Search by ZIP code to find all facilities within 25 miles of ${escHtml(cityName)}.</p>
-      <form action="/search" method="GET" class="city-zip-form" style="display: flex; gap: 0.5rem; max-width: 500px; margin: 0 auto;">
-        <input type="text" name="zip" placeholder="Enter ZIP code" pattern="[0-9]{5}" title="Enter a 5-digit ZIP code" maxlength="5" required style="flex: 1; padding: 1rem; border-radius: 0; border: none; font-family: 'Inter', system-ui, sans-serif;">
-        <button type="submit" class="btn" style="background: #fff; color: var(--ink); border: none;">Find Near Me</button>
+    <div class="city-zip-cta" style="background: var(--ink); color: #fff; padding: var(--space-2xl); text-align: center; border: none;">
+      <h2 style="color: #fff; margin-bottom: var(--space-m);">Don't see a facility?</h2>
+      <p style="font-size: 1.1rem; opacity: 0.7; max-width: 600px; margin: 0 auto var(--space-xl);">Search by ZIP code to find all facilities within 25 miles of ${escHtml(cityName)}.</p>
+      <form action="/search" method="GET" class="city-zip-form" style="display: flex; gap: var(--space-xs); max-width: 500px; margin: 0 auto;">
+        <input type="text" name="zip" placeholder="ZIP code" pattern="[0-9]{5}" title="Enter a 5-digit ZIP code" maxlength="5" required style="flex: 1; padding: var(--space-s); border-radius: 0; border: none; background: #fff; color: var(--ink); font-family: 'Inter', system-ui, sans-serif; font-size: 1rem;">
+        <button type="submit" class="btn-on-dark">Find Near Me</button>
       </form>
     </div>
   `;

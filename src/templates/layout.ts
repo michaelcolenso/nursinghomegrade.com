@@ -336,6 +336,54 @@ export function layout(
     .grade-D { color: var(--grade-D); }
     .grade-F { color: var(--grade-F); }
 
+    /* Grade badge */
+    .grade-badge {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 80px;
+      height: 80px;
+      border-radius: 0;
+      background: var(--bg);
+      border: 2px solid var(--ink);
+    }
+    .grade-badge-letter {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 2.5rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .grade-badge-score {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin-top: 0.15rem;
+    }
+
+    /* Button on dark background */
+    .btn-on-dark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-xs) var(--space-l);
+      background: #fff;
+      color: var(--ink);
+      border: 2px solid #fff;
+      font-family: 'Inter', system-ui, sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.2s ease-out;
+      min-height: 44px;
+    }
+    .btn-on-dark:hover { background: transparent; color: #fff; }
+    .btn-on-dark:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
     /* Responsive Tables */
     .table-container {
       overflow-x: auto;
