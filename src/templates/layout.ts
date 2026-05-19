@@ -2,6 +2,7 @@ export interface LayoutOptions {
   canonicalPath?: string;
   noindex?: boolean;
   ogType?: string;
+  ogImage?: string;
   jsonLd?: object[];
   extraHead?: string;
   extraScripts?: string;
@@ -13,7 +14,7 @@ export function layout(
   body: string,
   options: LayoutOptions = {},
 ): string {
-  const { canonicalPath, noindex, ogType = "website", jsonLd, extraHead, extraScripts } = options;
+  const { canonicalPath, noindex, ogType = "website", ogImage, jsonLd, extraHead, extraScripts } = options;
   const canonicalUrl = canonicalPath
     ? `https://nursinghomegrade.com${canonicalPath}`
     : undefined;
@@ -21,16 +22,28 @@ export function layout(
   const canonicalTag = canonicalUrl
     ? `<link rel="canonical" href="${escHtml(canonicalUrl)}">`
     : "";
-  const noindexTag = noindex
+  const robotsMeta = noindex
     ? `<meta name="robots" content="noindex, follow">`
+    : `<meta name="robots" content="max-snippet:-1, max-image-preview:large, max-video-preview:-1">`;
+  const hreflangTags = canonicalUrl
+    ? `<link rel="alternate" hreflang="en-US" href="${escHtml(canonicalUrl)}">
+  <link rel="alternate" hreflang="x-default" href="${escHtml(canonicalUrl)}">`
     : "";
+  const resolvedOgImage = ogImage ?? "https://nursinghomegrade.com/og.svg";
   const ogUrl = canonicalUrl ?? "https://nursinghomegrade.com";
   const ogTags = `
     <meta property="og:title" content="${escHtml(title)}">
     <meta property="og:description" content="${escHtml(description)}">
     <meta property="og:url" content="${escHtml(ogUrl)}">
     <meta property="og:type" content="${escHtml(ogType)}">
-    <meta name="twitter:card" content="summary">
+    <meta property="og:image" content="${escHtml(resolvedOgImage)}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="NursingHomeGrade">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="${escHtml(title)}">
+    <meta name="twitter:description" content="${escHtml(description)}">
+    <meta name="twitter:image" content="${escHtml(resolvedOgImage)}">
   `;
   const jsonLdTags = jsonLd?.length
     ? jsonLd
@@ -49,13 +62,15 @@ export function layout(
   <title>${escHtml(title)}</title>
   <meta name="description" content="${escHtml(description)}">
   ${canonicalTag}
-  ${noindexTag}
+  ${robotsMeta}
+  ${hreflangTags}
   ${ogTags}
   ${jsonLdTags}
   ${extraHead || ""}
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%231c1917'/%3E%3Ctext x='50' y='68' font-family='Georgia,serif' font-size='55' fill='%23f7f5f2' text-anchor='middle' font-weight='700'%3EN%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&family=Source+Sans+3:wght@400;600;700&display=swap">
   <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     :root {

@@ -29,10 +29,12 @@ export function statePage(data: StatePageData): string {
 
   const body = `
     <div style="margin-bottom: 4rem;">
-      <nav class="breadcrumb" style="margin-bottom: 1.5rem; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);">
-        <a href="/" style="color: var(--muted);">Home</a>
-        <span style="margin: 0 0.5rem; opacity: 0.5;">/</span>
-        <a href="/states" style="color: var(--muted);">States</a>
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a>
+        <span class="breadcrumb-sep">›</span>
+        <a href="/states">States</a>
+        <span class="breadcrumb-sep">›</span>
+        <span style="color:var(--ink);">${escHtml(stateName)}</span>
       </nav>
       <h1 style="margin-bottom: 1rem;">Nursing homes in ${escHtml(stateName)}</h1>
       <p class="lede">
@@ -78,11 +80,22 @@ export function statePage(data: StatePageData): string {
     </div>
   `;
 
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://nursinghomegrade.com/" },
+        { "@type": "ListItem", "position": 2, "name": "States", "item": "https://nursinghomegrade.com/states" },
+        { "@type": "ListItem", "position": 3, "name": `Nursing Homes in ${stateName}`, "item": `https://nursinghomegrade.com/state/${stateSlug}` }
+      ]
+    }
+  ];
   return layout(
     `Nursing Homes in ${stateName} — Grades & Ratings`,
     `${facilityCount} nursing homes in ${stateName}. ${pctFailing}% fail the federal staffing minimum. Independent grades based on CMS data.`,
     body,
-    { canonicalPath: `/state/${stateSlug}` }
+    { canonicalPath: `/state/${stateSlug}`, jsonLd }
   );
 }
 
@@ -132,8 +145,10 @@ function renderFacilityItem(f: Facility): string {
     export function statesHubPage(states: Array<{ state: string; count: number; slug: string }>): string {
   const body = `
     <div style="margin-bottom: 4rem;">
-      <nav class="breadcrumb" style="margin-bottom: 1.5rem; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);">
-        <a href="/" style="color: var(--muted);">Home</a>
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a>
+        <span class="breadcrumb-sep">›</span>
+        <span style="color:var(--ink);">States</span>
       </nav>
       <h1 style="margin-bottom: 1rem;">Nursing home grades by state</h1>
       <p class="lede">
@@ -151,10 +166,20 @@ function renderFacilityItem(f: Facility): string {
     </div>
   `;
 
+  const hubJsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://nursinghomegrade.com/" },
+        { "@type": "ListItem", "position": 2, "name": "All States", "item": "https://nursinghomegrade.com/states" }
+      ]
+    }
+  ];
   return layout(
     "Nursing Home Grades by State — NursingHomeGrade",
     "Browse independent nursing home ratings for every U.S. state. Grades based on federal CMS data.",
     body,
-    { canonicalPath: "/states" }
+    { canonicalPath: "/states", jsonLd: hubJsonLd }
   );
 }

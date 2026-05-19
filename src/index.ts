@@ -57,6 +57,22 @@ export default {
         headers: { "Content-Type": "text/plain" },
       });
 
+    if (path === "/og.svg") {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#1c1917"/>
+  <text x="80" y="310" font-family="Georgia,serif" font-size="200" fill="#f7f5f2" font-weight="700">N</text>
+  <text x="300" y="240" font-family="Georgia,serif" font-size="62" fill="#f7f5f2" font-weight="700">NursingHome</text>
+  <text x="300" y="320" font-family="Georgia,serif" font-size="62" fill="#f7f5f2" font-weight="700">Grade</text>
+  <text x="300" y="395" font-family="Georgia,serif" font-size="26" fill="#a8a29e">Honest ratings from CMS data · No commissions</text>
+</svg>`;
+      return new Response(svg, {
+        headers: {
+          "Content-Type": "image/svg+xml",
+          "Cache-Control": "public, max-age=604800",
+        },
+      });
+    }
+
     const facilityMatch = path.match(/^\/facility\/([A-Za-z0-9-]+)$/);
     if (facilityMatch?.[1]) return handleFacility(request, env, facilityMatch[1]);
 

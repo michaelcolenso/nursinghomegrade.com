@@ -48,23 +48,30 @@ async function main() {
     })
     .filter((u): u is string => u !== null))].map(escapeXml);
 
-  const urls = [
+  const today = new Date().toISOString().split("T")[0];
+
+  const staticUrls = [
     `${BASE}/`,
     `${BASE}/about`,
     `${BASE}/states`,
+    `${BASE}/explore`,
+    `${BASE}/compare`,
+  ];
+  const dynamicUrls = [
     ...stateSlugs.map((s) => `${BASE}/state/${escapeXml(s)}`),
     ...cityUrls,
     ...rows.map((r) => `${BASE}/facility/${escapeXml(r.cms_id)}-${escapeXml(r.slug)}`),
   ];
+  const allUrls = [...staticUrls, ...dynamicUrls];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map((u) => `  <url><loc>${u}</loc></url>`).join("\n")}
+${allUrls.map((u) => `  <url><loc>${u}</loc><lastmod>${today}</lastmod></url>`).join("\n")}
 </urlset>`;
 
   mkdirSync("public", { recursive: true });
   writeFileSync("public/sitemap.xml", xml);
-  console.log(`Wrote public/sitemap.xml with ${urls.length} URLs`);
+  console.log(`Wrote public/sitemap.xml with ${allUrls.length} URLs`);
 
   // Upload to KV
   try {

@@ -50,7 +50,7 @@ export function homePage(pctFailing: number): string {
     "NursingHomeGrade — Honest Nursing Home Ratings",
     `${pctFailing}% of U.S. nursing homes fail the federal staffing minimum. Find unbiased nursing home grades based on CMS data — no commissions.`,
     body,
-    { jsonLd }
+    { jsonLd, canonicalPath: "/" }
   );
 }
 
@@ -90,6 +90,7 @@ export function searchResultsPage(
       `No Results for ${zip} — NursingHomeGrade`,
       `No nursing homes found near ZIP code ${zip}.`,
       body,
+      { noindex: true },
     );
   }
 
