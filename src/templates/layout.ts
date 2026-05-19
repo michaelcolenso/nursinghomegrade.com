@@ -184,10 +184,9 @@ export function layout(
       white-space: nowrap;
     }
     .masthead-search-btn:hover { background: var(--accent-hover); border: none; }
-    @media (max-width: 600px) {
-      .masthead-nav { gap: var(--space-s); }
-      .masthead-nav-link { font-size: 0.8rem; }
-      .masthead-search-btn { padding: 0.35rem 0.75rem; }
+    @media (max-width: 640px) {
+      .masthead-nav-link { display: none; }
+      .masthead-search-btn { padding: 0.45rem 1rem; font-size: 0.9rem; }
     }
 
     /* Typography */
