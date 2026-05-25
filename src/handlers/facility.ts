@@ -6,7 +6,20 @@ import { notFoundPage, errorPage } from "../templates/subscribe";
 
 export async function handleFacility(request: Request, env: Env, slugId: string): Promise<Response> {
   try {
-    const cacheKey = htmlCacheKey(`facility:${slugId}`);
+    const facility = await getFacilityBySlugId(env, slugId);
+    if (!facility) {
+      const html = notFoundPage(new URL(request.url).pathname);
+      return new Response(html, { status: 404, headers: { "Content-Type": "text/html;charset=UTF-8" } });
+    }
+
+    const canonicalPath = `/facility/${facility.cms_id}-${facility.slug}`;
+    const url = new URL(request.url);
+    if (url.pathname !== canonicalPath) {
+      url.pathname = canonicalPath;
+      return Response.redirect(url.toString(), 308);
+    }
+
+    const cacheKey = htmlCacheKey(`facility:${facility.cms_id}-${facility.slug}`);
     const cached = await env.CACHE.get(cacheKey);
     if (cached)
       return new Response(cached, {
@@ -15,12 +28,6 @@ export async function handleFacility(request: Request, env: Env, slugId: string)
           "Cache-Control": "public, max-age=86400",
         },
       });
-
-    const facility = await getFacilityBySlugId(env, slugId);
-    if (!facility) {
-      const html = notFoundPage(new URL(request.url).pathname);
-      return new Response(html, { status: 404, headers: { "Content-Type": "text/html;charset=UTF-8" } });
-    }
 
     const [inspectionDetails, deficiencies, nearby] = await Promise.all([
       getFacilityInspectionDetails(env, facility.cms_id),

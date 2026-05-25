@@ -112,6 +112,12 @@ describe("facilityPage", () => {
     expect(html).toContain('"longitude":-86.8104');
   });
 
+  it("does not expose the facility score as a review aggregate", () => {
+    const html = facilityPage(baseFacility, []);
+    expect(html).not.toContain('"aggregateRating"');
+    expect(html).not.toContain('"@type":"AggregateRating"');
+  });
+
   it("omits geo from schema when coordinates are unavailable", () => {
     const noGeo = { ...baseFacility, latitude: null, longitude: null };
     const html = facilityPage(noGeo, []);

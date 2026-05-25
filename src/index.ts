@@ -9,6 +9,13 @@ import { handleCompare, handleCompareApi } from "./handlers/comparison";
 import { handleExplore, handleMapApi } from "./handlers/map";
 import { subscribePage, notFoundPage, errorPage } from "./templates/subscribe";
 
+const SITEMAP_KEYS: Record<string, string> = {
+  "/sitemap.xml": "sitemap",
+  "/sitemap-core.xml": "sitemap:core",
+  "/sitemap-cities.xml": "sitemap:cities",
+  "/sitemap-facilities.xml": "sitemap:facilities",
+};
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -42,8 +49,9 @@ export default {
       }
     }
 
-    if (path === "/sitemap.xml") {
-      const sitemap = await env.CACHE.get("sitemap");
+    const sitemapKey = SITEMAP_KEYS[path];
+    if (sitemapKey) {
+      const sitemap = await env.CACHE.get(sitemapKey);
       if (sitemap)
         return new Response(sitemap, {
           headers: { "Content-Type": "application/xml" },

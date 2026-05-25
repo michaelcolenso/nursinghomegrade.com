@@ -67,6 +67,16 @@ describe("statePage", () => {
     expect(html).toContain("1,162 facilities");
   });
 
+  it("uses the full state facility count in the meta description", () => {
+    const html = statePage(baseStateData);
+    expect(html).toContain(
+      '<meta name="description" content="1,162 nursing homes in California. 62.5% fail the federal staffing minimum. Independent grades based on CMS data.">',
+    );
+    expect(html).not.toContain(
+      '<meta name="description" content="2 nursing homes in California.',
+    );
+  });
+
   it("renders grade distribution", () => {
     const html = statePage(baseStateData);
     expect(html).toContain("Grade Distribution");

@@ -68,6 +68,25 @@ export function cityPage(data: CityPageData): string {
       </p>
     </div>
 
+    <section aria-label="${escHtml(cityName)} nursing home overview" style="margin-bottom: var(--space-2xl);">
+      <h2 style="margin-bottom: var(--space-m);">Local Ratings Snapshot</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-m); margin-bottom: var(--space-xl);">
+        <div class="snapshot-card">
+          <div class="snapshot-label">Nursing homes</div>
+          <div class="snapshot-value">${facilityCount}</div>
+        </div>
+        <div class="snapshot-card">
+          <div class="snapshot-label">Below staffing minimum</div>
+          <div class="snapshot-value">${pctFailing}%</div>
+        </div>
+        <div class="snapshot-card">
+          <div class="snapshot-label">National comparison</div>
+          <div class="snapshot-value">${nationalPctFailing}%</div>
+        </div>
+      </div>
+      ${renderGradeDistribution(gradeDistribution, facilityCount)}
+    </section>
+
     <div style="display: grid; gap: 1.5rem; margin-bottom: 6rem;">
       ${facilities.map(f => `
         <div class="card city-result-card" style="padding: 1.5rem;">
@@ -114,4 +133,27 @@ export function cityPage(data: CityPageData): string {
     body,
     { canonicalPath: `/state/${stateSlug}/${citySlug}`, jsonLd },
   );
+}
+
+function renderGradeDistribution(dist: Record<string, number>, total: number): string {
+  const letters = ["A", "B", "C", "D", "F"];
+  return `
+    <h3 style="margin-top: 0;">Grade Distribution</h3>
+    <div style="display: flex; gap: 2px; height: 32px; overflow: hidden; margin-bottom: var(--space-m);">
+      ${letters.map((letter) => {
+        const count = dist[letter] ?? 0;
+        const pct = total > 0 ? (count / total) * 100 : 0;
+        return `<div class="grade-${letter}" style="width:${pct}%;background:var(--grade-${letter});" title="Grade ${letter}: ${count} facilities"></div>`;
+      }).join("")}
+    </div>
+    <div style="display:flex;gap:var(--space-m);flex-wrap:wrap;">
+      ${letters.map((letter) => `
+        <div style="display:flex;align-items:center;gap:var(--space-2xs);">
+          <span class="grade-${letter}" aria-hidden="true" style="display:inline-block;width:12px;height:12px;background:var(--grade-${letter});"></span>
+          <span style="font-size:0.9rem;font-weight:700;">Grade ${letter}</span>
+          <span style="font-size:0.9rem;color:var(--muted);">${dist[letter] ?? 0}</span>
+        </div>
+      `).join("")}
+    </div>
+  `;
 }

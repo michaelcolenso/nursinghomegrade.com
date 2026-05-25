@@ -77,7 +77,7 @@ export function statePage(data: StatePageData): string {
         
         <h2 style="margin-bottom: 2rem; margin-top: 4rem;">Cities</h2>
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem;">
-          ${cities.slice(0, 30).map(c => `
+          ${cities.map(c => `
             <a href="/state/${stateSlug}/${citySlug(c.city)}" class="card" style="padding: 1rem; text-align: center; text-decoration: none; color: var(--ink); font-weight: 600; font-size: 0.9rem;">
               ${escHtml(c.city)} (${c.count})
             </a>
@@ -109,7 +109,7 @@ export function statePage(data: StatePageData): string {
 
   return layout(
     `Nursing Homes in ${stateName} — Grades & Ratings`,
-    `${facilityCount} nursing homes in ${stateName}. ${pctFailing}% fail the federal staffing minimum. Independent grades based on CMS data.`,
+    `${(totalFacilityCount ?? facilityCount).toLocaleString()} nursing homes in ${stateName}. ${pctFailing}% fail the federal staffing minimum. Independent grades based on CMS data.`,
     body,
     { canonicalPath: `/state/${stateSlug}`, jsonLd, extraHead: `<style>@media(max-width:768px){.state-layout{grid-template-columns:1fr!important;gap:2rem!important}.state-layout .card[style*="sticky"]{position:static!important;order:2}}</style>` }
   );

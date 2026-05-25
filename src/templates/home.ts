@@ -50,7 +50,7 @@ export function homePage(pctFailing: number): string {
     "NursingHomeGrade — Honest Nursing Home Ratings",
     `${pctFailing}% of U.S. nursing homes fail the federal staffing minimum. Find unbiased nursing home grades based on CMS data — no commissions.`,
     body,
-    { jsonLd, canonicalPath: "/", ogImage: "https://nursinghomegrade.com/NHG.png" }
+    { jsonLd, canonicalPath: "/" }
   );
 }
 
@@ -291,4 +291,3 @@ return layout(
   { noindex: true, extraHead, extraScripts },
 );
 }
-

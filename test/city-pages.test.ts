@@ -39,6 +39,25 @@ describe("statePage city links", () => {
     expect(html).toContain('href="/state/california/los-angeles"');
     expect(html).toContain('href="/state/california/st-louis"');
   });
+
+  it("keeps city pages linked beyond the first 30 entries", () => {
+    const html = statePage({
+      stateName: "California",
+      stateSlug: "california",
+      facilityCount: 31,
+      pctFailing: 50,
+      nationalPctFailing: 40,
+      gradeDistribution: { A: 1, B: 0, C: 0, D: 0, F: 1 },
+      cities: Array.from({ length: 31 }, (_, index) => ({
+        city: index === 30 ? "Yuba City" : `City ${index + 1}`,
+        count: 1,
+      })),
+      facilities: [],
+    });
+
+    expect(html).toContain('href="/state/california/yuba-city"');
+    expect(html).toContain("Yuba City (1)");
+  });
 });
 
 describe("cityPage", () => {
@@ -80,5 +99,26 @@ describe("cityPage", () => {
     expect(html).toContain('"name":"Los Angeles"');
     expect(html).toContain('"item":"https://nursinghomegrade.com/state/california"');
     expect(html).toContain('"item":"https://nursinghomegrade.com/state/california/los-angeles"');
+  });
+
+  it("renders local staffing context and grade distribution", () => {
+    const html = cityPage({
+      cityName: "Los Angeles",
+      citySlug: "los-angeles",
+      stateName: "California",
+      stateSlug: "california",
+      facilityCount: 78,
+      pctFailing: 71.8,
+      nationalPctFailing: 58,
+      gradeDistribution: { A: 5, B: 10, C: 20, D: 18, F: 25 },
+      facilities: [],
+    });
+
+    expect(html).toContain("71.8%");
+    expect(html).toContain("58%");
+    expect(html).toContain("Grade Distribution");
+    expect(html).toContain("Grade F");
+    expect(html).toContain("25");
+    expect(html).toContain("background:var(--grade-A)");
   });
 });

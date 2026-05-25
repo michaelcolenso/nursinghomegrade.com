@@ -318,14 +318,6 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
       "addressRegion": f.state,
       "postalCode": f.zip,
       "addressCountry": "US"
-    },
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": f.grade_score,
-      "bestRating": 100,
-      "worstRating": 0,
-      "ratingCount": 1,
-      "reviewCount": 1
     }
   };
 

@@ -55,6 +55,7 @@ export function notFoundPage(path: string): string {
     "Page Not Found — NursingHomeGrade",
     "The page you requested could not be found.",
     body,
+    { noindex: true },
   );
 }
 
@@ -73,5 +74,6 @@ export function errorPage(title: string, message: string, suggestion?: string): 
     `${escHtml(title)} — NursingHomeGrade`,
     escHtml(message),
     body,
+    { noindex: true },
   );
 }

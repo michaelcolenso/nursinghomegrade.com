@@ -1,37 +1,14 @@
 // Run after data load: npx tsx scripts/sitemap.ts [--local|--remote]
-// Generates public/sitemap.xml and uploads it to KV.
+// Generates grouped sitemap XML documents and uploads them to KV.
 
 import { getAllStateSlugs } from "../src/states";
 import { citySlug } from "../src/states";
-
-function escapeXml(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-interface SitemapEntry {
-  loc: string;
-  lastmod?: string;
-  changefreq?: string;
-  priority?: string;
-}
-
-function toXml(entries: SitemapEntry[]): string {
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${entries
-  .map((e) => {
-    const lastmod = e.lastmod ? `\n    <lastmod>${e.lastmod}</lastmod>` : "";
-    const changefreq = e.changefreq
-      ? `\n    <changefreq>${e.changefreq}</changefreq>`
-      : "";
-    const priority = e.priority
-      ? `\n    <priority>${e.priority}</priority>`
-      : "";
-    return `  <url>\n    <loc>${e.loc}</loc>${lastmod}${changefreq}${priority}\n  </url>`;
-  })
-  .join("\n")}
-</urlset>`;
-}
+import {
+  buildSitemapIndexXml,
+  buildSitemapUrlSetXml,
+  sitemapKvUploadTarget,
+  type SitemapEntry,
+} from "../src/sitemap";
 
 async function main() {
   const { execSync } = await import("child_process");
@@ -40,6 +17,7 @@ async function main() {
   const args = process.argv.slice(2);
   const useLocal = args.includes("--local") || !args.includes("--remote");
   const d1Flag = useLocal ? "--local" : "--remote";
+  const kvUploadTarget = sitemapKvUploadTarget(useLocal);
 
   console.log(`Querying D1 ${useLocal ? "local" : "remote"} database...`);
 
@@ -72,7 +50,7 @@ async function main() {
 
   const now = new Date().toISOString().split("T")[0];
 
-  const entries: SitemapEntry[] = [
+  const coreEntries: SitemapEntry[] = [
     { loc: `${BASE}/`, lastmod: now, changefreq: "weekly", priority: "1.0" },
     {
       loc: `${BASE}/about`,
@@ -87,11 +65,13 @@ async function main() {
       priority: "0.9",
     },
     ...stateSlugs.map((s) => ({
-      loc: `${BASE}/state/${escapeXml(s)}`,
+      loc: `${BASE}/state/${s}`,
       lastmod: now,
       changefreq: "weekly",
       priority: "0.8" as string,
     })),
+  ];
+  const cityEntries: SitemapEntry[] = [
     ...[...new Set(cityRows
       .map((r) => {
         const info = STATE_NAMES[r.state.toUpperCase()];
@@ -99,35 +79,70 @@ async function main() {
         return `${BASE}/state/${info.slug}/${citySlug(r.city)}`;
       })
       .filter((u): u is string => u !== null))].map((u) => ({
-      loc: escapeXml(u),
+      loc: u,
       lastmod: now,
       changefreq: "weekly",
       priority: "0.7" as string,
     })),
+  ];
+  const facilityEntries: SitemapEntry[] = [
     ...rows.map((r) => ({
-      loc: `${BASE}/facility/${escapeXml(r.cms_id)}-${escapeXml(r.slug)}`,
+      loc: `${BASE}/facility/${r.cms_id}-${r.slug}`,
       lastmod: r.updated_at ? r.updated_at.split("T")[0] : now,
       changefreq: "monthly",
       priority: "0.6" as string,
     })),
   ];
 
-  const xml = toXml(entries);
-
   mkdirSync("public", { recursive: true });
-  writeFileSync("public/sitemap.xml", xml);
-  console.log(`Wrote public/sitemap.xml with ${entries.length} URLs`);
+  const sitemapDocs = [
+    {
+      key: "sitemap",
+      file: "public/sitemap.xml",
+      label: "sitemap index",
+      xml: buildSitemapIndexXml([
+        `${BASE}/sitemap-core.xml`,
+        `${BASE}/sitemap-cities.xml`,
+        `${BASE}/sitemap-facilities.xml`,
+      ]),
+    },
+    {
+      key: "sitemap:core",
+      file: "public/sitemap-core.xml",
+      label: `${coreEntries.length} core URLs`,
+      xml: buildSitemapUrlSetXml(coreEntries),
+    },
+    {
+      key: "sitemap:cities",
+      file: "public/sitemap-cities.xml",
+      label: `${cityEntries.length} city URLs`,
+      xml: buildSitemapUrlSetXml(cityEntries),
+    },
+    {
+      key: "sitemap:facilities",
+      file: "public/sitemap-facilities.xml",
+      label: `${facilityEntries.length} facility URLs`,
+      xml: buildSitemapUrlSetXml(facilityEntries),
+    },
+  ];
 
-  // Upload to KV
-  try {
-    execSync(
-      `npx wrangler kv key put sitemap --path public/sitemap.xml --namespace-id=fa0faa67ae0c434093a3aeaa14a5992e ${d1Flag} --metadata '{"generatedAt":"${new Date().toISOString()}"}'`,
-      { encoding: "utf8", stdio: "inherit" },
-    );
-    console.log("Uploaded sitemap to KV");
-  } catch (err) {
-    console.error("Failed to upload sitemap to KV:", err);
-    process.exit(1);
+  for (const doc of sitemapDocs) {
+    writeFileSync(doc.file, doc.xml);
+    console.log(`Wrote ${doc.file} with ${doc.label}`);
+  }
+
+  const metadata = `{"generatedAt":"${new Date().toISOString()}"}`;
+  for (const doc of sitemapDocs) {
+    try {
+      execSync(
+        `npx wrangler kv key put ${doc.key} --path ${doc.file} ${kvUploadTarget} --metadata '${metadata}'`,
+        { encoding: "utf8", stdio: "inherit" },
+      );
+      console.log(`Uploaded ${doc.key} to KV`);
+    } catch (err) {
+      console.error(`Failed to upload ${doc.key} to KV:`, err);
+      process.exit(1);
+    }
   }
 }
 
