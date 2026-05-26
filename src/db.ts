@@ -55,6 +55,21 @@ export async function getFacilitiesByBounds(
   return results.results ?? [];
 }
 
+export async function getFacilitiesByBoundsAndGrades(
+  env: Env,
+  bounds: { minLat: number; maxLat: number; minLng: number; maxLatLng: number },
+  grades: string[],
+  limit = 5000,
+): Promise<Facility[]> {
+  if (grades.length === 0) return [];
+  const placeholders = grades.map(() => "?").join(", ");
+  const sql = `SELECT * FROM facilities WHERE latitude > ? AND latitude < ? AND longitude > ? AND longitude < ? AND grade_letter IN (${placeholders}) LIMIT ?`;
+  const results = await env.DB.prepare(sql)
+    .bind(bounds.minLat, bounds.maxLat, bounds.minLng, bounds.maxLatLng, ...grades, limit)
+    .all<Facility>();
+  return results.results ?? [];
+}
+
 export async function searchByZipExact(env: Env, zip: string, limit = 25): Promise<Facility[]> {
   const results = await env.DB.prepare("SELECT * FROM facilities WHERE zip = ? ORDER BY grade_score DESC LIMIT ?")
     .bind(zip, limit)

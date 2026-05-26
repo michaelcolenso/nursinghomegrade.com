@@ -1,5 +1,5 @@
 import type { Env } from "../types";
-import { getFacilitiesByBounds } from "../db";
+import { getFacilitiesByBoundsAndGrades } from "../db";
 import { explorePage } from "../templates/explore";
 
 export async function handleExplore(_request: Request, _env: Env): Promise<Response> {
@@ -23,12 +23,15 @@ export async function handleMapApi(request: Request, env: Env): Promise<Response
     });
   }
 
-  const facilities = await getFacilitiesByBounds(env, {
+  const gradesParam = url.searchParams.get("grades");
+  const grades = gradesParam ? gradesParam.split(",") : ["A", "B", "C", "D", "F"];
+
+  const facilities = await getFacilitiesByBoundsAndGrades(env, {
     minLat,
     maxLat,
     minLng,
     maxLatLng: maxLng,
-  }, 5000);
+  }, grades, 5000);
 
   // Return only essential data for the map
   const data = facilities.map((f) => ({
