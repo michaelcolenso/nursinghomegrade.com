@@ -4,17 +4,21 @@ import { htmlCacheKey } from "../cache";
 import { getNationalPctFailing, searchByZipExact, searchNearby, getStatesWithCounts, getTopRatedFacilities } from "../db";
 import { homePage, searchResultsPage } from "../templates/home";
 import { errorPage } from "../templates/subscribe";
+import { HOME_LINK_HEADERS } from "../agent-readiness";
 
 export async function handleHome(request: Request, env: Env): Promise<Response> {
   try {
     const cacheKey = htmlCacheKey("page:home");
     const cached = await env.CACHE.get(cacheKey);
+    const homeHeaders = {
+      "Content-Type": "text/html;charset=UTF-8",
+      "Cache-Control": "public, max-age=3600",
+      Link: HOME_LINK_HEADERS.join(", "),
+    };
+
     if (cached)
       return new Response(cached, {
-        headers: {
-          "Content-Type": "text/html;charset=UTF-8",
-          "Cache-Control": "public, max-age=3600",
-        },
+        headers: homeHeaders,
       });
 
     const pctFailing = await getNationalPctFailing(env);
@@ -22,10 +26,7 @@ export async function handleHome(request: Request, env: Env): Promise<Response> 
     const html = homePage(pctFailing, topFacilities);
     await env.CACHE.put(cacheKey, html, { expirationTtl: 3600 });
     return new Response(html, {
-      headers: {
-        "Content-Type": "text/html;charset=UTF-8",
-        "Cache-Control": "public, max-age=3600",
-      },
+      headers: homeHeaders,
     });
   } catch (err) {
     console.error("handleHome error", err);

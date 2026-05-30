@@ -1050,6 +1050,79 @@ export function layout(
       update();
     })();
   </script>
+  <script>
+    (function() {
+      if (!navigator.modelContext || typeof navigator.modelContext.provideContext !== "function") return;
+      navigator.modelContext.provideContext({
+        tools: [
+          {
+            name: "search_facilities",
+            description: "Search for nursing home facilities by ZIP code. Returns facilities with grades, distances, and links.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                zip: { type: "string", description: "5-digit US ZIP code" }
+              },
+              required: ["zip"]
+            },
+            execute: async function(input) {
+              try {
+                const res = await fetch("/search?zip=" + encodeURIComponent(input.zip));
+                const html = await res.text();
+                return { content: [{ type: "text", text: html }] };
+              } catch (e) {
+                return { content: [{ type: "text", text: "Error: " + (e instanceof Error ? e.message : String(e)) }] };
+              }
+            }
+          },
+          {
+            name: "get_facility",
+            description: "Get detailed information about a specific nursing home facility by its CMS ID.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                cms_id: { type: "string", description: "CMS certification number (e.g., 015001)" }
+              },
+              required: ["cms_id"]
+            },
+            execute: async function(input) {
+              try {
+                const res = await fetch("/facility/" + encodeURIComponent(input.cms_id));
+                const html = await res.text();
+                return { content: [{ type: "text", text: html }] };
+              } catch (e) {
+                return { content: [{ type: "text", text: "Error: " + (e instanceof Error ? e.message : String(e)) }] };
+              }
+            }
+          },
+          {
+            name: "compare_facilities",
+            description: "Compare multiple nursing home facilities side by side by CMS ID.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                ids: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "Array of CMS facility IDs to compare"
+                }
+              },
+              required: ["ids"]
+            },
+            execute: async function(input) {
+              try {
+                const res = await fetch("/api/compare?ids=" + input.ids.map(encodeURIComponent).join(","));
+                const data = await res.json();
+                return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+              } catch (e) {
+                return { content: [{ type: "text", text: "Error: " + (e instanceof Error ? e.message : String(e)) }] };
+              }
+            }
+          }
+        ]
+      });
+    })();
+  </script>
 </body>
 </html>`;
 }
