@@ -1,4 +1,5 @@
 import type { Facility } from "../types";
+import { citySlug as toCitySlug } from "../states";
 import { layout, escHtml } from "./layout";
 
 export interface CityPageData {
@@ -11,6 +12,45 @@ export interface CityPageData {
   nationalPctFailing: number;
   gradeDistribution: Record<string, number>;
   facilities: Facility[];
+  siblingCities: Array<{ city: string; count: number }>;
+}
+
+function renderCityRelatedLinks(
+  stateSlug: string,
+  stateName: string,
+  currentCitySlug: string,
+  siblingCities: Array<{ city: string; count: number }>,
+): string {
+  const otherCities = siblingCities
+    .filter(c => toCitySlug(c.city) !== currentCitySlug)
+    .slice(0, 8);
+
+  if (otherCities.length === 0) return "";
+
+  const cityLinks = otherCities.map(c =>
+    `<li><a href="/state/${escHtml(stateSlug)}/${escHtml(toCitySlug(c.city))}" style="color:var(--ink);text-decoration:none;font-weight:600;font-size:0.95rem;">Nursing homes in ${escHtml(c.city)} (${c.count})</a></li>`
+  ).join("");
+
+  return `
+    <nav aria-label="Related pages" style="margin-top:var(--space-2xl);padding-top:var(--space-xl);border-top:1px solid var(--rule);">
+      <h2 style="margin-bottom:var(--space-l);">Related Pages</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:var(--space-xl);">
+        <div>
+          <h3 style="font-size:0.8rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-s);">More Cities in ${escHtml(stateName)}</h3>
+          <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:var(--space-2xs);">
+            ${cityLinks}
+          </ul>
+        </div>
+        <div>
+          <h3 style="font-size:0.8rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-s);">Browse by State</h3>
+          <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:var(--space-2xs);">
+            <li><a href="/state/${escHtml(stateSlug)}" style="color:var(--ink);text-decoration:none;font-weight:600;font-size:0.95rem;">All nursing homes in ${escHtml(stateName)}</a></li>
+            <li><a href="/states" style="color:var(--ink);text-decoration:none;font-weight:600;font-size:0.95rem;">Browse all states</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  `;
 }
 
 export function cityPage(data: CityPageData): string {
@@ -24,6 +64,7 @@ export function cityPage(data: CityPageData): string {
     nationalPctFailing,
     gradeDistribution,
     facilities,
+    siblingCities,
   } = data;
 
   const baseUrl = "https://nursinghomegrade.com";
@@ -106,6 +147,8 @@ export function cityPage(data: CityPageData): string {
         <button type="submit" class="btn-on-dark">Find Near Me</button>
       </form>
     </div>
+
+    ${renderCityRelatedLinks(stateSlug, stateName, citySlug, siblingCities)}
   `;
 
   return layout(

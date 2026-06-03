@@ -145,7 +145,57 @@ function renderNearbyFacilities(current: FacilityPageData, nearby: Facility[]): 
   `;
 }
 
-export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [], nearby: Facility[] = []): string {
+function renderRelatedLinks(current: FacilityPageData, cityFacilities: Facility[], stateTopRated: Facility[]): string {
+  const stateInfo = getStateInfo(current.state);
+  const stateSlug = stateInfo?.slug ?? current.state.toLowerCase();
+  const stateName = stateInfo?.name ?? current.state;
+  const cSlug = citySlug(current.city);
+
+  const cityIds = new Set(cityFacilities.map(f => f.cms_id));
+  cityIds.add(current.cms_id);
+  const stateFiltered = stateTopRated.filter(f => !cityIds.has(f.cms_id)).slice(0, 4);
+
+  const cityLinks = cityFacilities.map(f =>
+    `<li><a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}" style="color:var(--ink);text-decoration:none;font-weight:600;font-size:0.95rem;">${escHtml(f.name)} (Grade ${escHtml(f.grade_letter)})</a></li>`
+  ).join("");
+
+  const stateLinks = stateFiltered.map(f =>
+    `<li><a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}" style="color:var(--ink);text-decoration:none;font-weight:600;font-size:0.95rem;">${escHtml(f.name)} in ${escHtml(f.city)} (Grade ${escHtml(f.grade_letter)})</a></li>`
+  ).join("");
+
+  return `
+    <nav aria-label="Related nursing home pages" style="margin-top:var(--space-2xl);padding-top:var(--space-xl);border-top:1px solid var(--rule);">
+      <h2 style="margin-bottom:var(--space-l);">Related Pages</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:var(--space-xl);">
+        ${cityFacilities.length > 0 ? `
+        <div>
+          <h3 style="font-size:0.8rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-s);">Other Facilities in ${escHtml(current.city)}</h3>
+          <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:var(--space-2xs);">
+            ${cityLinks}
+          </ul>
+        </div>
+        ` : ""}
+        <div>
+          <h3 style="font-size:0.8rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-s);">Browse by Location</h3>
+          <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:var(--space-2xs);">
+            <li><a href="/state/${escHtml(stateSlug)}/${escHtml(cSlug)}" style="color:var(--ink);text-decoration:none;font-weight:600;font-size:0.95rem;">All nursing homes in ${escHtml(current.city)}, ${escHtml(current.state)}</a></li>
+            <li><a href="/state/${escHtml(stateSlug)}" style="color:var(--ink);text-decoration:none;font-weight:600;font-size:0.95rem;">All nursing homes in ${escHtml(stateName)}</a></li>
+          </ul>
+        </div>
+        ${stateFiltered.length > 0 ? `
+        <div>
+          <h3 style="font-size:0.8rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-s);">Top-Rated in ${escHtml(stateName)}</h3>
+          <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:var(--space-2xs);">
+            ${stateLinks}
+          </ul>
+        </div>
+        ` : ""}
+      </div>
+    </nav>
+  `;
+}
+
+export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [], nearby: Facility[] = [], stateTopRated: Facility[] = []): string {
   const stateInfo = getStateInfo(f.state);
   const stateSlug = stateInfo?.slug ?? f.state.toLowerCase();
   const statePath = `/state/${stateSlug}`;
@@ -257,7 +307,7 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
 
     ${deficiencySection}
     ${renderTrustModule()}
-    ${renderNearbyFacilities(f, nearby)}
+    ${renderNearbyFacilities(f, nearby.slice(0, 5))}
 
     <div class="cta-box">
       <h3>Need help choosing a facility?</h3>
@@ -278,6 +328,8 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
         <button type="submit">Notify me</button>
       </form>
     </div>
+
+    ${renderRelatedLinks(f, nearby, stateTopRated)}
   `;
   const canonicalPath = `/facility/${f.cms_id}-${f.slug}`;
   const extraHead = f.latitude && f.longitude ? `
