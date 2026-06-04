@@ -4,6 +4,7 @@ import { getStateAbbreviation, getStateInfo } from "../states";
 import {
   getCitySnapshot,
   getNationalPctFailing,
+  getStateCityList,
 } from "../db";
 import { cityPage } from "../templates/city";
 import { notFoundPage, errorPage } from "../templates/subscribe";
@@ -32,9 +33,10 @@ export async function handleCity(request: Request, env: Env, stateSlug: string, 
         },
       });
 
-    const [snapshot, nationalPctFailing] = await Promise.all([
+    const [snapshot, nationalPctFailing, allCities] = await Promise.all([
       getCitySnapshot(env, stateAbbr, citySlugParam, 200),
       getNationalPctFailing(env),
+      getStateCityList(env, stateAbbr),
     ]);
 
     if (!snapshot) {
@@ -52,6 +54,7 @@ export async function handleCity(request: Request, env: Env, stateSlug: string, 
       nationalPctFailing,
       gradeDistribution: snapshot.gradeDistribution,
       facilities: snapshot.facilities,
+      siblingCities: allCities,
     });
 
     await env.CACHE.put(cacheKey, html, { expirationTtl: 86400 });

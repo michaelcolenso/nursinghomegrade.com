@@ -192,6 +192,20 @@ export async function getNearbyFacilities(
   return results.results ?? [];
 }
 
+export async function getTopRatedByState(
+  env: Env,
+  state: string,
+  excludeCmsId: string,
+  limit = 5,
+): Promise<Facility[]> {
+  const results = await env.DB.prepare(
+    "SELECT * FROM facilities WHERE state = ? AND cms_id != ? ORDER BY grade_score DESC LIMIT ?"
+  )
+    .bind(state, excludeCmsId, limit)
+    .all<Facility>();
+  return results.results ?? [];
+}
+
 export interface CitySnapshot {
   cityName: string;
   facilityCount: number;

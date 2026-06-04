@@ -53,6 +53,7 @@ describe("cityPage", () => {
       nationalPctFailing: 58,
       gradeDistribution: { A: 5, B: 10, C: 20, D: 18, F: 25 },
       facilities: [],
+      siblingCities: [],
     });
 
     expect(html).toContain("Nursing homes in Los Angeles, California");
@@ -71,6 +72,7 @@ describe("cityPage", () => {
       nationalPctFailing: 58,
       gradeDistribution: { A: 5, B: 10, C: 20, D: 18, F: 25 },
       facilities: [],
+      siblingCities: [],
     });
 
     expect(html).toContain('"@type":"ItemList"');
