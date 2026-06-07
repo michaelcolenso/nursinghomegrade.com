@@ -1,4 +1,4 @@
-import type { Facility, FacilityInspectionDetails, Deficiency, Env } from "./types";
+import type { Facility, FacilityInspectionDetails, Deficiency, Env, Operator, FacilitySnapshot } from "./types";
 import { cityDisplayName, citySlug } from "./states";
 
 export async function getFacilityById(env: Env, cmsId: string): Promise<Facility | null> {
@@ -44,13 +44,13 @@ export async function getFacilityInspectionDetails(env: Env, cmsId: string): Pro
 
 export async function getFacilitiesByBounds(
   env: Env,
-  bounds: { minLat: number; maxLat: number; minLng: number; maxLatLng: number },
+  bounds: { minLat: number; maxLat: number; minLng: number; maxLng: number },
   limit = 500,
 ): Promise<Facility[]> {
   const results = await env.DB.prepare(
     "SELECT * FROM facilities WHERE latitude > ? AND latitude < ? AND longitude > ? AND longitude < ? LIMIT ?",
   )
-    .bind(bounds.minLat, bounds.maxLat, bounds.minLng, bounds.maxLatLng, limit)
+    .bind(bounds.minLat, bounds.maxLat, bounds.minLng, bounds.maxLng, limit)
     .all<Facility>();
   return results.results ?? [];
 }
@@ -207,6 +207,20 @@ export async function getNearbyFacilities(
   return results.results ?? [];
 }
 
+export async function getTopRatedByState(
+  env: Env,
+  state: string,
+  excludeCmsId: string,
+  limit = 5,
+): Promise<Facility[]> {
+  const results = await env.DB.prepare(
+    "SELECT * FROM facilities WHERE state = ? AND cms_id != ? ORDER BY grade_score DESC LIMIT ?"
+  )
+    .bind(state, excludeCmsId, limit)
+    .all<Facility>();
+  return results.results ?? [];
+}
+
 export interface CitySnapshot {
   cityName: string;
   facilityCount: number;
@@ -234,7 +248,7 @@ export async function getCitySnapshot(
 
   const cityName = matchingFacilities.reduce((preferred, facility) => {
     return shouldPreferCityDisplayName(preferred, facility.city) ? facility.city : preferred;
-  }, matchingFacilities[0].city);
+  }, matchingFacilities[0]!.city);
 
   const gradeDistribution: Record<string, number> = { A: 0, B: 0, C: 0, D: 0, F: 0 };
   let failingCount = 0;
@@ -264,4 +278,81 @@ function shouldPreferCityDisplayName(current: string, candidate: string): boolea
   if (candidateHasLower && !currentHasLower) return true;
   if (currentHasLower && !candidateHasLower) return false;
   return candidate.length < current.length;
+}
+
+// Operator queries
+
+export async function getOperatorBySlug(env: Env, slug: string): Promise<Operator | null> {
+  const result = await env.DB.prepare("SELECT * FROM operators WHERE slug = ?").bind(slug).first<Operator>();
+  return result ?? null;
+}
+
+export async function getOperatorFacilities(env: Env, normalizedName: string): Promise<Facility[]> {
+  const results = await env.DB.prepare(
+    `SELECT f.* FROM facilities f
+     INNER JOIN facility_owners fo ON f.cms_id = fo.cms_id
+     WHERE fo.normalized_name = ?
+     GROUP BY f.cms_id
+     ORDER BY f.grade_score DESC`
+  ).bind(normalizedName).all<Facility>();
+  return results.results ?? [];
+}
+
+export async function getOperatorGradeDistribution(env: Env, normalizedName: string): Promise<Record<string, number>> {
+  const results = await env.DB.prepare(
+    `SELECT f.grade_letter, COUNT(*) as count
+     FROM facilities f
+     INNER JOIN facility_owners fo ON f.cms_id = fo.cms_id
+     WHERE fo.normalized_name = ?
+     GROUP BY f.grade_letter`
+  ).bind(normalizedName).all<{ grade_letter: string; count: number }>();
+
+  const distribution: Record<string, number> = { A: 0, B: 0, C: 0, D: 0, F: 0 };
+  for (const row of results.results ?? []) {
+    distribution[row.grade_letter] = row.count;
+  }
+  return distribution;
+}
+
+export async function getOperatorsRanked(env: Env, limit = 50, order: "ASC" | "DESC" = "DESC"): Promise<Operator[]> {
+  const results = await env.DB.prepare(
+    `SELECT * FROM operators WHERE facility_count >= 3 ORDER BY avg_grade ${order} LIMIT ?`
+  ).bind(limit).all<Operator>();
+  return results.results ?? [];
+}
+
+export async function getAllOperators(env: Env): Promise<Operator[]> {
+  const results = await env.DB.prepare(
+    "SELECT * FROM operators WHERE facility_count >= 2 ORDER BY facility_count DESC, normalized_name ASC"
+  ).all<Operator>();
+  return results.results ?? [];
+}
+
+export async function getNationalAverages(env: Env): Promise<{
+  avgGrade: number;
+  avgRnHours: number;
+  avgDeficiencies: number;
+  totalFacilities: number;
+}> {
+  const result = await env.DB.prepare(
+    `SELECT
+      ROUND(AVG(grade_score), 1) as avg_grade,
+      ROUND(AVG(rn_hours_per_resident_day), 2) as avg_rn_hours,
+      ROUND(AVG(total_deficiencies), 1) as avg_deficiencies,
+      COUNT(*) as total_facilities
+    FROM facilities`
+  ).first<{ avg_grade: number; avg_rn_hours: number; avg_deficiencies: number; total_facilities: number }>();
+  return {
+    avgGrade: result?.avg_grade ?? 0,
+    avgRnHours: result?.avg_rn_hours ?? 0,
+    avgDeficiencies: result?.avg_deficiencies ?? 0,
+    totalFacilities: result?.total_facilities ?? 0,
+  };
+}
+
+export async function getFacilitySnapshots(env: Env, cmsId: string): Promise<FacilitySnapshot[]> {
+  const results = await env.DB.prepare(
+    "SELECT * FROM facility_snapshots WHERE cms_id = ? ORDER BY snapshot_date ASC"
+  ).bind(cmsId).all<FacilitySnapshot>();
+  return results.results ?? [];
 }

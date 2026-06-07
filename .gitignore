@@ -5,3 +5,5 @@ dist/
 scripts/seed.sql
 public/sitemap.xml
 public/sitemap-*.xml
+indexnow-keys.txt
+.deepseek/

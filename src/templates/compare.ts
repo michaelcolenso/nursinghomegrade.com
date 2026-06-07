@@ -5,7 +5,7 @@ export function comparePage(): string {
     <h1 class="display">Comparison</h1>
     <p class="lede">Review your saved facilities side-by-side.</p>
     
-    <div id="compare-container" style="overflow-x: auto; margin-bottom: var(--space-2xl);">
+    <div id="compare-container" style="overflow-x: auto; margin-bottom: var(--space-2xl);" aria-live="polite" aria-atomic="false">
       <p>Loading your saved facilities...</p>
     </div>
 
@@ -103,7 +103,7 @@ export function comparePage(): string {
               </tr>
               <tr>
                 <td style="padding: 1rem;"></td>
-                \${facilities.map(function(f) { return \`<td style="padding: 1rem;"><a href="\${esc(f.report_path)}" class="btn-secondary">View report</a><br><button type="button" data-remove="\${esc(f.cms_id)}" style="color:var(--grade-F); background:none; border:none; font-family:'Inter',system-ui,sans-serif; font-weight:700; font-size:0.95rem; text-transform:uppercase; letter-spacing:0.1em; cursor:pointer; transition:color 0.2s ease-out; min-height:44px; padding:var(--space-xs) 0;" onmouseover="this.style.color='var(--grade-F)'" onmouseout="this.style.color='var(--grade-F)'">Remove</button></td>\`; }).join('')}
+                \${facilities.map(function(f) { return \`<td style="padding: 1rem;"><a href="\${esc(f.report_path)}" class="btn-secondary">View report</a><br><button type="button" data-remove="\${esc(f.cms_id)}" style="color:var(--grade-F); background:none; border:none; font-family:'Source Sans 3',system-ui,sans-serif; font-weight:700; font-size:0.95rem; text-transform:uppercase; letter-spacing:0.1em; cursor:pointer; transition:color 0.2s ease-out; min-height:44px; padding:var(--space-xs) 0;" onmouseover="this.style.color='var(--grade-F)'" onmouseout="this.style.color='var(--grade-F)'">Remove</button></td>\`; }).join('')}
               </tr>
             </tbody>
           </table>

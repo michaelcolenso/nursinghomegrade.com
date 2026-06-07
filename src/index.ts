@@ -7,6 +7,8 @@ import { handleState, handleStatesHub } from "./handlers/state";
 import { handleCity } from "./handlers/city";
 import { handleCompare, handleCompareApi } from "./handlers/comparison";
 import { handleExplore, handleMapApi } from "./handlers/map";
+import { handleOperator, handleOperatorsHub, handleOperatorsBest, handleOperatorsWorst } from "./handlers/operator";
+import { handleStaffingFailures, handleHighDeficiency } from "./handlers/reports";
 import { subscribePage, notFoundPage, errorPage } from "./templates/subscribe";
 import { maybeMarkdown } from "./markdown";
 import {
@@ -64,6 +66,30 @@ async function handleFetch(request: Request, env: Env): Promise<Response> {
   if (path === "/.well-known/oauth-protected-resource") return oauthProtectedResourceResponse();
   if (path === "/.well-known/mcp/server-card.json") return mcpServerCardResponse();
   if (path === "/.well-known/agent-skills/index.json") return agentSkillsIndexResponse();
+    if (path === "/operators") return handleOperatorsHub(request, env);
+    if (path === "/operators/best") return handleOperatorsBest(request, env);
+    if (path === "/operators/worst") return handleOperatorsWorst(request, env);
+    if (path === "/reports/staffing-failures") return handleStaffingFailures(request, env);
+    if (path === "/reports/high-deficiency-facilities") return handleHighDeficiency(request, env);
+
+    if (path === "/subscribe" && request.method === "POST") {
+      try {
+        const form = await request.formData();
+        const facilityName = form.get("facility_name")?.toString() ?? "this facility";
+        const returnPath = form.get("return_path")?.toString();
+        const html = subscribePage(facilityName, returnPath);
+        return new Response(html, {
+          headers: { "Content-Type": "text/html;charset=UTF-8" },
+        });
+      } catch {
+        const html = errorPage(
+          "Invalid submission",
+          "We couldn't process your subscription. Please try again.",
+          "If the problem persists, you can search for a facility and try subscribing again.",
+        );
+        return new Response(html, { status: 400, headers: { "Content-Type": "text/html;charset=UTF-8" } });
+      }
+    }
 
   if (path.startsWith("/.well-known/agent-skills/") && path.endsWith(".json")) {
     const skillName = path.slice("/.well-known/agent-skills/".length, -".json".length);
@@ -96,6 +122,14 @@ async function handleFetch(request: Request, env: Env): Promise<Response> {
     if (sitemap)
       return new Response(sitemap, {
         headers: { "Content-Type": "application/xml" },
+    if (path === "/9a151ecdcc4348238501f41bfc227d26.txt") {
+      return new Response("9a151ecdcc4348238501f41bfc227d26", {
+        headers: { "Content-Type": "text/plain" },
+      });
+    }
+    if (path === "/robots.txt")
+      return new Response("User-agent: *\nAllow: /\nSitemap: https://nursinghomegrade.com/sitemap.xml\n", {
+        headers: { "Content-Type": "text/plain" },
       });
     const html = errorPage("Sitemap not found", "The sitemap could not be found. It may still be generating.");
     return new Response(html, { status: 404, headers: { "Content-Type": "text/html;charset=UTF-8" } });
@@ -113,16 +147,22 @@ async function handleFetch(request: Request, env: Env): Promise<Response> {
   <rect x="200" y="200" width="70" height="200" rx="6" fill="#E6EBEF"/>
   <line x1="80" y1="400" x2="270" y2="200" stroke="#16897A" stroke-width="22" stroke-linecap="round"/>
   <line x1="110" y1="400" x2="300" y2="200" stroke="#16897A" stroke-width="22" stroke-linecap="round"/>
-  <text x="360" y="310" font-family="Georgia,serif" font-size="96" fill="#F7F9FA" font-weight="700">NursingHomeGrade</text>
-  <text x="362" y="390" font-family="Georgia,serif" font-size="32" fill="#16897A">Independent ratings · CMS data · No conflicts of interest</text>
+  <text x="360" y="310" font-family="Playfair Display,Georgia,serif" font-size="96" fill="#F7F9FA" font-weight="700">NursingHomeGrade</text>
+  <text x="362" y="390" font-family="Playfair Display,Georgia,serif" font-size="32" fill="#16897A">Independent ratings · CMS data · No conflicts of interest</text>
 </svg>`;
-    return new Response(svg, {
-      headers: {
-        "Content-Type": "image/svg+xml",
-        "Cache-Control": "public, max-age=604800",
-      },
-    });
-  }
+      return new Response(svg, {
+        headers: {
+          "Content-Type": "image/svg+xml",
+          "Cache-Control": "public, max-age=604800",
+        },
+      });
+    }
+
+    const operatorMatch = path.match(/^\/operator\/([a-z0-9-]+)$/);
+    if (operatorMatch?.[1]) return handleOperator(request, env, operatorMatch[1]);
+
+    const facilityMatch = path.match(/^\/facility\/([A-Za-z0-9-]+)$/);
+    if (facilityMatch?.[1]) return handleFacility(request, env, facilityMatch[1]);
 
   const facilityMatch = path.match(/^\/facility\/([A-Za-z0-9-]+)$/);
   if (facilityMatch?.[1]) return handleFacility(request, env, facilityMatch[1]);
@@ -139,3 +179,10 @@ async function handleFetch(request: Request, env: Env): Promise<Response> {
     headers: { "Content-Type": "text/html;charset=UTF-8" },
   });
 }
+  async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
+    // Weekly: invalidate cached pages so stats refresh
+    await env.CACHE.delete(htmlCacheKey("page:home"));
+    await env.CACHE.delete(htmlCacheKey("page:states"));
+    // Cache cleared silently
+  },
+} satisfies ExportedHandler<Env>;

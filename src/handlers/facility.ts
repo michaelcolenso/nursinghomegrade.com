@@ -1,8 +1,20 @@
 import type { Env } from "../types";
 import { htmlCacheKey } from "../cache";
-import { getFacilityBySlugId, getFacilityInspectionDetails, getFacilityDeficiencies, getNearbyFacilities } from "../db";
+import {
+  getFacilityBySlugId,
+  getFacilityInspectionDetails,
+  getFacilityDeficiencies,
+  getNearbyFacilities,
+  getTopRatedByState,
+  getFacilitySnapshots,
+  getNationalAverages,
+  getOperatorBySlug,
+} from "../db";
+import { computeTrajectory } from "../trajectory";
+import { generateFacilityAssessment, generateFacilitySummary } from "../narrative";
 import { facilityPage } from "../templates/facility";
 import { notFoundPage, errorPage } from "../templates/subscribe";
+import { toOperatorSlug } from "../ownership";
 
 export async function handleFacility(request: Request, env: Env, slugId: string): Promise<Response> {
   try {
@@ -29,13 +41,44 @@ export async function handleFacility(request: Request, env: Env, slugId: string)
         },
       });
 
-    const [inspectionDetails, deficiencies, nearby] = await Promise.all([
+    const [inspectionDetails, deficiencies, nearby, stateTopRated, snapshots, nationalAvg] = await Promise.all([
       getFacilityInspectionDetails(env, facility.cms_id),
       getFacilityDeficiencies(env, facility.cms_id),
-      getNearbyFacilities(env, facility.cms_id, facility.city, facility.state, 5),
+      getNearbyFacilities(env, facility.cms_id, facility.city, facility.state, 8),
+      getTopRatedByState(env, facility.state, facility.cms_id, 5),
+      getFacilitySnapshots(env, facility.cms_id),
+      getNationalAverages(env),
     ]);
 
-    const html = facilityPage({ ...facility, ...inspectionDetails }, deficiencies, nearby);
+    const trajectory = snapshots.length >= 3 ? computeTrajectory(snapshots) : null;
+
+    // Try to find operator for this facility
+    let operator = null;
+    try {
+      const ownerRow = await env.DB.prepare(
+        `SELECT normalized_name FROM facility_owners WHERE cms_id = ? AND owner_type = 'Organization' LIMIT 1`
+      ).bind(facility.cms_id).first<{ normalized_name: string }>();
+      if (ownerRow) {
+        const opSlug = toOperatorSlug(ownerRow.normalized_name);
+        operator = await getOperatorBySlug(env, opSlug);
+      }
+    } catch {
+      operator = null;
+    }
+
+    const assessment = generateFacilityAssessment(facility, trajectory, operator, nationalAvg);
+    const summary = generateFacilitySummary(facility, trajectory);
+
+    const html = facilityPage(
+      { ...facility, ...inspectionDetails },
+      deficiencies,
+      nearby,
+      stateTopRated,
+      trajectory,
+      assessment,
+      summary,
+      operator,
+    );
     await env.CACHE.put(cacheKey, html, { expirationTtl: 86400 });
     return new Response(html, {
       headers: {

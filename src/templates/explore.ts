@@ -13,7 +13,7 @@ export function explorePage(): string {
         background: var(--bg);
       }
       .map-tooltip {
-        font-family: 'Inter', system-ui, sans-serif;
+        font-family: 'Source Sans 3', system-ui, sans-serif;
         padding: 0.5rem;
         border: 2px solid var(--ink);
         border-radius: 0;

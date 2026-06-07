@@ -1,4 +1,4 @@
-import type { FacilityPageData, Deficiency, Facility } from "../types";
+import type { FacilityPageData, Deficiency, Facility, Trajectory, Operator } from "../types";
 import { citySlug, getStateInfo } from "../states";
 import { layout, escHtml } from "./layout";
 import { renderTrustModule } from "./trust";
@@ -43,12 +43,82 @@ function formatDate(dateStr: string | null): string {
   }
 }
 
+function renderTrajectory(trajectory: Trajectory | null): string {
+  if (!trajectory) return "";
+
+  const statusStyles: Record<string, { bg: string; color: string; icon: string }> = {
+    improving: { bg: "#e6f4f1", color: "#12805D", icon: "▲" },
+    declining: { bg: "#fdecea", color: "#B91C1C", icon: "▼" },
+    stable: { bg: "#f0f4f8", color: "#4A6272", icon: "●" },
+    volatile: { bg: "#fff8e6", color: "#b48a3e", icon: "◆" },
+    insufficient_history: { bg: "#f0f4f8", color: "#4A6272", icon: "○" },
+  };
+
+  const style = statusStyles[trajectory.status] ?? { bg: "#f0f4f8", color: "#4A6272", icon: "●" };
+  const parts: string[] = [];
+  if (trajectory.staffing_change_pct !== null) {
+    const sign = trajectory.staffing_change_pct > 0 ? "+" : "";
+    parts.push(`Staffing ${sign}${trajectory.staffing_change_pct}%`);
+  }
+  if (trajectory.deficiency_change_pct !== null) {
+    const sign = trajectory.deficiency_change_pct > 0 ? "+" : "";
+    parts.push(`Deficiencies ${sign}${trajectory.deficiency_change_pct}%`);
+  }
+
+  const detail = parts.length > 0 ? parts.join(" · ") : "Trend data available";
+
+  return `
+    <div style="background:${style.bg};border:2px solid ${style.color};padding:var(--space-l);margin-bottom:var(--space-xl);display:flex;align-items:center;gap:var(--space-m);flex-wrap:wrap;">
+      <span style="font-size:1.5rem;font-weight:800;color:${style.color};">${style.icon}</span>
+      <div>
+        <span style="font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:${style.color};font-size:0.9rem;">${trajectory.status.replace("_", " ")}</span>
+        <p style="margin:0;color:var(--muted);font-size:0.95rem;">${escHtml(detail)} over tracking period</p>
+      </div>
+    </div>
+  `;
+}
+
+function renderAssessment(assessment: string): string {
+  if (!assessment) return "";
+  return `
+    <div class="pull-quote" style="margin:var(--space-xl) 0;">
+      <strong>Facility Assessment</strong>
+      ${escHtml(assessment)}
+    </div>
+  `;
+}
+
+function renderOperatorLink(operator: Operator | null): string {
+  if (!operator) return "";
+  return `
+    <div style="margin-bottom:var(--space-l);">
+      <span style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);">Operator</span>
+      <p style="margin:0;"><a href="/operator/${escHtml(operator.slug)}">${escHtml(operator.normalized_name)}</a> · ${operator.facility_count} facilities</p>
+    </div>
+  `;
+}
+
+function renderDeficiencySummary(deficiencies: Deficiency[]): string {
+  if (deficiencies.length === 0) return "";
+  const harmCount = deficiencies.filter(d => d.scope_severity_code && d.scope_severity_code >= "G" && d.scope_severity_code < "J").length;
+  const jeopardyCount = deficiencies.filter(d => d.scope_severity_code && d.scope_severity_code >= "J").length;
+  const correctedCount = deficiencies.filter(d => d.correction_date).length;
+  const alerts: string[] = [];
+  if (jeopardyCount > 0) alerts.push(`<span style="color:var(--grade-F);font-weight:800;">${jeopardyCount} immediate jeopardy</span>`);
+  if (harmCount > 0) alerts.push(`<span style="color:var(--grade-D);font-weight:800;">${harmCount} actual harm</span>`);
+  const summaryText = alerts.length > 0
+    ? `${alerts.join(", ")} issue${(harmCount + jeopardyCount) !== 1 ? "s" : ""} found among ${deficiencies.length} total deficiency${deficiencies.length !== 1 ? "ies" : "y"}. ${correctedCount} corrected.`
+    : `${deficiencies.length} deficiency${deficiencies.length !== 1 ? "ies" : "y"} found. ${correctedCount} corrected. None involved actual harm.`;
+  return `<div style="background:var(--bg);border:2px solid var(--ink);padding:var(--space-l);margin-bottom:var(--space-xl);">
+    <p style="margin:0;font-family:'Playfair Display',Georgia,serif;font-size:clamp(1.1rem,2vw,1.35rem);line-height:1.4;">${summaryText}</p>
+  </div>`;
+}
+
 function renderDeficiencies(deficiencies: Deficiency[]): string {
   if (deficiencies.length === 0) {
     return `<p style="color:var(--muted);margin-bottom:var(--space-l);">No deficiencies reported for this facility.</p>`;
   }
 
-  // Group by inspection cycle
   const byCycle = new Map<number, Deficiency[]>();
   for (const d of deficiencies) {
     const cycle = d.inspection_cycle ?? 0;
@@ -145,7 +215,57 @@ function renderNearbyFacilities(current: FacilityPageData, nearby: Facility[]): 
   `;
 }
 
-export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [], nearby: Facility[] = []): string {
+function renderRelatedLinks(current: FacilityPageData, cityFacilities: Facility[], stateTopRated: Facility[]): string {
+  const stateInfo = getStateInfo(current.state);
+  const stateSlug = stateInfo?.slug ?? current.state.toLowerCase();
+  const stateName = stateInfo?.name ?? current.state;
+  const cSlug = citySlug(current.city);
+
+  const cityIds = new Set(cityFacilities.map(f => f.cms_id));
+  cityIds.add(current.cms_id);
+  const stateFiltered = stateTopRated.filter(f => !cityIds.has(f.cms_id)).slice(0, 4);
+
+  const cityLinks = cityFacilities.map(f =>
+    `<li><a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}" style="color:var(--ink);text-decoration:none;font-weight:600;font-size:0.95rem;">${escHtml(f.name)} (Grade ${escHtml(f.grade_letter)})</a></li>`
+  ).join("");
+
+  const stateLinks = stateFiltered.map(f =>
+    `<li><a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}" style="color:var(--ink);text-decoration:none;font-weight:600;font-size:0.95rem;">${escHtml(f.name)} (Grade ${escHtml(f.grade_letter)})</a></li>`
+  ).join("");
+
+  return `
+    <div style="margin-top:var(--space-2xl);padding-top:var(--space-xl);border-top:2px solid var(--ink);">
+      <h2>More Facilities</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:var(--space-l);margin-top:var(--space-m);">
+        <div>
+          <h3 style="font-size:1.1rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-s);">In ${escHtml(current.city)}</h3>
+          <ul style="list-style:none;padding:0;margin:0;display:grid;gap:var(--space-xs);">
+            ${cityLinks}
+            <li><a href="/state/${stateSlug}/${cSlug}" style="color:var(--accent);font-weight:700;">View all ${escHtml(current.city)} facilities →</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3 style="font-size:1.1rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-s);">Top Rated in ${escHtml(stateName)}</h3>
+          <ul style="list-style:none;padding:0;margin:0;display:grid;gap:var(--space-xs);">
+            ${stateLinks}
+            <li><a href="/state/${stateSlug}" style="color:var(--accent);font-weight:700;">View all ${escHtml(stateName)} facilities →</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+export function facilityPage(
+  f: FacilityPageData,
+  deficiencies: Deficiency[] = [],
+  nearby: Facility[] = [],
+  stateTopRated: Facility[] = [],
+  trajectory: Trajectory | null = null,
+  assessment: string = "",
+  summary: string = "",
+  operator: Operator | null = null,
+): string {
   const stateInfo = getStateInfo(f.state);
   const stateSlug = stateInfo?.slug ?? f.state.toLowerCase();
   const statePath = `/state/${stateSlug}`;
@@ -166,20 +286,20 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
       ? `<span role="img" aria-label="${f.staffing_rating} out of 5 stars">${"★".repeat(f.staffing_rating)}${"☆".repeat(5 - f.staffing_rating)}</span> (${f.staffing_rating}/5)`
       : "Not rated";
 
-  // Contextual CTA based on grade
   const isPoorGrade = f.grade_letter === "D" || f.grade_letter === "F";
   const primaryCta = isPoorGrade
-    ? `<a class="btn" href="https://www.caring.com/local/nursing-homes" rel="nofollow noopener" target="_blank">Get help finding alternatives →</a>`
-    : `<a class="btn" href="https://www.senioradvisor.com/nursing-homes" rel="nofollow noopener" target="_blank">Compare nearby options →</a>`;
+    ? `<a class="btn" href="https://www.caring.com/local/nursing-homes" rel="nofollow noopener" target="_blank">Get help finding alternatives ↗</a>`
+    : `<a class="btn" href="https://www.senioradvisor.com/nursing-homes" rel="nofollow noopener" target="_blank">Compare nearby options ↗</a>`;
   const secondaryCta = isPoorGrade
-    ? `<a href="https://www.senioradvisor.com/nursing-homes" rel="nofollow noopener" target="_blank" class="btn-secondary">Compare nearby →</a>`
-    : `<a href="https://www.caring.com/local/nursing-homes" rel="nofollow noopener" target="_blank" class="btn-secondary">Get free help →</a>`;
+    ? `<a href="https://www.senioradvisor.com/nursing-homes" rel="nofollow noopener" target="_blank" class="btn-secondary">Compare nearby ↗</a>`
+    : `<a href="https://www.caring.com/local/nursing-homes" rel="nofollow noopener" target="_blank" class="btn-secondary">Get free help ↗</a>`;
 
   const deficiencySection = `
     <h2 id="inspections">Inspection Deficiencies</h2>
     <p class="lede" style="font-size:1.125rem;margin-bottom:var(--space-l);">
       Health inspections identify violations of federal standards. Severity ranges from no actual harm (A–F) to immediate jeopardy (J–L).
     </p>
+    ${renderDeficiencySummary(deficiencies)}
     ${renderDeficiencies(deficiencies)}
   `;
 
@@ -200,8 +320,13 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
         <p style="color:var(--muted);margin-bottom:var(--space-s);font-size:1.1rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">
           ${escHtml(f.address)}, ${escHtml(f.city)}, ${escHtml(f.state)} ${escHtml(f.zip)}
         </p>
-        <div style="display:inline-block; margin-bottom:var(--space-m); padding: 0.5rem; background: var(--bg); border: 1px solid var(--rule); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);">
-          Independent ratings: No payments from facilities
+        ${renderOperatorLink(operator)}
+        <div style="display:flex;gap:var(--space-s);flex-wrap:wrap;margin-bottom:var(--space-m);">
+          <button onclick="window.print()" class="btn-secondary" title="Print this report">Print Report</button>
+          <button onclick="toggleSave('${escHtml(f.cms_id)}', '${escHtml(f.name.replace(/'/g, "\\'"))}', '${f.grade_letter}', ${f.grade_score})" id="save-${escHtml(f.cms_id)}" class="compare-toggle" aria-pressed="false" title="Add to compare">
+            <span class="compare-toggle-box" aria-hidden="true"></span>
+            <span class="compare-toggle-label">Compare</span>
+          </button>
         </div>
         ${f.latitude && f.longitude ? `
           <div id="facility-map" style="height:200px; width:100%; max-width:400px; border:2px solid var(--ink); margin-bottom:var(--space-m);"></div>
@@ -211,6 +336,9 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
         ${escHtml(f.grade_letter)}
       </div>
     </div>
+
+    ${renderTrajectory(trajectory)}
+    ${renderAssessment(assessment)}
 
     <p class="lede" style="max-width:800px;margin-bottom:var(--space-xl);">
       ${escHtml(f.grade_summary)}
@@ -224,7 +352,7 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
             <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">RN Staffing</div>
             <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Registered nurse time each resident receives daily. Federal minimum: 0.55 hrs.</div>
           </td>
-          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Playfair Display',Georgia,serif;font-size:1.5rem;text-align:right;color:${meetsMinimum ? "var(--grade-A)" : "var(--grade-F)"}">
+          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Source Sans 3',system-ui,sans-serif;font-size:1.5rem;text-align:right;color:${meetsMinimum ? "var(--accent-positive)" : "var(--grade-F)"}">
             ${escHtml(rnDisplay)}
           </td>
         </tr>
@@ -233,14 +361,14 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
             <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">Health Deficiencies</div>
             <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Violations found during federal inspections over the last 3 years.</div>
           </td>
-          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Playfair Display',Georgia,serif;font-size:1.5rem;text-align:right;">${f.total_deficiencies ?? "Not reported"}</td>
+          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Source Sans 3',system-ui,sans-serif;font-size:1.5rem;text-align:right;">${f.total_deficiencies ?? "Not reported"}</td>
         </tr>
         <tr class="quality-row" style="border-bottom:1px solid var(--rule);">
           <td class="quality-label-cell" style="padding:var(--space-m) 0;">
             <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">CMS Ratings</div>
             <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Overall and Staffing quality ratings from CMS (1-5 stars).</div>
           </td>
-          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Playfair Display',Georgia,serif;font-size:1.25rem;text-align:right;">
+          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Source Sans 3',system-ui,sans-serif;font-size:1.25rem;text-align:right;">
             <div style="margin-bottom:var(--space-3xs);">Quality: ${qualityStars}</div>
             <div>Staffing: ${staffingStars}</div>
           </td>
@@ -249,7 +377,7 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
           <td class="quality-label-cell" style="padding:var(--space-m) 0;">
             <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">NursingHomeGrade Score</div>
           </td>
-          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Playfair Display',Georgia,serif;font-size:2.5rem;text-align:right;">${f.grade_score}/100</td>
+          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Source Sans 3',system-ui,sans-serif;font-size:2.5rem;text-align:right;">${f.grade_score}/100</td>
         </tr>
       </table>
     </div>
@@ -257,13 +385,14 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
 
     ${deficiencySection}
     ${renderTrustModule()}
-    ${renderNearbyFacilities(f, nearby)}
+    ${renderNearbyFacilities(f, nearby.slice(0, 5))}
 
     <div class="cta-box">
       <h3>Need help choosing a facility?</h3>
       <p>Get free guidance from senior living advisors. We may earn a referral fee from comparison services, but never from nursing facilities and never in ways that affect grades.</p>
       ${primaryCta}
       ${secondaryCta}
+      <p style="font-size:0.75rem;color:#c8d6e0;margin-top:var(--space-s);opacity:0.8;">↗ Links open independent third-party sites in a new tab.</p>
     </div>
 
     <div style="margin-top:var(--space-2xl);">
@@ -274,10 +403,12 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
         <input type="hidden" name="facility_name" value="${escHtml(f.name)}">
         <input type="hidden" name="return_path" value="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}">
         <label for="sub-email" class="visually-hidden">Email address</label>
-        <input type="email" id="sub-email" name="email" placeholder="your@email.com" required>
+        <input type="email" id="sub-email" name="email" placeholder="your@email.com" required autocomplete="email">
         <button type="submit">Notify me</button>
       </form>
     </div>
+
+    ${renderRelatedLinks(f, nearby, stateTopRated)}
   `;
   const canonicalPath = `/facility/${f.cms_id}-${f.slug}`;
   const extraHead = f.latitude && f.longitude ? `
@@ -288,7 +419,7 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script>
       (function() {
-        const map = L.map('facility-map', { zoomControl: false, attributionControl: false }).setView([${f.latitude}, ${f.longitude}], 14);
+        const map = L.map('facility-map', { zoomControl: false }).setView([${f.latitude}, ${f.longitude}], 14);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
           subdomains: 'abcd',
           maxZoom: 20
@@ -365,7 +496,7 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
 
   return layout(
     `${f.name} — NursingHomeGrade ${f.grade_letter} | ${f.city}, ${f.state}`,
-    `${f.name} in ${f.city}, ${f.state} earns a grade of ${f.grade_letter} (${f.grade_score}/100). ${f.grade_summary}`,
+    summary || `${f.name} in ${f.city}, ${f.state} earns a grade of ${f.grade_letter} (${f.grade_score}/100). ${f.grade_summary}`,
     body,
     {
       canonicalPath,

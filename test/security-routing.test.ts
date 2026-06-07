@@ -30,21 +30,21 @@ const uppercaseCmsFacility: Facility = {
 function createFacilityEnv(): Env {
   const db = {
     prepare(query: string) {
-      return {
+      const statement = {
+        async first<T>() {
+          if (query.includes("SELECT * FROM facilities WHERE cms_id = ?")) {
+            return uppercaseCmsFacility as T;
+          }
+          return null as T | null;
+        },
+        async all<T>() {
+          return { results: [] as T[] };
+        },
         bind(..._args: unknown[]) {
-          return {
-            async first<T>() {
-              if (query.includes("SELECT * FROM facilities WHERE cms_id = ?")) {
-                return uppercaseCmsFacility as T;
-              }
-              return null as T | null;
-            },
-            async all<T>() {
-              return { results: [] as T[] };
-            },
-          };
+          return statement;
         },
       };
+      return statement;
     },
   };
 
