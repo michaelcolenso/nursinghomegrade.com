@@ -1,4 +1,4 @@
-import type { FacilityPageData, Deficiency, Facility } from "../types";
+import type { FacilityPageData, Deficiency, Facility, Trajectory, Operator } from "../types";
 import { citySlug, getStateInfo } from "../states";
 import { layout, escHtml } from "./layout";
 import { renderTrustModule } from "./trust";
@@ -43,12 +43,66 @@ function formatDate(dateStr: string | null): string {
   }
 }
 
+function renderTrajectory(trajectory: Trajectory | null): string {
+  if (!trajectory) return "";
+
+  const statusStyles: Record<string, { bg: string; color: string; icon: string }> = {
+    improving: { bg: "#e6f4f1", color: "#12805D", icon: "▲" },
+    declining: { bg: "#fdecea", color: "#B91C1C", icon: "▼" },
+    stable: { bg: "#f0f4f8", color: "#4A6272", icon: "●" },
+    volatile: { bg: "#fff8e6", color: "#b48a3e", icon: "◆" },
+    insufficient_history: { bg: "#f0f4f8", color: "#4A6272", icon: "○" },
+  };
+
+  const style = statusStyles[trajectory.status] ?? { bg: "#f0f4f8", color: "#4A6272", icon: "●" };
+  const parts: string[] = [];
+  if (trajectory.staffing_change_pct !== null) {
+    const sign = trajectory.staffing_change_pct > 0 ? "+" : "";
+    parts.push(`Staffing ${sign}${trajectory.staffing_change_pct}%`);
+  }
+  if (trajectory.deficiency_change_pct !== null) {
+    const sign = trajectory.deficiency_change_pct > 0 ? "+" : "";
+    parts.push(`Deficiencies ${sign}${trajectory.deficiency_change_pct}%`);
+  }
+
+  const detail = parts.length > 0 ? parts.join(" · ") : "Trend data available";
+
+  return `
+    <div style="background:${style.bg};border:2px solid ${style.color};padding:var(--space-l);margin-bottom:var(--space-xl);display:flex;align-items:center;gap:var(--space-m);flex-wrap:wrap;">
+      <span style="font-size:1.5rem;font-weight:800;color:${style.color};">${style.icon}</span>
+      <div>
+        <span style="font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:${style.color};font-size:0.9rem;">${trajectory.status.replace("_", " ")}</span>
+        <p style="margin:0;color:var(--muted);font-size:0.95rem;">${escHtml(detail)} over tracking period</p>
+      </div>
+    </div>
+  `;
+}
+
+function renderAssessment(assessment: string): string {
+  if (!assessment) return "";
+  return `
+    <div class="pull-quote" style="margin:var(--space-xl) 0;">
+      <strong>Facility Assessment</strong>
+      ${escHtml(assessment)}
+    </div>
+  `;
+}
+
+function renderOperatorLink(operator: Operator | null): string {
+  if (!operator) return "";
+  return `
+    <div style="margin-bottom:var(--space-l);">
+      <span style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);">Operator</span>
+      <p style="margin:0;"><a href="/operator/${escHtml(operator.slug)}">${escHtml(operator.normalized_name)}</a> · ${operator.facility_count} facilities</p>
+    </div>
+  `;
+}
+
 function renderDeficiencies(deficiencies: Deficiency[]): string {
   if (deficiencies.length === 0) {
     return `<p style="color:var(--muted);margin-bottom:var(--space-l);">No deficiencies reported for this facility.</p>`;
   }
 
-  // Group by inspection cycle
   const byCycle = new Map<number, Deficiency[]>();
   for (const d of deficiencies) {
     const cycle = d.inspection_cycle ?? 0;
@@ -160,42 +214,42 @@ function renderRelatedLinks(current: FacilityPageData, cityFacilities: Facility[
   ).join("");
 
   const stateLinks = stateFiltered.map(f =>
-    `<li><a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}" style="color:var(--ink);text-decoration:none;font-weight:600;font-size:0.95rem;">${escHtml(f.name)} in ${escHtml(f.city)} (Grade ${escHtml(f.grade_letter)})</a></li>`
+    `<li><a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}" style="color:var(--ink);text-decoration:none;font-weight:600;font-size:0.95rem;">${escHtml(f.name)} (Grade ${escHtml(f.grade_letter)})</a></li>`
   ).join("");
 
   return `
-    <nav aria-label="Related nursing home pages" style="margin-top:var(--space-2xl);padding-top:var(--space-xl);border-top:1px solid var(--rule);">
-      <h2 style="margin-bottom:var(--space-l);">Related Pages</h2>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:var(--space-xl);">
-        ${cityFacilities.length > 0 ? `
+    <div style="margin-top:var(--space-2xl);padding-top:var(--space-xl);border-top:2px solid var(--ink);">
+      <h2>More Facilities</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:var(--space-l);margin-top:var(--space-m);">
         <div>
-          <h3 style="font-size:0.8rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-s);">Other Facilities in ${escHtml(current.city)}</h3>
-          <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:var(--space-2xs);">
+          <h3 style="font-size:1.1rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-s);">In ${escHtml(current.city)}</h3>
+          <ul style="list-style:none;padding:0;margin:0;display:grid;gap:var(--space-xs);">
             ${cityLinks}
+            <li><a href="/state/${stateSlug}/${cSlug}" style="color:var(--accent);font-weight:700;">View all ${escHtml(current.city)} facilities →</a></li>
           </ul>
         </div>
-        ` : ""}
         <div>
-          <h3 style="font-size:0.8rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-s);">Browse by Location</h3>
-          <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:var(--space-2xs);">
-            <li><a href="/state/${escHtml(stateSlug)}/${escHtml(cSlug)}" style="color:var(--ink);text-decoration:none;font-weight:600;font-size:0.95rem;">All nursing homes in ${escHtml(current.city)}, ${escHtml(current.state)}</a></li>
-            <li><a href="/state/${escHtml(stateSlug)}" style="color:var(--ink);text-decoration:none;font-weight:600;font-size:0.95rem;">All nursing homes in ${escHtml(stateName)}</a></li>
-          </ul>
-        </div>
-        ${stateFiltered.length > 0 ? `
-        <div>
-          <h3 style="font-size:0.8rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-s);">Top-Rated in ${escHtml(stateName)}</h3>
-          <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:var(--space-2xs);">
+          <h3 style="font-size:1.1rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-s);">Top Rated in ${escHtml(stateName)}</h3>
+          <ul style="list-style:none;padding:0;margin:0;display:grid;gap:var(--space-xs);">
             ${stateLinks}
+            <li><a href="/state/${stateSlug}" style="color:var(--accent);font-weight:700;">View all ${escHtml(stateName)} facilities →</a></li>
           </ul>
         </div>
-        ` : ""}
       </div>
-    </nav>
+    </div>
   `;
 }
 
-export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [], nearby: Facility[] = [], stateTopRated: Facility[] = []): string {
+export function facilityPage(
+  f: FacilityPageData,
+  deficiencies: Deficiency[] = [],
+  nearby: Facility[] = [],
+  stateTopRated: Facility[] = [],
+  trajectory: Trajectory | null = null,
+  assessment: string = "",
+  summary: string = "",
+  operator: Operator | null = null,
+): string {
   const stateInfo = getStateInfo(f.state);
   const stateSlug = stateInfo?.slug ?? f.state.toLowerCase();
   const statePath = `/state/${stateSlug}`;
@@ -216,7 +270,6 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
       ? `<span role="img" aria-label="${f.staffing_rating} out of 5 stars">${"★".repeat(f.staffing_rating)}${"☆".repeat(5 - f.staffing_rating)}</span> (${f.staffing_rating}/5)`
       : "Not rated";
 
-  // Contextual CTA based on grade
   const isPoorGrade = f.grade_letter === "D" || f.grade_letter === "F";
   const primaryCta = isPoorGrade
     ? `<a class="btn" href="https://www.caring.com/local/nursing-homes" rel="nofollow noopener" target="_blank">Get help finding alternatives →</a>`
@@ -250,6 +303,7 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
         <p style="color:var(--muted);margin-bottom:var(--space-s);font-size:1.1rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">
           ${escHtml(f.address)}, ${escHtml(f.city)}, ${escHtml(f.state)} ${escHtml(f.zip)}
         </p>
+        ${renderOperatorLink(operator)}
         <div style="display:inline-block; margin-bottom:var(--space-m); padding: 0.5rem; background: var(--bg); border: 1px solid var(--rule); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);">
           Independent ratings: No payments from facilities
         </div>
@@ -261,6 +315,9 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
         ${escHtml(f.grade_letter)}
       </div>
     </div>
+
+    ${renderTrajectory(trajectory)}
+    ${renderAssessment(assessment)}
 
     <p class="lede" style="max-width:800px;margin-bottom:var(--space-xl);">
       ${escHtml(f.grade_summary)}
@@ -370,14 +427,6 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
       "addressRegion": f.state,
       "postalCode": f.zip,
       "addressCountry": "US"
-    },
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": f.grade_score,
-      "bestRating": 100,
-      "worstRating": 0,
-      "ratingCount": 1,
-      "reviewCount": 1
     }
   };
 
@@ -425,7 +474,7 @@ export function facilityPage(f: FacilityPageData, deficiencies: Deficiency[] = [
 
   return layout(
     `${f.name} — NursingHomeGrade ${f.grade_letter} | ${f.city}, ${f.state}`,
-    `${f.name} in ${f.city}, ${f.state} earns a grade of ${f.grade_letter} (${f.grade_score}/100). ${f.grade_summary}`,
+    summary || `${f.name} in ${f.city}, ${f.state} earns a grade of ${f.grade_letter} (${f.grade_score}/100). ${f.grade_summary}`,
     body,
     {
       canonicalPath,
