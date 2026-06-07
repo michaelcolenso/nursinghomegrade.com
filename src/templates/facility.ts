@@ -381,7 +381,7 @@ export function facilityPage(
         <input type="hidden" name="facility_name" value="${escHtml(f.name)}">
         <input type="hidden" name="return_path" value="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}">
         <label for="sub-email" class="visually-hidden">Email address</label>
-        <input type="email" id="sub-email" name="email" placeholder="your@email.com" required>
+        <input type="email" id="sub-email" name="email" placeholder="your@email.com" required autocomplete="email">
         <button type="submit">Notify me</button>
       </form>
     </div>
@@ -397,7 +397,7 @@ export function facilityPage(
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script>
       (function() {
-        const map = L.map('facility-map', { zoomControl: false, attributionControl: false }).setView([${f.latitude}, ${f.longitude}], 14);
+        const map = L.map('facility-map', { zoomControl: false }).setView([${f.latitude}, ${f.longitude}], 14);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
           subdomains: 'abcd',
           maxZoom: 20

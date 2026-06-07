@@ -5,7 +5,7 @@ export function comparePage(): string {
     <h1 class="display">Comparison</h1>
     <p class="lede">Review your saved facilities side-by-side.</p>
     
-    <div id="compare-container" style="overflow-x: auto; margin-bottom: var(--space-2xl);">
+    <div id="compare-container" style="overflow-x: auto; margin-bottom: var(--space-2xl);" aria-live="polite" aria-atomic="false">
       <p>Loading your saved facilities...</p>
     </div>
 

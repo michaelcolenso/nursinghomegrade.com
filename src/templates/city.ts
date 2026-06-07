@@ -143,7 +143,7 @@ export function cityPage(data: CityPageData): string {
       <h2 style="color: #fff; margin-bottom: var(--space-m);">Don't see a facility?</h2>
       <p style="font-size: 1.1rem; opacity: 0.7; max-width: 600px; margin: 0 auto var(--space-xl);">Search by ZIP code to find all facilities within 25 miles of ${escHtml(cityName)}.</p>
       <form action="/search" method="GET" class="city-zip-form" style="display: flex; gap: var(--space-xs); max-width: 500px; margin: 0 auto;">
-        <input type="text" name="zip" placeholder="ZIP code" pattern="[0-9]{5}" title="Enter a 5-digit ZIP code" maxlength="5" required style="flex: 1; padding: var(--space-s); border-radius: 0; border: none; background: #fff; color: var(--ink); font-family: 'Inter', system-ui, sans-serif; font-size: 1rem;">
+        <input type="text" name="zip" placeholder="ZIP code" pattern="[0-9]{5}" title="Enter a 5-digit ZIP code" maxlength="5" required autocomplete="postal-code" inputmode="numeric" style="flex: 1; padding: var(--space-s); border-radius: 0; border: none; background: #fff; color: var(--ink); font-family: 'Inter', system-ui, sans-serif; font-size: 1rem;">
         <button type="submit" class="btn-on-dark">Find Near Me</button>
       </form>
     </div>

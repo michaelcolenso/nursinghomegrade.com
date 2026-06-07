@@ -111,6 +111,6 @@ export default {
     // Weekly: invalidate cached pages so stats refresh
     await env.CACHE.delete(htmlCacheKey("page:home"));
     await env.CACHE.delete(htmlCacheKey("page:states"));
-    console.log("Scheduled: home and states cache cleared");
+    // Cache cleared silently
   },
 } satisfies ExportedHandler<Env>;
