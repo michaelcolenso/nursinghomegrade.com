@@ -98,6 +98,22 @@ function renderOperatorLink(operator: Operator | null): string {
   `;
 }
 
+function renderDeficiencySummary(deficiencies: Deficiency[]): string {
+  if (deficiencies.length === 0) return "";
+  const harmCount = deficiencies.filter(d => d.scope_severity_code && d.scope_severity_code >= "G" && d.scope_severity_code < "J").length;
+  const jeopardyCount = deficiencies.filter(d => d.scope_severity_code && d.scope_severity_code >= "J").length;
+  const correctedCount = deficiencies.filter(d => d.correction_date).length;
+  const alerts: string[] = [];
+  if (jeopardyCount > 0) alerts.push(`<span style="color:var(--grade-F);font-weight:800;">${jeopardyCount} immediate jeopardy</span>`);
+  if (harmCount > 0) alerts.push(`<span style="color:var(--grade-D);font-weight:800;">${harmCount} actual harm</span>`);
+  const summaryText = alerts.length > 0
+    ? `${alerts.join(", ")} issue${(harmCount + jeopardyCount) !== 1 ? "s" : ""} found among ${deficiencies.length} total deficiency${deficiencies.length !== 1 ? "ies" : "y"}. ${correctedCount} corrected.`
+    : `${deficiencies.length} deficiency${deficiencies.length !== 1 ? "ies" : "y"} found. ${correctedCount} corrected. None involved actual harm.`;
+  return `<div style="background:var(--bg);border:2px solid var(--ink);padding:var(--space-l);margin-bottom:var(--space-xl);">
+    <p style="margin:0;font-family:'Playfair Display',Georgia,serif;font-size:clamp(1.1rem,2vw,1.35rem);line-height:1.4;">${summaryText}</p>
+  </div>`;
+}
+
 function renderDeficiencies(deficiencies: Deficiency[]): string {
   if (deficiencies.length === 0) {
     return `<p style="color:var(--muted);margin-bottom:var(--space-l);">No deficiencies reported for this facility.</p>`;
@@ -272,17 +288,18 @@ export function facilityPage(
 
   const isPoorGrade = f.grade_letter === "D" || f.grade_letter === "F";
   const primaryCta = isPoorGrade
-    ? `<a class="btn" href="https://www.caring.com/local/nursing-homes" rel="nofollow noopener" target="_blank">Get help finding alternatives →</a>`
-    : `<a class="btn" href="https://www.senioradvisor.com/nursing-homes" rel="nofollow noopener" target="_blank">Compare nearby options →</a>`;
+    ? `<a class="btn" href="https://www.caring.com/local/nursing-homes" rel="nofollow noopener" target="_blank">Get help finding alternatives ↗</a>`
+    : `<a class="btn" href="https://www.senioradvisor.com/nursing-homes" rel="nofollow noopener" target="_blank">Compare nearby options ↗</a>`;
   const secondaryCta = isPoorGrade
-    ? `<a href="https://www.senioradvisor.com/nursing-homes" rel="nofollow noopener" target="_blank" class="btn-secondary">Compare nearby →</a>`
-    : `<a href="https://www.caring.com/local/nursing-homes" rel="nofollow noopener" target="_blank" class="btn-secondary">Get free help →</a>`;
+    ? `<a href="https://www.senioradvisor.com/nursing-homes" rel="nofollow noopener" target="_blank" class="btn-secondary">Compare nearby ↗</a>`
+    : `<a href="https://www.caring.com/local/nursing-homes" rel="nofollow noopener" target="_blank" class="btn-secondary">Get free help ↗</a>`;
 
   const deficiencySection = `
     <h2 id="inspections">Inspection Deficiencies</h2>
     <p class="lede" style="font-size:1.125rem;margin-bottom:var(--space-l);">
       Health inspections identify violations of federal standards. Severity ranges from no actual harm (A–F) to immediate jeopardy (J–L).
     </p>
+    ${renderDeficiencySummary(deficiencies)}
     ${renderDeficiencies(deficiencies)}
   `;
 
@@ -304,8 +321,12 @@ export function facilityPage(
           ${escHtml(f.address)}, ${escHtml(f.city)}, ${escHtml(f.state)} ${escHtml(f.zip)}
         </p>
         ${renderOperatorLink(operator)}
-        <div style="display:inline-block; margin-bottom:var(--space-m); padding: 0.5rem; background: var(--bg); border: 1px solid var(--rule); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);">
-          Independent ratings: No payments from facilities
+        <div style="display:flex;gap:var(--space-s);flex-wrap:wrap;margin-bottom:var(--space-m);">
+          <button onclick="window.print()" class="btn-secondary" title="Print this report">Print Report</button>
+          <button onclick="toggleSave('${escHtml(f.cms_id)}', '${escHtml(f.name.replace(/'/g, "\\'"))}', '${f.grade_letter}', ${f.grade_score})" id="save-${escHtml(f.cms_id)}" class="compare-toggle" aria-pressed="false" title="Add to compare">
+            <span class="compare-toggle-box" aria-hidden="true"></span>
+            <span class="compare-toggle-label">Compare</span>
+          </button>
         </div>
         ${f.latitude && f.longitude ? `
           <div id="facility-map" style="height:200px; width:100%; max-width:400px; border:2px solid var(--ink); margin-bottom:var(--space-m);"></div>
@@ -331,7 +352,7 @@ export function facilityPage(
             <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">RN Staffing</div>
             <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Registered nurse time each resident receives daily. Federal minimum: 0.55 hrs.</div>
           </td>
-          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Playfair Display',Georgia,serif;font-size:1.5rem;text-align:right;color:${meetsMinimum ? "var(--grade-A)" : "var(--grade-F)"}">
+          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Source Sans 3',system-ui,sans-serif;font-size:1.5rem;text-align:right;color:${meetsMinimum ? "var(--accent-positive)" : "var(--grade-F)"}">
             ${escHtml(rnDisplay)}
           </td>
         </tr>
@@ -340,14 +361,14 @@ export function facilityPage(
             <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">Health Deficiencies</div>
             <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Violations found during federal inspections over the last 3 years.</div>
           </td>
-          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Playfair Display',Georgia,serif;font-size:1.5rem;text-align:right;">${f.total_deficiencies ?? "Not reported"}</td>
+          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Source Sans 3',system-ui,sans-serif;font-size:1.5rem;text-align:right;">${f.total_deficiencies ?? "Not reported"}</td>
         </tr>
         <tr class="quality-row" style="border-bottom:1px solid var(--rule);">
           <td class="quality-label-cell" style="padding:var(--space-m) 0;">
             <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">CMS Ratings</div>
             <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Overall and Staffing quality ratings from CMS (1-5 stars).</div>
           </td>
-          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Playfair Display',Georgia,serif;font-size:1.25rem;text-align:right;">
+          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Source Sans 3',system-ui,sans-serif;font-size:1.25rem;text-align:right;">
             <div style="margin-bottom:var(--space-3xs);">Quality: ${qualityStars}</div>
             <div>Staffing: ${staffingStars}</div>
           </td>
@@ -356,7 +377,7 @@ export function facilityPage(
           <td class="quality-label-cell" style="padding:var(--space-m) 0;">
             <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">NursingHomeGrade Score</div>
           </td>
-          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Playfair Display',Georgia,serif;font-size:2.5rem;text-align:right;">${f.grade_score}/100</td>
+          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Source Sans 3',system-ui,sans-serif;font-size:2.5rem;text-align:right;">${f.grade_score}/100</td>
         </tr>
       </table>
     </div>
@@ -371,6 +392,7 @@ export function facilityPage(
       <p>Get free guidance from senior living advisors. We may earn a referral fee from comparison services, but never from nursing facilities and never in ways that affect grades.</p>
       ${primaryCta}
       ${secondaryCta}
+      <p style="font-size:0.75rem;color:#c8d6e0;margin-top:var(--space-s);opacity:0.8;">↗ Links open independent third-party sites in a new tab.</p>
     </div>
 
     <div style="margin-top:var(--space-2xl);">

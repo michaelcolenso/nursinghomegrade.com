@@ -77,8 +77,8 @@ export default {
   <rect x="200" y="200" width="70" height="200" rx="6" fill="#E6EBEF"/>
   <line x1="80" y1="400" x2="270" y2="200" stroke="#16897A" stroke-width="22" stroke-linecap="round"/>
   <line x1="110" y1="400" x2="300" y2="200" stroke="#16897A" stroke-width="22" stroke-linecap="round"/>
-  <text x="360" y="310" font-family="Georgia,serif" font-size="96" fill="#F7F9FA" font-weight="700">NursingHomeGrade</text>
-  <text x="362" y="390" font-family="Georgia,serif" font-size="32" fill="#16897A">Independent ratings · CMS data · No conflicts of interest</text>
+  <text x="360" y="310" font-family="Playfair Display,Georgia,serif" font-size="96" fill="#F7F9FA" font-weight="700">NursingHomeGrade</text>
+  <text x="362" y="390" font-family="Playfair Display,Georgia,serif" font-size="32" fill="#16897A">Independent ratings · CMS data · No conflicts of interest</text>
 </svg>`;
       return new Response(svg, {
         headers: {

@@ -70,8 +70,8 @@ export function layout(
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 48'%3E%3Crect width='60' height='48' rx='3' fill='%230B1D33'/%3E%3Crect x='8' y='8' width='10' height='28' fill='%23E6EBEF' rx='1'/%3E%3Crect x='28' y='8' width='10' height='28' fill='%23E6EBEF' rx='1'/%3E%3Cline x1='8' y1='36' x2='38' y2='8' stroke='%2316897A' stroke-width='3.5' stroke-linecap='round'/%3E%3Cline x1='14' y1='36' x2='44' y2='8' stroke='%2316897A' stroke-width='3.5' stroke-linecap='round'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Inter:wght@400;500;600;700;800&display=swap">
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Source+Sans+3:wght@400;500;600;700;800&display=swap">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Source+Sans+3:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
       /* Brand Colors */
@@ -79,8 +79,9 @@ export function layout(
       --ink: #0B1D33;
       --muted: #4A6272;
       --rule: #E6EBEF;
-      --accent: #0e6b60;
-      --accent-hover: #0a5249;
+      --accent: #9f1239;
+      --accent-hover: #7c0f2d;
+      --accent-positive: #0e6b60;
 
       /* Grade Palette */
       --grade-A: #12805D;
@@ -110,7 +111,7 @@ export function layout(
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'Source Sans 3', system-ui, sans-serif;
       color: var(--ink);
       background: var(--bg);
       line-height: 1.6;
@@ -178,7 +179,7 @@ export function layout(
       gap: var(--space-m);
     }
     .masthead-nav-link {
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'Source Sans 3', system-ui, sans-serif;
       font-size: 0.875rem;
       font-weight: 500;
       color: var(--ink);
@@ -189,7 +190,7 @@ export function layout(
     .masthead-nav-link:hover { color: var(--accent); border: none; }
     .masthead-search-btn {
       min-height: 44px;
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'Source Sans 3', system-ui, sans-serif;
       font-size: 0.875rem;
       font-weight: 600;
       color: #fff;
@@ -212,7 +213,7 @@ export function layout(
       font-family: 'Playfair Display', Georgia, serif;
       font-size: clamp(3rem, 10vw, 5.5rem);
       font-weight: 800;
-      line-height: 0.9;
+      line-height: 1.0;
       letter-spacing: 0;
       margin-bottom: var(--space-l);
       color: var(--ink);
@@ -230,6 +231,7 @@ export function layout(
     p { margin-bottom: var(--space-s); }
     a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s ease; }
     a:hover { border-bottom-color: var(--accent); text-decoration: none; }
+    a:visited { color: var(--accent-hover); }
 
     /* Editorial components */
     .lede {
@@ -283,7 +285,7 @@ export function layout(
       border: 2px solid var(--ink);
       border-radius: 0;
       font-size: 1.125rem;
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'Source Sans 3', system-ui, sans-serif;
       background: #fff;
     }
     .search-bar input:focus { outline: 2px solid var(--accent); outline-offset: -2px; background: var(--bg); }
@@ -297,7 +299,7 @@ export function layout(
       cursor: pointer;
       font-weight: 700;
       font-size: 1.125rem;
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'Source Sans 3', system-ui, sans-serif;
       transition: background 0.2s ease-out, color 0.2s ease-out;
     }
     .search-bar button:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
@@ -349,6 +351,42 @@ export function layout(
     }
     .btn-secondary:hover { color: var(--accent); text-decoration: underline; }
 
+    .compare-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: none;
+      border: 2px solid var(--rule);
+      padding: 0.4rem 0.75rem;
+      font-family: 'Source Sans 3', system-ui, sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-height: 44px;
+      color: var(--ink);
+    }
+    .compare-toggle:hover { border-color: var(--accent); }
+    .compare-toggle[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: #fff; }
+    .compare-toggle-box {
+      width: 16px;
+      height: 16px;
+      border: 2px solid currentColor;
+      display: inline-block;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .compare-toggle[aria-pressed="true"] .compare-toggle-box::after {
+      content: '✓';
+      position: absolute;
+      top: -3px;
+      left: 1px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
     /* Grade colors */
     .grade-A { color: var(--grade-A); }
     .grade-B { color: var(--grade-B); }
@@ -392,7 +430,7 @@ export function layout(
       background: #fff;
       color: var(--ink);
       border: 2px solid #fff;
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'Source Sans 3', system-ui, sans-serif;
       font-weight: 700;
       font-size: 0.95rem;
       text-transform: uppercase;
@@ -472,7 +510,7 @@ export function layout(
     .footer-tagline { font-size: 0.8rem; color: var(--muted); line-height: 1.6; margin: 0; }
     .footer-col { display: flex; flex-direction: column; gap: var(--space-2xs); }
     .footer-col-head {
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'Source Sans 3', system-ui, sans-serif;
       font-size: 0.7rem;
       font-weight: 800;
       text-transform: uppercase;
@@ -496,7 +534,7 @@ export function layout(
       border: 1px solid var(--rule);
       border-radius: 4px;
       font-size: 0.875rem;
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'Source Sans 3', system-ui, sans-serif;
       background: var(--bg);
     }
     .footer-newsletter-input:focus { outline: 2px solid var(--accent); outline-offset: 0; }
@@ -509,7 +547,7 @@ export function layout(
       border-radius: 4px;
       font-size: 0.875rem;
       font-weight: 600;
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'Source Sans 3', system-ui, sans-serif;
       cursor: pointer;
       transition: background 0.2s ease;
     }
@@ -616,7 +654,7 @@ export function layout(
       border-radius: 0;
       font-size: 1rem;
       background: #fff;
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'Source Sans 3', system-ui, sans-serif;
       font-weight: 700;
     }
     .results-list { display: grid; gap: var(--space-l); }
@@ -961,6 +999,7 @@ export function layout(
         <nav class="masthead-nav" aria-label="Main navigation">
           <a href="/explore" class="masthead-nav-link">Find Facilities</a>
           <a href="/states" class="masthead-nav-link">Ratings</a>
+          <a href="/compare" class="masthead-nav-link">Compare</a>
           <a href="/about" class="masthead-nav-link">About</a>
           <a href="/search" class="masthead-search-btn">Search</a>
         </nav>
@@ -1049,7 +1088,7 @@ export function layout(
           if (btn) {
             btn.disabled = true;
             btn.style.opacity = '0.5';
-            btn.textContent = 'Loading...';
+            btn.textContent = btn.getAttribute('data-loading-text') || 'Loading...';
           }
         });
       });
@@ -1083,28 +1122,63 @@ export function layout(
           });
         });
       }
+
+      window.toggleSave = function(id, name, grade, score) {
+        var data = JSON.parse(localStorage.getItem('nhg_saved_facilities') || '[]');
+        var idx = data.findIndex(function(f) { return f.cms_id === id; });
+        var btn = document.getElementById('save-' + id);
+        if (idx > -1) {
+          data.splice(idx, 1);
+          if (btn) {
+            btn.setAttribute('aria-pressed', 'false');
+            var label = btn.querySelector('.compare-toggle-label');
+            if (label) label.textContent = 'Compare';
+          }
+        } else {
+          data.push({ cms_id: id, name: name, grade_letter: grade, grade_score: score });
+          if (btn) {
+            btn.setAttribute('aria-pressed', 'true');
+            var label = btn.querySelector('.compare-toggle-label');
+            if (label) label.textContent = 'Added';
+          }
+        }
+        localStorage.setItem('nhg_saved_facilities', JSON.stringify(data));
+        window.dispatchEvent(new Event('storage'));
+      };
+
+      (function() {
+        var saved = JSON.parse(localStorage.getItem('nhg_saved_facilities') || '[]');
+        saved.forEach(function(f) {
+          var btn = document.getElementById('save-' + f.cms_id);
+          if (btn) {
+            btn.setAttribute('aria-pressed', 'true');
+            var label = btn.querySelector('.compare-toggle-label');
+            if (label) label.textContent = 'Added';
+          }
+        });
+      })();
     })();
   </script>
   ${extraScripts || ""}
-  <div id="comparison-bar" style="display:none; position:fixed; bottom:0; left:0; width:100%; background:var(--ink); color:#fff; padding:var(--space-s) var(--space-m); justify-content:space-between; align-items:center; z-index:1000;">
+  <div id="comparison-bar" style="display:none; position:fixed; bottom:0; left:0; width:100%; background:var(--ink); color:#fff; padding:var(--space-s) var(--space-m); justify-content:space-between; align-items:center; z-index:1000; border-top: 4px solid var(--accent); box-shadow: 0 -4px 12px rgba(0,0,0,0.15);">
     <div id="comparison-count" style="font-weight:700;"></div>
-    <a href="/compare" class="btn" style="background:#fff; color:var(--ink); border:none;">Compare Selected →</a>
+    <a href="/compare" class="btn" style="background:#fff; color:var(--ink); border:none;">Compare <span id="compare-btn-count"></span> →</a>
   </div>
   <script>
     (function() {
-      const bar = document.getElementById('comparison-bar');
-      const count = document.getElementById('comparison-count');
-      
+      var bar = document.getElementById('comparison-bar');
+      var count = document.getElementById('comparison-count');
+      var btnCount = document.getElementById('compare-btn-count');
       function update() {
-        const data = JSON.parse(localStorage.getItem('nhg_saved_facilities') || '[]');
+        var data = JSON.parse(localStorage.getItem('nhg_saved_facilities') || '[]');
         if (data.length > 0 && window.location.pathname !== '/compare') {
           bar.style.display = 'flex';
-          count.textContent = data.length + ' facilities selected';
+          count.textContent = data.length + ' facility' + (data.length !== 1 ? 'ies' : 'y') + ' selected';
+          if (btnCount) btnCount.textContent = '(' + data.length + ')';
         } else {
           bar.style.display = 'none';
         }
       }
-      
       window.addEventListener('storage', update);
       update();
     })();
