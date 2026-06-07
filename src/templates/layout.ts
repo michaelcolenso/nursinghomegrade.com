@@ -132,6 +132,23 @@ export function layout(
       border-width: 0;
     }
 
+    /* Skip link */
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: var(--ink);
+      color: #fff;
+      padding: 0.5rem 1rem;
+      text-decoration: none;
+      z-index: 1001;
+      font-weight: 700;
+      font-size: 0.9rem;
+      border: none;
+      transition: top 0.2s ease;
+    }
+    .skip-link:focus { top: 0; outline: 2px solid var(--accent); outline-offset: 2px; }
+
     /* Masthead */
     header { border-bottom: 1px solid var(--rule); padding: var(--space-s) 0; background: #fff; }
     .masthead { display: flex; align-items: center; justify-content: space-between; gap: var(--space-m); }
@@ -171,6 +188,7 @@ export function layout(
     }
     .masthead-nav-link:hover { color: var(--accent); border: none; }
     .masthead-search-btn {
+      min-height: 44px;
       font-family: 'Inter', system-ui, sans-serif;
       font-size: 0.875rem;
       font-weight: 600;
@@ -186,7 +204,7 @@ export function layout(
     .masthead-search-btn:hover { background: var(--accent-hover); border: none; }
     @media (max-width: 640px) {
       .masthead-nav-link { display: none; }
-      .masthead-search-btn { padding: 0.45rem 1rem; font-size: 0.9rem; }
+      .masthead-search-btn { min-height: 44px; padding: 0.45rem 1rem; font-size: 0.9rem; }
     }
 
     /* Typography */
@@ -270,6 +288,7 @@ export function layout(
     }
     .search-bar input:focus { outline: 2px solid var(--accent); outline-offset: -2px; background: var(--bg); }
     .search-bar button {
+      min-height: 44px;
       background: var(--accent);
       color: #fff;
       padding: var(--space-s) var(--space-l);
@@ -283,6 +302,7 @@ export function layout(
     }
     .search-bar button:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
     .search-bar .geo-btn {
+      min-height: 44px;
       background: #fff;
       color: var(--ink);
       border: 2px solid var(--ink);
@@ -481,6 +501,7 @@ export function layout(
     }
     .footer-newsletter-input:focus { outline: 2px solid var(--accent); outline-offset: 0; }
     .footer-newsletter-btn {
+      min-height: 44px;
       background: var(--accent);
       color: #fff;
       border: none;
@@ -759,6 +780,43 @@ export function layout(
       font-size: 1.05rem;
     }
 
+    /* Focus-visible for keyboard navigation */
+    .masthead-nav-link:focus-visible,
+    .masthead-search-btn:focus-visible,
+    .search-bar button:focus-visible,
+    .search-bar .geo-btn:focus-visible,
+    .btn:focus-visible,
+    .btn-secondary:focus-visible,
+    .footer-newsletter-btn:focus-visible,
+    .footer-link:focus-visible,
+    .footer-bottom-link:focus-visible,
+    .results-controls select:focus-visible,
+    a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .search-bar input:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; background: var(--bg); }
+    .btn-on-dark:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+    /* Active / pressed states */
+    .btn:active,
+    .masthead-search-btn:active,
+    .search-bar button:active,
+    .footer-newsletter-btn:active,
+    .btn-on-dark:active {
+      transform: translateY(1px);
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
     @media (max-width: 768px) {
       :root { --space-page: var(--space-m); }
       header { padding: var(--space-s) 0; }
@@ -783,8 +841,8 @@ export function layout(
       .facility-grade-hero { font-size: 6rem; }
       .search-bar { flex-direction: column; }
       .search-bar input { border-bottom: none; }
-      .search-bar button { border-top: none; }
-      .search-bar .geo-btn { border-left: 2px solid var(--ink); border-top: none; }
+      .search-bar button { min-height: 44px; border-top: none; }
+      .search-bar .geo-btn { min-height: 44px; border-left: 2px solid var(--ink); border-top: none; }
       .cta-box { padding: var(--space-m); }
       .results-count { line-height: 1; }
       .results-controls { gap: var(--space-s); padding: var(--space-s); }
@@ -886,6 +944,7 @@ export function layout(
   </style>
 </head>
 <body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
   <header>
     <div class="container">
       <div class="masthead">
@@ -908,7 +967,7 @@ export function layout(
       </div>
     </div>
   </header>
-  <main class="container" style="padding-top: var(--space-xl); padding-bottom: var(--space-xl);">
+  <main id="main-content" class="container" style="padding-top: var(--space-xl); padding-bottom: var(--space-xl);">
     ${body}
   </main>
   <footer>
@@ -954,7 +1013,7 @@ export function layout(
           <p class="footer-newsletter-desc">Get updates on ratings, data releases, and important news.</p>
           <form action="/subscribe" method="POST" class="footer-newsletter-form">
             <input type="hidden" name="facility_name" value="newsletter">
-            <input type="email" name="email" placeholder="Enter your email" required class="footer-newsletter-input">
+            <input type="email" name="email" placeholder="Enter your email" required autocomplete="email" class="footer-newsletter-input">
             <button type="submit" class="footer-newsletter-btn">Subscribe</button>
           </form>
           <div class="footer-social">

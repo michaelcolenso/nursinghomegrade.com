@@ -14,7 +14,7 @@ export function homePage(pctFailing: number): string {
 
     <form action="/search" method="GET" class="search-bar">
       <label for="zip-search" class="visually-hidden">ZIP code</label>
-      <input type="text" id="zip-search" name="zip" placeholder="Enter ZIP code" maxlength="5" pattern="[0-9]{5}">
+      <input type="text" id="zip-search" name="zip" placeholder="Enter ZIP code" maxlength="5" pattern="[0-9]{5}" autocomplete="postal-code" inputmode="numeric">
       <button type="submit">Search</button>
       <button type="button" id="geo-btn" class="geo-btn">Use my location</button>
     </form>
@@ -78,7 +78,7 @@ export function searchResultsPage(
         <p style="color:var(--muted);margin-bottom:1.5rem;">We search within 25 miles of the ZIP code. Try another ZIP or check that you entered it correctly.</p>
 
         <form action="/search" method="GET" class="search-bar" style="max-width:400px;">
-          <input type="text" name="zip" placeholder="Enter ZIP code" maxlength="5" pattern="[0-9]{5}">
+          <input type="text" name="zip" placeholder="Enter ZIP code" maxlength="5" pattern="[0-9]{5}" autocomplete="postal-code" inputmode="numeric">
           <button type="submit" class="btn" data-loading-text="Searching…">Search</button>
         </form>
 
@@ -153,7 +153,7 @@ export function searchResultsPage(
                 <a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}" class="result-name">${escHtml(f.name)}</a>
                 <button onclick="toggleSave('${escHtml(f.cms_id)}', '${escHtml(f.name.replace(/'/g, "\\'"))}', '${f.grade_letter}', ${f.grade_score})" 
                         id="save-${escHtml(f.cms_id)}"
-                        style="background:none; border:1px solid var(--rule); padding:0.25rem 0.5rem; font-size:0.7rem; font-weight:700; text-transform:uppercase; cursor:pointer;">
+                        style="background:none; border:1px solid var(--rule); padding:0.25rem 0.5rem; font-size:0.7rem; font-weight:700; text-transform:uppercase; cursor:pointer;" title="Save to compare later">
                   Save
                 </button>
               </div>
@@ -280,7 +280,7 @@ const body = `
   </div>
 
   <div id="results-map"></div>
-  <div class="results-list">${items}</div>
+  <div class="results-list" aria-live="polite" aria-atomic="false">${items}</div>
   <p style="margin-top:var(--space-l);"><a href="/">← New search</a></p>
 `;
 

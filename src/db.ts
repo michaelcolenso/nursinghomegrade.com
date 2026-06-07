@@ -44,13 +44,13 @@ export async function getFacilityInspectionDetails(env: Env, cmsId: string): Pro
 
 export async function getFacilitiesByBounds(
   env: Env,
-  bounds: { minLat: number; maxLat: number; minLng: number; maxLatLng: number },
+  bounds: { minLat: number; maxLat: number; minLng: number; maxLng: number },
   limit = 500,
 ): Promise<Facility[]> {
   const results = await env.DB.prepare(
     "SELECT * FROM facilities WHERE latitude > ? AND latitude < ? AND longitude > ? AND longitude < ? LIMIT ?",
   )
-    .bind(bounds.minLat, bounds.maxLat, bounds.minLng, bounds.maxLatLng, limit)
+    .bind(bounds.minLat, bounds.maxLat, bounds.minLng, bounds.maxLng, limit)
     .all<Facility>();
   return results.results ?? [];
 }
