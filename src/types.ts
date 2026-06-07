@@ -62,6 +62,52 @@ export interface Deficiency {
   complaint_deficiency: string | null;
 }
 
+// Stored in facility_snapshots table
+export interface FacilitySnapshot {
+  cms_id: string;
+  snapshot_date: string;
+  overall_rating: number | null;
+  quality_rating: number | null;
+  staffing_rating: number | null;
+  inspection_rating: number | null;
+  rn_hours_per_resident_day: number | null;
+  total_deficiencies: number | null;
+  grade_score: number;
+  grade_letter: string;
+}
+
+export interface Operator {
+  id: number;
+  normalized_name: string;
+  slug: string;
+  facility_count: number;
+  avg_grade: number | null;
+  avg_staffing_score: number | null;
+  avg_deficiency_score: number | null;
+  avg_penalty_score: number | null;
+}
+
+export interface FacilityOwner {
+  id: number;
+  cms_id: string;
+  raw_name: string;
+  normalized_name: string;
+  owner_type: string | null;
+  role: string | null;
+  ownership_percentage: string | null;
+}
+
+export type TrajectoryStatus = "improving" | "stable" | "declining" | "volatile" | "insufficient_history";
+
+export interface Trajectory {
+  cms_id: string;
+  status: TrajectoryStatus;
+  staffing_change_pct: number | null;
+  deficiency_change_pct: number | null;
+  grade_change: number | null;
+  rn_hours_trend: "up" | "down" | "flat" | null;
+}
+
 // Cloudflare Worker environment bindings
 export interface Env {
   DB: D1Database;

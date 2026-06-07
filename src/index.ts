@@ -7,6 +7,8 @@ import { handleState, handleStatesHub } from "./handlers/state";
 import { handleCity } from "./handlers/city";
 import { handleCompare, handleCompareApi } from "./handlers/comparison";
 import { handleExplore, handleMapApi } from "./handlers/map";
+import { handleOperator, handleOperatorsHub, handleOperatorsBest, handleOperatorsWorst } from "./handlers/operator";
+import { handleStaffingFailures, handleHighDeficiency } from "./handlers/reports";
 import { subscribePage, notFoundPage, errorPage } from "./templates/subscribe";
 
 export default {
@@ -22,6 +24,12 @@ export default {
     if (path === "/explore") return handleExplore(request, env);
     if (path === "/api/compare") return handleCompareApi(request, env);
     if (path === "/api/map/facilities") return handleMapApi(request, env);
+
+    if (path === "/operators") return handleOperatorsHub(request, env);
+    if (path === "/operators/best") return handleOperatorsBest(request, env);
+    if (path === "/operators/worst") return handleOperatorsWorst(request, env);
+    if (path === "/reports/staffing-failures") return handleStaffingFailures(request, env);
+    if (path === "/reports/high-deficiency-facilities") return handleHighDeficiency(request, env);
 
     if (path === "/subscribe" && request.method === "POST") {
       try {
@@ -52,6 +60,11 @@ export default {
       return new Response(html, { status: 404, headers: { "Content-Type": "text/html;charset=UTF-8" } });
     }
 
+    if (path === "/9a151ecdcc4348238501f41bfc227d26.txt") {
+      return new Response("9a151ecdcc4348238501f41bfc227d26", {
+        headers: { "Content-Type": "text/plain" },
+      });
+    }
     if (path === "/robots.txt")
       return new Response("User-agent: *\nAllow: /\nSitemap: https://nursinghomegrade.com/sitemap.xml\n", {
         headers: { "Content-Type": "text/plain" },
@@ -74,6 +87,9 @@ export default {
         },
       });
     }
+
+    const operatorMatch = path.match(/^\/operator\/([a-z0-9-]+)$/);
+    if (operatorMatch?.[1]) return handleOperator(request, env, operatorMatch[1]);
 
     const facilityMatch = path.match(/^\/facility\/([A-Za-z0-9-]+)$/);
     if (facilityMatch?.[1]) return handleFacility(request, env, facilityMatch[1]);
