@@ -3,6 +3,10 @@ import { citySlug, getStateInfo } from "../states";
 import { layout, escHtml } from "./layout";
 import { renderTrustModule } from "./trust";
 
+// Number of same-city facilities shown as rich cards. The related-links block
+// skips these so the same facility isn't linked twice on one page.
+const NEARBY_CARD_COUNT = 5;
+
 function severityLabel(code: string | null): string {
   if (!code) return "Unknown";
   const map: Record<string, string> = {
@@ -215,22 +219,32 @@ function renderNearbyFacilities(current: FacilityPageData, nearby: Facility[]): 
   `;
 }
 
-function renderRelatedLinks(current: FacilityPageData, cityFacilities: Facility[], stateTopRated: Facility[]): string {
+function renderRelatedLinks(
+  current: FacilityPageData,
+  cityFacilities: Facility[],
+  stateTopRated: Facility[],
+  cardCount = 0,
+): string {
   const stateInfo = getStateInfo(current.state);
   const stateSlug = stateInfo?.slug ?? current.state.toLowerCase();
   const stateName = stateInfo?.name ?? current.state;
   const cSlug = citySlug(current.city);
 
+  // Skip the same-city facilities already rendered as cards by renderNearbyFacilities
+  // so we don't link the same URLs twice on one page (keeps link count under ~20).
+  const extraCityFacilities = cityFacilities.slice(cardCount);
+
   const cityIds = new Set(cityFacilities.map(f => f.cms_id));
   cityIds.add(current.cms_id);
   const stateFiltered = stateTopRated.filter(f => !cityIds.has(f.cms_id)).slice(0, 4);
 
-  const cityLinks = cityFacilities.map(f =>
+  const cityLinks = extraCityFacilities.map(f =>
     `<li><a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}" style="color:var(--ink);text-decoration:none;font-weight:600;font-size:0.95rem;">${escHtml(f.name)} (Grade ${escHtml(f.grade_letter)})</a></li>`
   ).join("");
 
+  // Cross-city links: include the city in the anchor text so it stays descriptive.
   const stateLinks = stateFiltered.map(f =>
-    `<li><a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}" style="color:var(--ink);text-decoration:none;font-weight:600;font-size:0.95rem;">${escHtml(f.name)} (Grade ${escHtml(f.grade_letter)})</a></li>`
+    `<li><a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}" style="color:var(--ink);text-decoration:none;font-weight:600;font-size:0.95rem;">${escHtml(f.name)} — ${escHtml(f.city)} (Grade ${escHtml(f.grade_letter)})</a></li>`
   ).join("");
 
   return `
@@ -238,7 +252,7 @@ function renderRelatedLinks(current: FacilityPageData, cityFacilities: Facility[
       <h2>More Facilities</h2>
       <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:var(--space-l);margin-top:var(--space-m);">
         <div>
-          <h3 style="font-size:1.1rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-s);">In ${escHtml(current.city)}</h3>
+          <h3 style="font-size:1.1rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-s);">More in ${escHtml(current.city)}</h3>
           <ul style="list-style:none;padding:0;margin:0;display:grid;gap:var(--space-xs);">
             ${cityLinks}
             <li><a href="/state/${stateSlug}/${cSlug}" style="color:var(--accent);font-weight:700;">View all ${escHtml(current.city)} facilities →</a></li>
@@ -385,7 +399,7 @@ export function facilityPage(
 
     ${deficiencySection}
     ${renderTrustModule()}
-    ${renderNearbyFacilities(f, nearby.slice(0, 5))}
+    ${renderNearbyFacilities(f, nearby.slice(0, NEARBY_CARD_COUNT))}
 
     <div class="cta-box">
       <h3>Need help choosing a facility?</h3>
@@ -408,7 +422,7 @@ export function facilityPage(
       </form>
     </div>
 
-    ${renderRelatedLinks(f, nearby, stateTopRated)}
+    ${renderRelatedLinks(f, nearby, stateTopRated, NEARBY_CARD_COUNT)}
   `;
   const canonicalPath = `/facility/${f.cms_id}-${f.slug}`;
   const extraHead = f.latitude && f.longitude ? `
