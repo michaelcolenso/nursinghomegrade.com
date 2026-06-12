@@ -1042,6 +1042,9 @@ export function layout(
           <div class="footer-col-head">Explore</div>
           <a href="/explore" class="footer-link">Find Facilities</a>
           <a href="/states" class="footer-link">Browse by State</a>
+          <a href="/compare" class="footer-link">Compare</a>
+          <a href="/best" class="footer-link">Best</a>
+          <a href="/worst" class="footer-link">Worst</a>
           <a href="/search" class="footer-link">Search</a>
         </nav>
 
@@ -1050,6 +1053,7 @@ export function layout(
           <a href="/about" class="footer-link">How We Grade</a>
           <a href="/about" class="footer-link">Methodology</a>
           <a href="/best" class="footer-link">Best Facilities</a>
+          <a href="/worst" class="footer-link">Worst Facilities</a>
           <a href="/reports/staffing-failures" class="footer-link">Staffing Report</a>
         </nav>
 
