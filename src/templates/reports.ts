@@ -1,3 +1,4 @@
+import type { Operator } from "../types";
 import { layout, escHtml } from "./layout";
 
 interface FacilityRow {
@@ -115,5 +116,131 @@ export function highDeficiencyPage(facilities: FacilityRow[]): string {
     "Nursing facilities with the most health inspection deficiencies.",
     body,
     { canonicalPath: "/reports/high-deficiency-facilities" },
+  );
+}
+
+export function staffingFailuresStatePage(stateName: string, facilities: FacilityRow[]): string {
+  const scope = `Staffing Failures in ${stateName}`;
+  const body = `
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span class="breadcrumb-sep">›</span>
+      <a href="/reports/staffing-failures">Staffing Failures</a>
+      <span class="breadcrumb-sep">›</span>
+      <span style="color:var(--ink);">${escHtml(stateName)}</span>
+    </nav>
+
+    <h1>${escHtml(scope)}</h1>
+    <p class="lede" style="max-width:800px;margin-bottom:var(--space-xl);">
+      <strong>${facilities.length} facilities</strong> in ${escHtml(stateName)} fall below the RN staffing benchmark of 0.55 hours per resident per day.
+    </p>
+
+    ${renderReportTable(facilities, [
+      { key: "name", label: "Facility" },
+      { key: "city", label: "City" },
+      { key: "rn_hours_per_resident_day", label: "RN Hours" },
+      { key: "grade_letter", label: "Grade" },
+    ])}
+
+    ${reportMethodology(new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }))}
+  `;
+
+  return layout(
+    `${scope} — NursingHomeGrade Report`,
+    `${facilities.length} nursing facilities in ${stateName} fall below the RN staffing benchmark of 0.55 hours per resident day.`,
+    body,
+    { canonicalPath: `/reports/staffing-failures/${stateName.toLowerCase().replace(/\s+/g, "-")}` },
+  );
+}
+
+export function chainsReportPage(
+  bestChains: Operator[],
+  worstChains: Operator[],
+  nationalAvg: { avgGrade: number; avgRnHours: number; avgDeficiencies: number },
+): string {
+  const renderChainList = (operators: Operator[], kind: "best" | "worst"): string => {
+    return operators.map((op, i) => {
+      const avg = op.avg_grade ?? 0;
+      const diff = kind === "best" ? avg - nationalAvg.avgGrade : nationalAvg.avgGrade - avg;
+      const diffStr = diff >= 0 ? `+${diff.toFixed(0)}` : diff.toFixed(0);
+      const diffLabel = kind === "best"
+        ? `${diffStr} vs national`
+        : `${diffStr} vs national`;
+
+      return `
+        <tr style="border-bottom:1px solid var(--rule);">
+          <td style="padding:var(--space-s) var(--space-xs);font-weight:800;color:var(--muted);font-size:0.85rem;">${i + 1}</td>
+          <td style="padding:var(--space-s) var(--space-xs);font-weight:700;">
+            <a href="/operator/${escHtml(op.slug)}">${escHtml(op.normalized_name)}</a>
+          </td>
+          <td style="padding:var(--space-s) var(--space-xs);">${op.facility_count}</td>
+          <td style="padding:var(--space-s) var(--space-xs);font-weight:700;font-family:'Playfair Display',Georgia,serif;font-size:1.15rem;">${avg}</td>
+          <td style="padding:var(--space-s) var(--space-xs);color:${kind === "best" ? "var(--grade-A)" : "var(--grade-F)"};font-weight:700;">${escHtml(diffLabel)}</td>
+        </tr>
+      `;
+    }).join("");
+  };
+
+  const body = `
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span class="breadcrumb-sep">›</span>
+      <span style="color:var(--ink);">Chain Comparison Report</span>
+    </nav>
+
+    <h1>Nursing Home Chain Comparison</h1>
+    <p class="lede" style="max-width:800px;margin-bottom:var(--space-xl);">
+      How the largest nursing home operators compare. Rankings based on average NursingHomeGrade Score across all facilities in each chain (3+ facilities required).
+      National average: ${nationalAvg.avgGrade}/100.
+    </p>
+
+    <h2>Best Operators</h2>
+    <div class="table-container">
+      <table style="min-width:600px;">
+        <thead>
+          <tr style="border-bottom:2px solid var(--ink);">
+            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">#</th>
+            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Operator</th>
+            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Facilities</th>
+            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Avg Grade</th>
+            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Vs National</th>
+          </tr>
+        </thead>
+        <tbody>${renderChainList(bestChains, "best")}</tbody>
+      </table>
+    </div>
+
+    <h2>Worst Operators</h2>
+    <div class="table-container">
+      <table style="min-width:600px;">
+        <thead>
+          <tr style="border-bottom:2px solid var(--ink);">
+            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">#</th>
+            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Operator</th>
+            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Facilities</th>
+            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Avg Grade</th>
+            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Vs National</th>
+          </tr>
+        </thead>
+        <tbody>${renderChainList(worstChains, "worst")}</tbody>
+      </table>
+    </div>
+
+    ${reportMethodology(new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }))}
+
+    <div class="cta-box" style="margin-top:var(--space-2xl);">
+      <h3>Explore operators further</h3>
+      <p>Browse all nursing home operators with detailed facility lists, grade distributions, and performance comparisons.</p>
+      <a class="btn" href="/operators">All Operators →</a>
+      <a href="/operators/best" class="btn-secondary">Best →</a>
+      <a href="/operators/worst" class="btn-secondary">Worst →</a>
+    </div>
+  `;
+
+  return layout(
+    "Nursing Home Chain Comparison — Best & Worst Operators | NursingHomeGrade",
+    "Compare nursing home operators by average facility grade. Rankings of the best and worst chains based on independent CMS data analysis.",
+    body,
+    { canonicalPath: "/reports/chains" },
   );
 }

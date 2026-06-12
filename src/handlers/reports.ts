@@ -1,25 +1,69 @@
 import type { Env } from "../types";
 import { htmlCacheKey } from "../cache";
-import { getFacilitiesByState } from "../db";
+import { getStateAbbreviation, getStateInfo } from "../states";
+import { getOperatorsRanked, getNationalAverages } from "../db";
+import { staffingFailuresPage, highDeficiencyPage, staffingFailuresStatePage, chainsReportPage } from "../templates/reports";
 import { notFoundPage, errorPage } from "../templates/subscribe";
-import { staffingFailuresPage, highDeficiencyPage } from "../templates/reports";
 
-export async function handleStaffingFailures(request: Request, env: Env): Promise<Response> {
+interface FacilityRow {
+  cms_id: string;
+  name: string;
+  city: string;
+  state: string;
+  rn_hours_per_resident_day: number | null;
+  grade_score: number;
+  grade_letter: string;
+  slug: string;
+}
+
+export async function handleStaffingFailures(request: Request, env: Env, stateSlug?: string): Promise<Response> {
   try {
-    const cacheKey = htmlCacheKey("report:staffing-failures");
+    let stateAbbr: string | undefined;
+    let stateName: string | undefined;
+
+    if (stateSlug) {
+      stateAbbr = getStateAbbreviation(stateSlug);
+      if (!stateAbbr) {
+        const html = notFoundPage(new URL(request.url).pathname);
+        return new Response(html, { status: 404, headers: { "Content-Type": "text/html;charset=UTF-8" } });
+      }
+      const info = getStateInfo(stateAbbr);
+      stateName = info?.name ?? stateAbbr;
+    }
+
+    const cacheSuffix = stateAbbr ? `report:staffing-failures:${stateAbbr}` : "report:staffing-failures";
+    const cacheKey = htmlCacheKey(cacheSuffix);
     const cached = await env.CACHE.get(cacheKey);
     if (cached)
       return new Response(cached, {
         headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
       });
 
-    const results = await env.DB.prepare(
-      `SELECT f.* FROM facilities f
-       WHERE f.rn_hours_per_resident_day < 0.55
-       ORDER BY f.state ASC, f.grade_score ASC`
-    ).all<{ cms_id: string; name: string; city: string; state: string; rn_hours_per_resident_day: number | null; grade_score: number; grade_letter: string; slug: string }>();
+    let query: string;
+    let bindings: string[];
 
-    const html = staffingFailuresPage(results.results ?? []);
+    if (stateAbbr) {
+      query = `SELECT cms_id, name, city, state, rn_hours_per_resident_day, grade_score, grade_letter, slug
+        FROM facilities
+        WHERE rn_hours_per_resident_day < 0.55 AND state = ?
+        ORDER BY grade_score ASC`;
+      bindings = [stateAbbr];
+    } else {
+      query = `SELECT cms_id, name, city, state, rn_hours_per_resident_day, grade_score, grade_letter, slug
+        FROM facilities
+        WHERE rn_hours_per_resident_day < 0.55
+        ORDER BY state ASC, grade_score ASC`;
+      bindings = [];
+    }
+
+    const stmt = env.DB.prepare(query);
+    for (const b of bindings) stmt.bind(b);
+    const results = await stmt.all<FacilityRow>();
+
+    const html = stateAbbr
+      ? staffingFailuresStatePage(stateName!, results.results ?? [])
+      : staffingFailuresPage(results.results ?? []);
+
     await env.CACHE.put(cacheKey, html, { expirationTtl: 86400 });
     return new Response(html, {
       headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
@@ -55,6 +99,33 @@ export async function handleHighDeficiency(request: Request, env: Env): Promise<
     });
   } catch (err) {
     console.error("handleHighDeficiency error", err);
+    const html = errorPage("Service unavailable", "We're experiencing a temporary issue. Please try again in a moment.");
+    return new Response(html, { status: 503, headers: { "Content-Type": "text/html;charset=UTF-8" } });
+  }
+}
+
+export async function handleChainsReport(request: Request, env: Env): Promise<Response> {
+  try {
+    const cacheKey = htmlCacheKey("report:chains");
+    const cached = await env.CACHE.get(cacheKey);
+    if (cached)
+      return new Response(cached, {
+        headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
+      });
+
+    const [bestChains, worstChains, nationalAvg] = await Promise.all([
+      getOperatorsRanked(env, 25, "DESC"),
+      getOperatorsRanked(env, 25, "ASC"),
+      getNationalAverages(env),
+    ]);
+
+    const html = chainsReportPage(bestChains, worstChains, nationalAvg);
+    await env.CACHE.put(cacheKey, html, { expirationTtl: 86400 });
+    return new Response(html, {
+      headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
+    });
+  } catch (err) {
+    console.error("handleChainsReport error", err);
     const html = errorPage("Service unavailable", "We're experiencing a temporary issue. Please try again in a moment.");
     return new Response(html, { status: 503, headers: { "Content-Type": "text/html;charset=UTF-8" } });
   }

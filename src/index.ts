@@ -8,8 +8,9 @@ import { handleCity } from "./handlers/city";
 import { handleCompare, handleCompareApi } from "./handlers/comparison";
 import { handleExplore, handleMapApi } from "./handlers/map";
 import { handleOperator, handleOperatorsHub, handleOperatorsBest, handleOperatorsWorst } from "./handlers/operator";
-import { handleStaffingFailures, handleHighDeficiency } from "./handlers/reports";
+import { handleStaffingFailures, handleHighDeficiency, handleChainsReport } from "./handlers/reports";
 import { handleBest, handleWorst } from "./handlers/best";
+import { handleStateReport } from "./handlers/state-report";
 import { subscribePage, notFoundPage, errorPage } from "./templates/subscribe";
 
 export default {
@@ -31,6 +32,7 @@ export default {
     if (path === "/operators/worst") return handleOperatorsWorst(request, env);
     if (path === "/reports/staffing-failures") return handleStaffingFailures(request, env);
     if (path === "/reports/high-deficiency-facilities") return handleHighDeficiency(request, env);
+    if (path === "/reports/chains") return handleChainsReport(request, env);
 
     if (path === "/best") return handleBest(request, env);
     if (path === "/worst") return handleWorst(request, env);
@@ -95,6 +97,9 @@ export default {
     const operatorMatch = path.match(/^\/operator\/([a-z0-9-]+)$/);
     if (operatorMatch?.[1]) return handleOperator(request, env, operatorMatch[1]);
 
+    const staffingFailuresStateMatch = path.match(/^\/reports\/staffing-failures\/([a-z-]+)$/);
+    if (staffingFailuresStateMatch?.[1]) return handleStaffingFailures(request, env, staffingFailuresStateMatch[1]);
+
     const bestStateMatch = path.match(/^\/best\/([a-z-]+)$/);
     if (bestStateMatch?.[1]) return handleBest(request, env, bestStateMatch[1]);
 
@@ -106,6 +111,9 @@ export default {
 
     const cityMatch = path.match(/^\/state\/([a-z-]+)\/([a-z-]+)$/);
     if (cityMatch?.[1] && cityMatch?.[2]) return handleCity(request, env, cityMatch[1], cityMatch[2]);
+
+    const stateReportMatch = path.match(/^\/state\/([a-z-]+)\/report$/);
+    if (stateReportMatch?.[1]) return handleStateReport(request, env, stateReportMatch[1]);
 
     const stateMatch = path.match(/^\/state\/([a-z-]+)$/);
     if (stateMatch?.[1]) return handleState(request, env, stateMatch[1]);
