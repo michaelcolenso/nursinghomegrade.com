@@ -1036,15 +1036,17 @@ export function layout(
         <nav class="footer-col" aria-label="Resources">
           <div class="footer-col-head">Resources</div>
           <a href="/about" class="footer-link">How We Grade</a>
-          <a href="/about" class="footer-link">FAQ</a>
-          <a href="/about" class="footer-link">Glossary</a>
+          <a href="/about" class="footer-link">Methodology</a>
+          <a href="/best" class="footer-link">Best Facilities</a>
+          <a href="/reports/staffing-failures" class="footer-link">Staffing Report</a>
         </nav>
 
         <nav class="footer-col" aria-label="Company">
           <div class="footer-col-head">Company</div>
           <a href="/about" class="footer-link">About Us</a>
-          <a href="/about" class="footer-link">Methodology</a>
+          <a href="/about" class="footer-link">FAQ</a>
           <a href="/about" class="footer-link">Contact</a>
+          <a href="/about" class="footer-link">Glossary</a>
         </nav>
 
         <div class="footer-col">

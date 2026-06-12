@@ -9,6 +9,7 @@ import { handleCompare, handleCompareApi } from "./handlers/comparison";
 import { handleExplore, handleMapApi } from "./handlers/map";
 import { handleOperator, handleOperatorsHub, handleOperatorsBest, handleOperatorsWorst } from "./handlers/operator";
 import { handleStaffingFailures, handleHighDeficiency } from "./handlers/reports";
+import { handleBest, handleWorst } from "./handlers/best";
 import { subscribePage, notFoundPage, errorPage } from "./templates/subscribe";
 
 export default {
@@ -30,6 +31,9 @@ export default {
     if (path === "/operators/worst") return handleOperatorsWorst(request, env);
     if (path === "/reports/staffing-failures") return handleStaffingFailures(request, env);
     if (path === "/reports/high-deficiency-facilities") return handleHighDeficiency(request, env);
+
+    if (path === "/best") return handleBest(request, env);
+    if (path === "/worst") return handleWorst(request, env);
 
     if (path === "/subscribe" && request.method === "POST") {
       try {
@@ -90,6 +94,12 @@ export default {
 
     const operatorMatch = path.match(/^\/operator\/([a-z0-9-]+)$/);
     if (operatorMatch?.[1]) return handleOperator(request, env, operatorMatch[1]);
+
+    const bestStateMatch = path.match(/^\/best\/([a-z-]+)$/);
+    if (bestStateMatch?.[1]) return handleBest(request, env, bestStateMatch[1]);
+
+    const worstStateMatch = path.match(/^\/worst\/([a-z-]+)$/);
+    if (worstStateMatch?.[1]) return handleWorst(request, env, worstStateMatch[1]);
 
     const facilityMatch = path.match(/^\/facility\/([A-Za-z0-9-]+)$/);
     if (facilityMatch?.[1]) return handleFacility(request, env, facilityMatch[1]);

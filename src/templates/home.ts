@@ -5,8 +5,8 @@ export function homePage(pctFailing: number): string {
   const body = `
     <h1 class="display">Find honest nursing home grades</h1>
     <p class="lede">
-      <strong>${pctFailing}% of U.S. nursing homes</strong> fail the federal staffing minimum.
-      We show you which ones — independent grades based on CMS data.
+      <strong>${pctFailing}% of U.S. nursing homes</strong> fall below safe RN staffing levels.
+      Independent grades based on CMS data — no facility payments, no conflicts.
     </p>
     <p style="color:var(--muted);font-size:0.9rem;margin-bottom:var(--space-m);">
       Data from CMS Nursing Home Compare. Last updated: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long" })}.
@@ -47,8 +47,8 @@ export function homePage(pctFailing: number): string {
   ];
 
   return layout(
-    "NursingHomeGrade — Honest Nursing Home Ratings",
-    `${pctFailing}% of U.S. nursing homes fail the federal staffing minimum. Find unbiased nursing home grades based on CMS data — no commissions.`,
+    "NursingHomeGrade — Independent Nursing Home Ratings",
+    `${pctFailing}% of U.S. nursing homes fall below safe RN staffing levels. Find unbiased nursing home grades based on CMS data — no commissions.`,
     body,
     { jsonLd, canonicalPath: "/", ogImage: "https://nursinghomegrade.com/NHG.png" }
   );
