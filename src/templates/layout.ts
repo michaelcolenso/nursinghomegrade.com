@@ -1201,6 +1201,112 @@ export function layout(
       update();
     })();
   </script>
+  <script>
+    // WebMCP — Expose site tools to AI agents via navigator.modelContext
+    (function() {
+      if (!navigator.modelContext || !navigator.modelContext.registerTool) return;
+
+      var controller = new AbortController();
+      var signal = controller.signal;
+
+      // Search facilities by ZIP code
+      if (document.querySelector('input[name="zip"]')) {
+        navigator.modelContext.registerTool({
+          name: "search_facilities",
+          description: "Search nursing homes by ZIP code and return quality grades, staffing data, and deficiency reports.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              zip: { type: "string", description: "5-digit US ZIP code" },
+              sort: { type: "string", enum: ["grade", "distance", "name"], description: "Sort order (default: grade)" },
+              min_grade: { type: "string", enum: ["A", "B", "C", "D", "F"], description: "Minimum grade filter" },
+            },
+            required: ["zip"],
+          },
+          execute: function(params) {
+            var url = "/search?zip=" + encodeURIComponent(params.zip);
+            if (params.sort) url += "&sort=" + encodeURIComponent(params.sort);
+            if (params.min_grade) url += "&min_grade=" + encodeURIComponent(params.min_grade);
+            window.location.href = url;
+            return Promise.resolve({ navigated: url });
+          },
+        }, { signal: signal });
+      }
+
+      // Navigate to facility detail page
+      if (window.location.pathname === "/" || window.location.pathname === "/search" || window.location.pathname === "/explore") {
+        navigator.modelContext.registerTool({
+          name: "get_facility",
+          description: "View detailed information about a specific nursing home including grades, staffing data, and deficiency history.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              facility_id: { type: "string", description: "CMS certification number (CCN) or facility slug from the URL" },
+            },
+            required: ["facility_id"],
+          },
+          execute: function(params) {
+            window.location.href = "/facility/" + encodeURIComponent(params.facility_id);
+            return Promise.resolve({ navigated: "/facility/" + params.facility_id });
+          },
+        }, { signal: signal });
+      }
+
+      // Compare facilities
+      if (window.location.pathname === "/compare" || window.location.pathname === "/" || window.location.pathname === "/search") {
+        navigator.modelContext.registerTool({
+          name: "compare_facilities",
+          description: "Compare multiple nursing homes side-by-side on grades, staffing, inspection results, and deficiency data.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              ids: { type: "array", items: { type: "string" }, description: "Array of facility CCNs to compare (max 5)" },
+            },
+            required: ["ids"],
+          },
+          execute: function(params) {
+            var ids = params.ids.slice(0, 5).join(",");
+            window.location.href = "/compare?ids=" + encodeURIComponent(ids);
+            return Promise.resolve({ navigated: "/compare?ids=" + ids });
+          },
+        }, { signal: signal });
+      }
+
+      // Navigate to state rankings
+      navigator.modelContext.registerTool({
+        name: "get_state_rankings",
+        description: "Browse nursing home quality rankings and statistics for a specific state.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            state: { type: "string", description: "Two-letter US state abbreviation (e.g., CA, TX, FL)" },
+          },
+          required: ["state"],
+        },
+        execute: function(params) {
+          window.location.href = "/state/" + encodeURIComponent(params.state.toLowerCase());
+          return Promise.resolve({ navigated: "/state/" + params.state.toLowerCase() });
+        },
+      }, { signal: signal });
+
+      // Navigate to any page
+      navigator.modelContext.registerTool({
+        name: "navigate",
+        description: "Navigate to any page on NursingHomeGrade.com, including home, about, reports, operator pages, and search.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            path: { type: "string", description: "URL path on nursinghomegrade.com (e.g., /about, /best, /reports/staffing-failures)" },
+          },
+          required: ["path"],
+        },
+        execute: function(params) {
+          window.location.href = params.path.startsWith("/") ? params.path : "/" + params.path;
+          return Promise.resolve({ navigated: params.path });
+        },
+      }, { signal: signal });
+    })();
+  </script>
 </body>
 </html>`;
 }
