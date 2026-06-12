@@ -189,14 +189,18 @@ export function layout(
     }
     .masthead-nav-link:hover { color: var(--accent); border: none; }
     .masthead-search-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       min-height: 44px;
       font-family: 'Source Sans 3', system-ui, sans-serif;
       font-size: 0.875rem;
       font-weight: 600;
+      line-height: 1;
       color: #fff;
       background: var(--accent);
       padding: 0.4rem 1rem;
-      border-radius: 4px;
+      border-radius: 0;
       text-decoration: none;
       border: none;
       transition: background 0.2s ease;
@@ -866,13 +870,19 @@ export function layout(
         gap: var(--space-2xs) !important;
         flex-wrap: wrap;
       }
-      header nav a {
+      header nav .masthead-nav-link {
         display: inline-flex;
         min-height: 44px;
         align-items: center;
         padding: 0 var(--space-xs);
         border: 1px solid var(--rule) !important;
         background: #fff;
+      }
+      header nav .masthead-search-btn {
+        background: var(--accent);
+        color: #fff;
+        border: none !important;
+        padding: 0.45rem 1rem;
       }
       main.container { padding-top: var(--space-l) !important; }
       .facility-header { flex-direction: column-reverse; gap: var(--space-s); }
@@ -1000,6 +1010,8 @@ export function layout(
           <a href="/explore" class="masthead-nav-link">Find Facilities</a>
           <a href="/states" class="masthead-nav-link">Ratings</a>
           <a href="/compare" class="masthead-nav-link">Compare</a>
+          <a href="/best" class="masthead-nav-link">Best</a>
+          <a href="/worst" class="masthead-nav-link">Worst</a>
           <a href="/about" class="masthead-nav-link">About</a>
           <a href="/search" class="masthead-search-btn">Search</a>
         </nav>
