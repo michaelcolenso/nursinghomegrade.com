@@ -509,8 +509,8 @@ export function facilityPage(
   ];
 
   return layout(
-    `${f.name} — NursingHomeGrade ${f.grade_letter} | ${f.city}, ${f.state}`,
-    summary || `${f.name} in ${f.city}, ${f.state} earns a grade of ${f.grade_letter} (${f.grade_score}/100). ${f.grade_summary}`,
+    `${f.name} — Ratings, Inspections & Staffing Data | ${f.city}, ${f.state}`,
+    `See the full quality report for ${f.name} in ${f.city}, ${f.state}: ${f.grade_score}/100 grade, staffing levels, deficiency history, and nearby alternatives.`,
     body,
     {
       canonicalPath,
