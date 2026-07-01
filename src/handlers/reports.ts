@@ -1,5 +1,5 @@
 import type { Env } from "../types";
-import { htmlCacheKey } from "../cache";
+import { htmlCacheKey, pageCache } from "../cache";
 import { getStateAbbreviation, getStateInfo } from "../states";
 import { getOperatorsRanked, getNationalAverages } from "../db";
 import { staffingFailuresPage, highDeficiencyPage, staffingFailuresStatePage, chainsReportPage } from "../templates/reports";
@@ -33,7 +33,7 @@ export async function handleStaffingFailures(request: Request, env: Env, stateSl
 
     const cacheSuffix = stateAbbr ? `report:staffing-failures:${stateAbbr}` : "report:staffing-failures";
     const cacheKey = htmlCacheKey(cacheSuffix);
-    const cached = await env.CACHE.get(cacheKey);
+    const cached = await pageCache.get(cacheKey);
     if (cached)
       return new Response(cached, {
         headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
@@ -64,7 +64,7 @@ export async function handleStaffingFailures(request: Request, env: Env, stateSl
       ? staffingFailuresStatePage(stateName!, results.results ?? [])
       : staffingFailuresPage(results.results ?? []);
 
-    await env.CACHE.put(cacheKey, html, { expirationTtl: 86400 });
+    await pageCache.put(cacheKey, html, { expirationTtl: 86400 });
     return new Response(html, {
       headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
     });
@@ -78,7 +78,7 @@ export async function handleStaffingFailures(request: Request, env: Env, stateSl
 export async function handleHighDeficiency(request: Request, env: Env): Promise<Response> {
   try {
     const cacheKey = htmlCacheKey("report:high-deficiency");
-    const cached = await env.CACHE.get(cacheKey);
+    const cached = await pageCache.get(cacheKey);
     if (cached)
       return new Response(cached, {
         headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
@@ -93,7 +93,7 @@ export async function handleHighDeficiency(request: Request, env: Env): Promise<
     ).all<{ cms_id: string; name: string; city: string; state: string; total_deficiencies: number | null; grade_score: number; grade_letter: string; slug: string }>();
 
     const html = highDeficiencyPage(results.results ?? []);
-    await env.CACHE.put(cacheKey, html, { expirationTtl: 86400 });
+    await pageCache.put(cacheKey, html, { expirationTtl: 86400 });
     return new Response(html, {
       headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
     });
@@ -107,7 +107,7 @@ export async function handleHighDeficiency(request: Request, env: Env): Promise<
 export async function handleChainsReport(request: Request, env: Env): Promise<Response> {
   try {
     const cacheKey = htmlCacheKey("report:chains");
-    const cached = await env.CACHE.get(cacheKey);
+    const cached = await pageCache.get(cacheKey);
     if (cached)
       return new Response(cached, {
         headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
@@ -120,7 +120,7 @@ export async function handleChainsReport(request: Request, env: Env): Promise<Re
     ]);
 
     const html = chainsReportPage(bestChains, worstChains, nationalAvg);
-    await env.CACHE.put(cacheKey, html, { expirationTtl: 86400 });
+    await pageCache.put(cacheKey, html, { expirationTtl: 86400 });
     return new Response(html, {
       headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
     });

@@ -1,5 +1,5 @@
 import type { Env } from "../types";
-import { htmlCacheKey } from "../cache";
+import { htmlCacheKey, pageCache } from "../cache";
 import { getStateAbbreviation, getStateInfo } from "../states";
 import {
   getCitySnapshot,
@@ -24,7 +24,7 @@ export async function handleCity(request: Request, env: Env, stateSlug: string, 
     }
 
     const cacheKey = htmlCacheKey(`city:${stateSlug}:${citySlugParam}`);
-    const cached = await env.CACHE.get(cacheKey);
+    const cached = await pageCache.get(cacheKey);
     if (cached)
       return new Response(cached, {
         headers: {
@@ -57,7 +57,7 @@ export async function handleCity(request: Request, env: Env, stateSlug: string, 
       siblingCities: allCities,
     });
 
-    await env.CACHE.put(cacheKey, html, { expirationTtl: 86400 });
+    await pageCache.put(cacheKey, html, { expirationTtl: 86400 });
     return new Response(html, {
       headers: {
         "Content-Type": "text/html;charset=UTF-8",

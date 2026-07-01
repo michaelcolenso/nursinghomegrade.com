@@ -1,6 +1,6 @@
 import type { Env } from "../types";
 import type { Facility } from "../types";
-import { htmlCacheKey } from "../cache";
+import { htmlCacheKey, pageCache } from "../cache";
 import { getNationalPctFailing, searchByZipExact, searchNearby, getStatesWithCounts } from "../db";
 import { homePage, searchResultsPage } from "../templates/home";
 import { errorPage } from "../templates/subscribe";
@@ -8,7 +8,7 @@ import { errorPage } from "../templates/subscribe";
 export async function handleHome(request: Request, env: Env): Promise<Response> {
   try {
     const cacheKey = htmlCacheKey("page:home");
-    const cached = await env.CACHE.get(cacheKey);
+    const cached = await pageCache.get(cacheKey);
     if (cached)
       return new Response(cached, {
         headers: {
@@ -19,7 +19,7 @@ export async function handleHome(request: Request, env: Env): Promise<Response> 
 
     const pctFailing = await getNationalPctFailing(env);
     const html = homePage(pctFailing);
-    await env.CACHE.put(cacheKey, html, { expirationTtl: 3600 });
+    await pageCache.put(cacheKey, html, { expirationTtl: 3600 });
     return new Response(html, {
       headers: {
         "Content-Type": "text/html;charset=UTF-8",
@@ -48,7 +48,7 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number): numb
 }
 
 async function geocodeZip(env: Env, zip: string): Promise<{ lat: number; lng: number; state: string } | null> {
-  const cached = await env.CACHE.get(`zip:latlng:${zip}`);
+  const cached = await pageCache.get(`zip:latlng:${zip}`);
   if (cached) {
     try {
       return JSON.parse(cached);
@@ -70,7 +70,7 @@ async function geocodeZip(env: Env, zip: string): Promise<{ lat: number; lng: nu
       lng: parseFloat(place.longitude),
       state: place["state abbreviation"],
     };
-    await env.CACHE.put(`zip:latlng:${zip}`, JSON.stringify(result), {
+    await pageCache.put(`zip:latlng:${zip}`, JSON.stringify(result), {
       expirationTtl: 86400 * 30,
     });
     return result;
