@@ -1,5 +1,5 @@
 import type { Env } from "../types";
-import { htmlCacheKey } from "../cache";
+import { htmlCacheKey, pageCache } from "../cache";
 import {
   getFacilityBySlugId,
   getFacilityInspectionDetails,
@@ -32,7 +32,7 @@ export async function handleFacility(request: Request, env: Env, slugId: string)
     }
 
     const cacheKey = htmlCacheKey(`facility:${facility.cms_id}-${facility.slug}`);
-    const cached = await env.CACHE.get(cacheKey);
+    const cached = await pageCache.get(cacheKey);
     if (cached)
       return new Response(cached, {
         headers: {
@@ -79,7 +79,7 @@ export async function handleFacility(request: Request, env: Env, slugId: string)
       summary,
       operator,
     );
-    await env.CACHE.put(cacheKey, html, { expirationTtl: 86400 });
+    await pageCache.put(cacheKey, html, { expirationTtl: 86400 });
     return new Response(html, {
       headers: {
         "Content-Type": "text/html;charset=UTF-8",
