@@ -1,5 +1,5 @@
 import type { Env } from "../types";
-import { htmlCacheKey } from "../cache";
+import { htmlCacheKey, pageCache } from "../cache";
 import { getStateAbbreviation, getStateInfo } from "../states";
 import {
   getFacilitiesByState,
@@ -27,7 +27,7 @@ export async function handleStateReport(request: Request, env: Env, stateSlug: s
     }
 
     const cacheKey = htmlCacheKey(`state-report:${stateSlug}`);
-    const cached = await env.CACHE.get(cacheKey);
+    const cached = await pageCache.get(cacheKey);
     if (cached)
       return new Response(cached, {
         headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
@@ -110,7 +110,7 @@ export async function handleStateReport(request: Request, env: Env, stateSlug: s
       datasetDate,
     });
 
-    await env.CACHE.put(cacheKey, html, { expirationTtl: 86400 });
+    await pageCache.put(cacheKey, html, { expirationTtl: 86400 });
     return new Response(html, {
       headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
     });

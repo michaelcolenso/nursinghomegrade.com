@@ -1,5 +1,5 @@
 import type { Env } from "../types";
-import { htmlCacheKey } from "../cache";
+import { htmlCacheKey, pageCache } from "../cache";
 import { getStateAbbreviation, getStateInfo } from "../states";
 import { bestPage, worstPage } from "../templates/best";
 import { notFoundPage, errorPage } from "../templates/subscribe";
@@ -73,7 +73,7 @@ export async function handleBest(request: Request, env: Env, stateSlug?: string)
 
     const cacheSuffix = stateAbbr ? `best:${stateAbbr}` : "best:national";
     const cacheKey = htmlCacheKey(cacheSuffix);
-    const cached = await env.CACHE.get(cacheKey);
+    const cached = await pageCache.get(cacheKey);
     if (cached)
       return new Response(cached, {
         headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
@@ -82,7 +82,7 @@ export async function handleBest(request: Request, env: Env, stateSlug?: string)
     const facilities = await fetchBest(env, stateAbbr);
 
     const html = bestPage(facilities, stateName);
-    await env.CACHE.put(cacheKey, html, { expirationTtl: 86400 });
+    await pageCache.put(cacheKey, html, { expirationTtl: 86400 });
     return new Response(html, {
       headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
     });
@@ -110,7 +110,7 @@ export async function handleWorst(request: Request, env: Env, stateSlug?: string
 
     const cacheSuffix = stateAbbr ? `worst:${stateAbbr}` : "worst:national";
     const cacheKey = htmlCacheKey(cacheSuffix);
-    const cached = await env.CACHE.get(cacheKey);
+    const cached = await pageCache.get(cacheKey);
     if (cached)
       return new Response(cached, {
         headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
@@ -119,7 +119,7 @@ export async function handleWorst(request: Request, env: Env, stateSlug?: string
     const facilities = await fetchWorst(env, stateAbbr);
 
     const html = worstPage(facilities, stateName);
-    await env.CACHE.put(cacheKey, html, { expirationTtl: 86400 });
+    await pageCache.put(cacheKey, html, { expirationTtl: 86400 });
     return new Response(html, {
       headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
     });

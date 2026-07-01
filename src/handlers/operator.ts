@@ -1,5 +1,5 @@
 import type { Env } from "../types";
-import { htmlCacheKey } from "../cache";
+import { htmlCacheKey, pageCache } from "../cache";
 import {
   getOperatorBySlug,
   getOperatorFacilities,
@@ -26,7 +26,7 @@ export async function handleOperator(request: Request, env: Env, slug: string): 
     }
 
     const cacheKey = htmlCacheKey(`operator:${slug}`);
-    const cached = await env.CACHE.get(cacheKey);
+    const cached = await pageCache.get(cacheKey);
     if (cached)
       return new Response(cached, {
         headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
@@ -52,7 +52,7 @@ export async function handleOperator(request: Request, env: Env, slug: string): 
       insightLines,
     });
 
-    await env.CACHE.put(cacheKey, html, { expirationTtl: 86400 });
+    await pageCache.put(cacheKey, html, { expirationTtl: 86400 });
     return new Response(html, {
       headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
     });
@@ -66,7 +66,7 @@ export async function handleOperator(request: Request, env: Env, slug: string): 
 export async function handleOperatorsHub(request: Request, env: Env): Promise<Response> {
   try {
     const cacheKey = htmlCacheKey("page:operators");
-    const cached = await env.CACHE.get(cacheKey);
+    const cached = await pageCache.get(cacheKey);
     if (cached)
       return new Response(cached, {
         headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
@@ -74,7 +74,7 @@ export async function handleOperatorsHub(request: Request, env: Env): Promise<Re
 
     const operators = await getAllOperators(env);
     const html = operatorsHubPage(operators);
-    await env.CACHE.put(cacheKey, html, { expirationTtl: 86400 });
+    await pageCache.put(cacheKey, html, { expirationTtl: 86400 });
     return new Response(html, {
       headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
     });
@@ -88,7 +88,7 @@ export async function handleOperatorsHub(request: Request, env: Env): Promise<Re
 export async function handleOperatorsBest(request: Request, env: Env): Promise<Response> {
   try {
     const cacheKey = htmlCacheKey("page:operators-best");
-    const cached = await env.CACHE.get(cacheKey);
+    const cached = await pageCache.get(cacheKey);
     if (cached)
       return new Response(cached, {
         headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
@@ -96,7 +96,7 @@ export async function handleOperatorsBest(request: Request, env: Env): Promise<R
 
     const operators = await getOperatorsRanked(env, 50, "DESC");
     const html = operatorsBestPage(operators);
-    await env.CACHE.put(cacheKey, html, { expirationTtl: 86400 });
+    await pageCache.put(cacheKey, html, { expirationTtl: 86400 });
     return new Response(html, {
       headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
     });
@@ -110,7 +110,7 @@ export async function handleOperatorsBest(request: Request, env: Env): Promise<R
 export async function handleOperatorsWorst(request: Request, env: Env): Promise<Response> {
   try {
     const cacheKey = htmlCacheKey("page:operators-worst");
-    const cached = await env.CACHE.get(cacheKey);
+    const cached = await pageCache.get(cacheKey);
     if (cached)
       return new Response(cached, {
         headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
@@ -118,7 +118,7 @@ export async function handleOperatorsWorst(request: Request, env: Env): Promise<
 
     const operators = await getOperatorsRanked(env, 50, "ASC");
     const html = operatorsWorstPage(operators);
-    await env.CACHE.put(cacheKey, html, { expirationTtl: 86400 });
+    await pageCache.put(cacheKey, html, { expirationTtl: 86400 });
     return new Response(html, {
       headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
     });

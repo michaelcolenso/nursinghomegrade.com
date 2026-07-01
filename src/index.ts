@@ -1,5 +1,4 @@
 import type { Env } from "./types";
-import { htmlCacheKey } from "./cache";
 import { handleFacility } from "./handlers/facility";
 import { handleHome, handleSearch } from "./handlers/home";
 import { handleAbout } from "./handlers/about";
@@ -325,12 +324,5 @@ export default {
         "Link": AGENT_LINKS,
       },
     });
-  },
-
-  async scheduled(controller: ScheduledController, env: Env, _ctx: ExecutionContext): Promise<void> {
-    // Weekly: invalidate cached pages so stats refresh
-    await env.CACHE.delete(htmlCacheKey("page:home"));
-    await env.CACHE.delete(htmlCacheKey("page:states"));
-    // Cache cleared silently
   },
 } satisfies ExportedHandler<Env>;
