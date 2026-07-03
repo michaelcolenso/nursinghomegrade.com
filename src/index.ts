@@ -28,6 +28,13 @@ const AGENT_LINKS = [
   '</.well-known/oauth-protected-resource>; rel="oauth-protected-resource"',
 ].join(", ");
 
+const SITEMAP_CACHE_KEYS: Record<string, string> = {
+  "/sitemap.xml": "sitemap",
+  "/sitemap-core.xml": "sitemap-core",
+  "/sitemap-cities.xml": "sitemap-cities",
+  "/sitemap-facilities.xml": "sitemap-facilities",
+};
+
 // ── Response wrapper: Link headers + markdown negotiation ───────────────
 async function wrapResponse(
   original: Response,
@@ -139,6 +146,26 @@ See our [About page](/about) for methodology and data sources.
   });
 }
 
+async function handleSitemap(env: Env, cacheKey: string): Promise<Response> {
+  const sitemap = await env.CACHE.get(cacheKey);
+  if (sitemap)
+    return new Response(sitemap, {
+      headers: {
+        "Content-Type": "application/xml",
+        "Link": AGENT_LINKS,
+      },
+    });
+
+  const html = errorPage("Sitemap not found", "The sitemap could not be found. It may still be generating.");
+  return new Response(html, {
+    status: 404,
+    headers: {
+      "Content-Type": "text/html;charset=UTF-8",
+      "Link": AGENT_LINKS,
+    },
+  });
+}
+
 // ── Main Worker ─────────────────────────────────────────────────────────
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -203,24 +230,8 @@ export default {
     }
 
     // ── Sitemap ────────────────────────────────────────────────────────
-    if (path === "/sitemap.xml") {
-      const sitemap = await env.CACHE.get("sitemap");
-      if (sitemap)
-        return new Response(sitemap, {
-          headers: {
-            "Content-Type": "application/xml",
-            "Link": AGENT_LINKS,
-          },
-        });
-      const html = errorPage("Sitemap not found", "The sitemap could not be found. It may still be generating.");
-      return new Response(html, {
-        status: 404,
-        headers: {
-          "Content-Type": "text/html;charset=UTF-8",
-          "Link": AGENT_LINKS,
-        },
-      });
-    }
+    const sitemapCacheKey = SITEMAP_CACHE_KEYS[path];
+    if (sitemapCacheKey) return handleSitemap(env, sitemapCacheKey);
 
     // ── Domain verification ────────────────────────────────────────────
     if (path === "/9a151ecdcc4348238501f41bfc227d26.txt") {
