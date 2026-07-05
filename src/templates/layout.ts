@@ -1250,7 +1250,10 @@ export function layout(
   </script>
   ${extraScripts || ""}
   <div id="comparison-bar" style="display:none; position:fixed; bottom:0; left:0; width:100%; background:var(--ink); color:#fff; padding:var(--space-s) var(--space-m); justify-content:space-between; align-items:center; z-index:1000; border-top: 4px solid var(--accent); box-shadow: 0 -4px 12px rgba(0,0,0,0.15);">
-    <div id="comparison-count" style="font-weight:700;"></div>
+    <div style="display:flex; align-items:center; gap:var(--space-s);">
+      <div id="comparison-count" style="font-weight:700;"></div>
+      <button id="comparison-clear" style="background:none; border:none; color:rgba(255,255,255,0.6); font-family:'Inter',system-ui,sans-serif; font-size:0.8rem; cursor:pointer; padding:0; text-decoration:underline;">Clear all</button>
+    </div>
     <a href="/compare" class="btn" style="background:#fff; color:var(--ink); border:none;">Compare <span id="compare-btn-count"></span> →</a>
   </div>
   <script>
@@ -1258,6 +1261,7 @@ export function layout(
       var bar = document.getElementById('comparison-bar');
       var count = document.getElementById('comparison-count');
       var btnCount = document.getElementById('compare-btn-count');
+      var clearBtn = document.getElementById('comparison-clear');
       function update() {
         var data = JSON.parse(localStorage.getItem('nhg_saved_facilities') || '[]');
         if (data.length > 0 && window.location.pathname !== '/compare') {
@@ -1268,6 +1272,13 @@ export function layout(
           bar.style.display = 'none';
         }
       }
+      clearBtn.addEventListener('click', function() {
+        localStorage.removeItem('nhg_saved_facilities');
+        document.querySelectorAll('[id^="save-"]').forEach(function(btn) {
+          btn.textContent = 'Save';
+        });
+        update();
+      });
       window.addEventListener('storage', update);
       update();
     })();
