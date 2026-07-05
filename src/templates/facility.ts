@@ -140,7 +140,14 @@ function renderDeficiencies(deficiencies: Deficiency[]): string {
       const surveyDate = defs[0]?.survey_date ? formatDate(defs[0].survey_date) : "";
       const dateLabel = surveyDate ? ` (${surveyDate})` : "";
 
-      const items = defs
+      // Sort: uncorrected first, then corrected — surface outstanding issues
+      const sorted = [...defs].sort((a, b) => {
+        const aCorrected = a.correction_date ? 1 : 0;
+        const bCorrected = b.correction_date ? 1 : 0;
+        return aCorrected - bCorrected;
+      });
+
+      const items = sorted
         .map((d) => {
           const sevColor = severityColor(d.scope_severity_code);
           const sevLabel = severityLabel(d.scope_severity_code);
