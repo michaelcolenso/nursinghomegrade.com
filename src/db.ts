@@ -362,7 +362,7 @@ export async function getFacilitiesWithUncorrectedDeficiencies(env: Env, limit =
       MAX(fd.scope_severity_code) as worst_severity
     FROM facilities f
     INNER JOIN facility_deficiencies fd ON f.cms_id = fd.cms_id
-    WHERE fd.correction_date IS NULL
+    WHERE fd.deficiency_corrected IN ('Deficient, Provider has no plan of correction', 'Deficient, Provider has plan of correction')
     GROUP BY f.cms_id
     ORDER BY
       CASE

@@ -34,6 +34,11 @@ function severityColor(code: string | null): string {
   return "#607D8B";
 }
 
+function isUncorrectedDeficiency(d: Deficiency): boolean {
+  return d.deficiency_corrected === "Deficient, Provider has no plan of correction"
+      || d.deficiency_corrected === "Deficient, Provider has plan of correction";
+}
+
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return "";
   try {
@@ -106,8 +111,8 @@ function renderDeficiencySummary(deficiencies: Deficiency[]): string {
   if (deficiencies.length === 0) return "";
   const harmCount = deficiencies.filter(d => d.scope_severity_code && d.scope_severity_code >= "G" && d.scope_severity_code < "J").length;
   const jeopardyCount = deficiencies.filter(d => d.scope_severity_code && d.scope_severity_code >= "J").length;
-  const correctedCount = deficiencies.filter(d => d.correction_date).length;
-  const uncorrectedCount = deficiencies.length - correctedCount;
+  const correctedCount = deficiencies.filter(d => !isUncorrectedDeficiency(d)).length;
+  const uncorrectedCount = deficiencies.filter(d => isUncorrectedDeficiency(d)).length;
   const alerts: string[] = [];
   if (jeopardyCount > 0) alerts.push(`<span style="color:var(--grade-F);font-weight:800;">${jeopardyCount} immediate jeopardy</span>`);
   if (harmCount > 0) alerts.push(`<span style="color:var(--grade-D);font-weight:800;">${harmCount} actual harm</span>`);
@@ -146,9 +151,9 @@ function renderDeficiencies(deficiencies: Deficiency[]): string {
 
       // Sort: uncorrected first, then corrected — surface outstanding issues
       const sorted = [...defs].sort((a, b) => {
-        const aCorrected = a.correction_date ? 1 : 0;
-        const bCorrected = b.correction_date ? 1 : 0;
-        return aCorrected - bCorrected;
+        const aUncorrected = isUncorrectedDeficiency(a) ? 0 : 1;
+        const bUncorrected = isUncorrectedDeficiency(b) ? 0 : 1;
+        return aUncorrected - bUncorrected;
       });
 
       const items = sorted
@@ -158,7 +163,11 @@ function renderDeficiencies(deficiencies: Deficiency[]): string {
           const tag = d.deficiency_tag_number ? `F${d.deficiency_tag_number}` : "";
           const corrected = d.deficiency_corrected ? ` — ${d.deficiency_corrected}` : "";
           const correctionDate = d.correction_date ? `, corrected ${formatDate(d.correction_date)}` : "";
-          const statusLabel = d.correction_date ? "Status: Corrected" : "Status: Outstanding";
+          const statusLabel = isUncorrectedDeficiency(d)
+            ? (d.deficiency_corrected === "Deficient, Provider has no plan of correction"
+                ? "Status: Outstanding — No Plan"
+                : "Status: Outstanding — Plan Filed")
+            : "Status: Corrected";
 
           return `
             <div class="deficiency-item" style="border-left: 8px solid ${sevColor}">
