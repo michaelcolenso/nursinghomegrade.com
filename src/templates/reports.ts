@@ -78,6 +78,13 @@ export function staffingFailuresPage(facilities: FacilityRow[]): string {
     ])}
 
     ${reportMethodology(new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }))}
+
+    <div class="cta-box" style="margin-top:var(--space-2xl);">
+      <h3>Related Reports</h3>
+      <p>Explore other facility quality reports built from official CMS inspection data.</p>
+      <a class="btn" href="/reports/uncorrected-deficiencies">Uncorrected Deficiencies →</a>
+      <a href="/reports/high-deficiency-facilities" class="btn-secondary">High Deficiencies →</a>
+    </div>
   `;
 
   return layout(
@@ -110,6 +117,13 @@ export function highDeficiencyPage(facilities: FacilityRow[]): string {
     ])}
 
     ${reportMethodology(new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }))}
+
+    <div class="cta-box" style="margin-top:var(--space-2xl);">
+      <h3>Related Reports</h3>
+      <p>Explore other facility quality reports built from official CMS inspection data.</p>
+      <a class="btn" href="/reports/uncorrected-deficiencies">Uncorrected Deficiencies →</a>
+      <a href="/reports/staffing-failures" class="btn-secondary">Staffing Failures →</a>
+    </div>
   `;
 
   return layout(
@@ -144,6 +158,13 @@ export function staffingFailuresStatePage(stateName: string, facilities: Facilit
     ])}
 
     ${reportMethodology(new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }))}
+
+    <div class="cta-box" style="margin-top:var(--space-2xl);">
+      <h3>Related Reports</h3>
+      <p>Explore other facility quality reports built from official CMS inspection data.</p>
+      <a class="btn" href="/reports/uncorrected-deficiencies">Uncorrected Deficiencies →</a>
+      <a href="/reports/staffing-failures" class="btn-secondary">Staffing Failures →</a>
+    </div>
   `;
 
   return layout(
