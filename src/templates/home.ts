@@ -50,7 +50,7 @@ export function homePage(pctFailing: number): string {
     "NursingHomeGrade — Independent Nursing Home Ratings",
     `${pctFailing}% of U.S. nursing homes fall below safe RN staffing levels. Find unbiased nursing home grades based on CMS inspection, staffing, and quality data — no facility commissions, no conflicts of interest.`,
     body,
-    { jsonLd, canonicalPath: "/", ogImage: "https://nursinghomegrade.com/NHG.png" }
+    { jsonLd, canonicalPath: "/" }
   );
 }
 
@@ -250,7 +250,7 @@ const body = `
   <div class="results-header">
     <div class="results-overview">
       <div class="results-kicker">Search results</div>
-      <div class="results-count">${facilities.length} facilit${facilities.length === 1 ? "y" : "ies"} near ${escHtml(zip)}</div>
+      <h1 class="results-count">${facilities.length} facilit${facilities.length === 1 ? "y" : "ies"} near ${escHtml(zip)}</h1>
       <p class="results-intro">Sorted to surface the strongest options first. Scan grade, staffing, and inspection issues before opening a full facility record.</p>
       <div style="margin-top:var(--space-s);">
         <button id="map-toggle-btn" onclick="toggleMap()" class="btn" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Show Map View</button>
@@ -260,6 +260,7 @@ const body = `
   </div>
 
   <div id="results-map"></div>
+  <h2 class="visually-hidden">Facility results</h2>
   <div class="results-list" aria-live="polite" aria-atomic="false">${items}</div>
   <p style="margin-top:var(--space-l);"><a href="/">← New search</a></p>
 `;
