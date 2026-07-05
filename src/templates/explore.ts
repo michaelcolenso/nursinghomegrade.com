@@ -135,6 +135,18 @@ export function explorePage(): string {
       </div>
     </div>
 
+    <h2>Browse Nursing Homes by State</h2>
+    <p>Select a state to view nursing home ratings, staffing data, and inspection records for every CMS-certified facility.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:var(--space-xs);margin-bottom:var(--space-l)">
+      <a href="/states" style="font-size:0.8rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em">All States →</a>
+    </div>
+
+    <h2>How We Grade Nursing Homes</h2>
+    <p>Every facility receives an A–F grade based on staffing levels, health inspection results, and quality measure performance — all from official CMS data. <a href="/methodology">Learn about our methodology →</a></p>
+
+    <h2>Top-Rated Facilities Near You</h2>
+    <p>Use the map below to find highly-rated nursing homes in any area. Zoom in to see individual facility grades and click a marker for the full report.</p>
+
     <div id="explore-map"></div>
 
     <div style="margin-top: var(--space-l); display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-s);">
@@ -162,8 +174,8 @@ export function explorePage(): string {
   `;
 
   return layout(
-    "National Nursing Home Exploration Map",
-    "Interact with our national map to find nursing home grades in your area and across the country.",
+    "Nursing Home Database — Explore 15,000+ Facilities by State & Rating",
+    "Browse independent grades for 15,000+ nursing homes nationwide. Filter by state, city, and overall rating. All data sourced from official CMS reports — no commissions.",
     body,
     { extraHead, extraScripts, canonicalPath: "/explore" }
   );
