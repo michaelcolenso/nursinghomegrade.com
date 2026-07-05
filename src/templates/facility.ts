@@ -495,6 +495,30 @@ export function facilityPage(
     };
   }
 
+  // additionalProperty (schema.org PropertyValue) mirrors the metrics shown
+  // in the on-page Quality Breakdown table. We deliberately don't emit
+  // aggregateRating/review here: CMS's overall_rating is a regulatory score,
+  // not a count of user reviews, and Google requires a ratingCount/
+  // reviewCount for aggregateRating — using it without one risks a manual
+  // action for misleading structured data.
+  const additionalProperty: Array<Record<string, unknown>> = [
+    { "@type": "PropertyValue", "name": "NursingHomeGrade Score", "value": f.grade_score, "unitText": "out of 100" },
+    { "@type": "PropertyValue", "name": "NursingHomeGrade Letter Grade", "value": f.grade_letter },
+  ];
+  if (rnHours !== null) {
+    additionalProperty.push({ "@type": "PropertyValue", "name": "RN Staffing Hours per Resident Day", "value": rnHours, "unitText": "hours" });
+  }
+  if (f.total_deficiencies !== null) {
+    additionalProperty.push({ "@type": "PropertyValue", "name": "Total Health Deficiencies", "value": f.total_deficiencies });
+  }
+  if (f.quality_rating !== null) {
+    additionalProperty.push({ "@type": "PropertyValue", "name": "CMS Quality Rating", "value": f.quality_rating, "unitText": "out of 5 stars" });
+  }
+  if (f.staffing_rating !== null) {
+    additionalProperty.push({ "@type": "PropertyValue", "name": "CMS Staffing Rating", "value": f.staffing_rating, "unitText": "out of 5 stars" });
+  }
+  nursingHomeSchema.additionalProperty = additionalProperty;
+
   const jsonLd = [
     nursingHomeSchema,
     {
