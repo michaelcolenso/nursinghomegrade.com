@@ -29,7 +29,7 @@ export function layout(
     ? `<link rel="alternate" hreflang="en-US" href="${escHtml(canonicalUrl)}">
   <link rel="alternate" hreflang="x-default" href="${escHtml(canonicalUrl)}">`
     : "";
-  const resolvedOgImage = ogImage ?? "https://nursinghomegrade.com/og.svg";
+  const resolvedOgImage = ogImage ?? "https://nursinghomegrade.com/og.png";
   const ogUrl = canonicalUrl ?? "https://nursinghomegrade.com";
   const ogTags = `
     <meta property="og:title" content="${escHtml(title)}">
@@ -859,10 +859,12 @@ export function layout(
     /* Focus-visible for keyboard navigation */
     .masthead-nav-link:focus-visible,
     .masthead-search-btn:focus-visible,
+    .masthead-toggle:focus-visible,
     .search-bar button:focus-visible,
     .search-bar .geo-btn:focus-visible,
     .btn:focus-visible,
     .btn-secondary:focus-visible,
+    .compare-toggle:focus-visible,
     .footer-newsletter-btn:focus-visible,
     .footer-link:focus-visible,
     .footer-bottom-link:focus-visible,

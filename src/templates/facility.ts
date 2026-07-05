@@ -119,9 +119,10 @@ function renderDeficiencySummary(deficiencies: Deficiency[]): string {
   const uncorrectedAlert = uncorrectedCount > 0
     ? ` <span style="color:var(--grade-F);font-weight:800;">— ${uncorrectedCount} still outstanding</span>`
     : "";
+  const deficiencyWord = deficiencies.length === 1 ? "deficiency" : "deficiencies";
   const summaryText = alerts.length > 0
-    ? `${alerts.join(", ")} issue${(harmCount + jeopardyCount) !== 1 ? "s" : ""} found among ${deficiencies.length} total deficiency${deficiencies.length !== 1 ? "ies" : "y"}. ${correctedCount} corrected.${uncorrectedAlert}`
-    : `${deficiencies.length} deficiency${deficiencies.length !== 1 ? "ies" : "y"} found. ${correctedCount} corrected. None involved actual harm.${uncorrectedAlert}`;
+    ? `${alerts.join(", ")} issue${(harmCount + jeopardyCount) !== 1 ? "s" : ""} found among ${deficiencies.length} total ${deficiencyWord}. ${correctedCount} corrected.${uncorrectedAlert}`
+    : `${deficiencies.length} ${deficiencyWord} found. ${correctedCount} corrected. None involved actual harm.${uncorrectedAlert}`;
   return `<div style="background:var(--bg);border:2px solid var(--ink);padding:var(--space-l);margin-bottom:var(--space-xl);">
     <p style="margin:0;font-family:'Playfair Display',Georgia,serif;font-size:clamp(1.1rem,2vw,1.35rem);line-height:1.4;">${summaryText}</p>
   </div>`;
@@ -494,6 +495,30 @@ export function facilityPage(
     };
   }
 
+  // additionalProperty (schema.org PropertyValue) mirrors the metrics shown
+  // in the on-page Quality Breakdown table. We deliberately don't emit
+  // aggregateRating/review here: CMS's overall_rating is a regulatory score,
+  // not a count of user reviews, and Google requires a ratingCount/
+  // reviewCount for aggregateRating — using it without one risks a manual
+  // action for misleading structured data.
+  const additionalProperty: Array<Record<string, unknown>> = [
+    { "@type": "PropertyValue", "name": "NursingHomeGrade Score", "value": f.grade_score, "unitText": "out of 100" },
+    { "@type": "PropertyValue", "name": "NursingHomeGrade Letter Grade", "value": f.grade_letter },
+  ];
+  if (rnHours !== null) {
+    additionalProperty.push({ "@type": "PropertyValue", "name": "RN Staffing Hours per Resident Day", "value": rnHours, "unitText": "hours" });
+  }
+  if (f.total_deficiencies !== null) {
+    additionalProperty.push({ "@type": "PropertyValue", "name": "Total Health Deficiencies", "value": f.total_deficiencies });
+  }
+  if (f.quality_rating !== null) {
+    additionalProperty.push({ "@type": "PropertyValue", "name": "CMS Quality Rating", "value": f.quality_rating, "unitText": "out of 5 stars" });
+  }
+  if (f.staffing_rating !== null) {
+    additionalProperty.push({ "@type": "PropertyValue", "name": "CMS Staffing Rating", "value": f.staffing_rating, "unitText": "out of 5 stars" });
+  }
+  nursingHomeSchema.additionalProperty = additionalProperty;
+
   const jsonLd = [
     nursingHomeSchema,
     {
@@ -530,12 +555,12 @@ export function facilityPage(
 
   const title = `${f.name} Nursing Home Report | ${f.city}, ${f.state}`;
   
-  const metaIntro = f.grade_score >= 80
+  const metaIntro = summary || (f.grade_score >= 80
     ? `See the full quality report for ${f.name}: ${f.grade_score}/100 grade, staffing levels, deficiency history, and nearby alternatives.`
-    : `See the full quality report for ${f.name}: staffing levels, inspection history, deficiency records, and nearby nursing home alternatives.`;
-  
-  const metaDesc = metaIntro.length > 160 
-    ? metaIntro.substring(0, 157) + '...' 
+    : `See the full quality report for ${f.name}: staffing levels, inspection history, deficiency records, and nearby nursing home alternatives.`);
+
+  const metaDesc = metaIntro.length > 160
+    ? metaIntro.substring(0, 157) + '...'
     : metaIntro;
 
   return layout(
