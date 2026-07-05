@@ -27,7 +27,7 @@ export async function handleMapApi(request: Request, env: Env): Promise<Response
     minLat,
     maxLat,
     minLng,
-    maxLatLng: maxLng,
+    maxLng,
   }, 5000);
 
   // Return only essential data for the map

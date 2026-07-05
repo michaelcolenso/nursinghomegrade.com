@@ -27,6 +27,33 @@ export function statePage(data: StatePageData): string {
     facilities,
   } = data;
 
+  const baseUrl = "https://nursinghomegrade.com";
+  const stateUrl = `${baseUrl}/state/${stateSlug}`;
+
+  const itemListSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": `Top Rated Nursing Homes in ${stateName}`,
+    "itemListElement": facilities.slice(0, 10).map((f, i) => ({
+      "@type": "ListItem",
+      "position": i + 1,
+      "name": f.name,
+      "url": `${baseUrl}/facility/${f.cms_id}-${f.slug}`,
+    })),
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": `${baseUrl}/` },
+      { "@type": "ListItem", "position": 2, "name": "States", "item": `${baseUrl}/states` },
+      { "@type": "ListItem", "position": 3, "name": stateName, "item": stateUrl },
+    ],
+  };
+
+  const jsonLd = [itemListSchema, breadcrumbSchema];
+
   const body = `
     <div style="margin-bottom: 4rem;">
       <nav class="breadcrumb" aria-label="Breadcrumb">
@@ -58,12 +85,12 @@ export function statePage(data: StatePageData): string {
         </div>
       </div>
       
-      <div class="card" style="background: var(--ink); color: #fff; border: none; position: sticky; top: 120px;">
-        <h3 style="color: #fff; font-size: 1.25rem; margin-bottom: 1.5rem; font-family: 'Playfair Display', Georgia, serif;">Quick Search</h3>
-        <p style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 1.5rem;">Find a specific facility in ${escHtml(stateName)} by ZIP code.</p>
-        <form action="/search" method="GET" style="display: flex; flex-direction: column; gap: 0.75rem;">
-          <input type="text" name="zip" placeholder="ZIP Code" pattern="[0-9]{5}" title="Enter a 5-digit ZIP code" maxlength="5" required style="padding: 0.75rem 1rem; border-radius: 0; border: none; font-family: 'Inter', system-ui, sans-serif;">
-          <button type="submit" class="btn" style="background: #fff; color: var(--ink); border: none;">Search</button>
+      <div class="card" style="background: var(--ink); color: #fff; border: none; position: sticky; top: 120px; padding: var(--space-l);">
+        <h3 style="color: #fff; font-size: 1.25rem; margin-bottom: 1rem; font-family: 'Playfair Display', Georgia, serif;">Quick Search</h3>
+        <p style="font-size: 0.9rem; opacity: 0.7; margin-bottom: 1.25rem;">Find a specific facility in ${escHtml(stateName)} by ZIP code.</p>
+        <form action="/search" method="GET" style="display: flex; flex-direction: column; gap: var(--space-xs);">
+          <input type="text" name="zip" placeholder="ZIP code" pattern="[0-9]{5}" title="Enter a 5-digit ZIP code" maxlength="5" required autocomplete="postal-code" inputmode="numeric" style="padding: var(--space-s); border-radius: 0; border: none; background: #fff; color: var(--ink); font-family: 'Source Sans 3', system-ui, sans-serif; font-size: 1rem;">
+          <button type="submit" class="btn-on-dark">Search</button>
         </form>
       </div>
     </div>
@@ -80,17 +107,6 @@ export function statePage(data: StatePageData): string {
     </div>
   `;
 
-  const jsonLd = [
-    {
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://nursinghomegrade.com/" },
-        { "@type": "ListItem", "position": 2, "name": "States", "item": "https://nursinghomegrade.com/states" },
-        { "@type": "ListItem", "position": 3, "name": `Nursing Homes in ${stateName}`, "item": `https://nursinghomegrade.com/state/${stateSlug}` }
-      ]
-    }
-  ];
   return layout(
     `Nursing Homes in ${stateName} — Grades & Ratings`,
     `${facilityCount} nursing homes in ${stateName}. ${pctFailing}% fail the federal staffing minimum. Independent grades based on CMS data.`,
@@ -166,14 +182,26 @@ function renderFacilityItem(f: Facility): string {
     </div>
   `;
 
+  const baseUrl = "https://nursinghomegrade.com";
   const hubJsonLd = [
     {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://nursinghomegrade.com/" },
-        { "@type": "ListItem", "position": 2, "name": "All States", "item": "https://nursinghomegrade.com/states" }
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": `${baseUrl}/` },
+        { "@type": "ListItem", "position": 2, "name": "All States", "item": `${baseUrl}/states` }
       ]
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      "name": "Nursing Home Grades by State",
+      "itemListElement": states.map((s, i) => ({
+        "@type": "ListItem",
+        "position": i + 1,
+        "name": s.state,
+        "url": `${baseUrl}/state/${s.slug}`,
+      })),
     }
   ];
   return layout(

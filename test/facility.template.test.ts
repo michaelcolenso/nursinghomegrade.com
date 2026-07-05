@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { facilityPage } from "../src/templates/facility";
-import type { FacilityPageData, Deficiency } from "../src/types";
+import type { FacilityPageData, Deficiency, Trajectory, Operator } from "../src/types";
 
 const baseFacility: FacilityPageData = {
   cms_id: "015001",
@@ -52,6 +52,26 @@ const nearbyFacility = {
   total_deficiencies: 3,
 };
 
+const sampleTrajectory: Trajectory = {
+  cms_id: "015001",
+  status: "improving",
+  staffing_change_pct: 22,
+  deficiency_change_pct: -18,
+  grade_change: 8,
+  rn_hours_trend: "up",
+};
+
+const sampleOperator: Operator = {
+  id: 1,
+  normalized_name: "SUNRISE HEALTHCARE",
+  slug: "sunrise-healthcare",
+  facility_count: 12,
+  avg_grade: 58,
+  avg_staffing_score: 0.52,
+  avg_deficiency_score: 6.2,
+  avg_penalty_score: null,
+};
+
 describe("facilityPage", () => {
   it("renders basic facility info", () => {
     const html = facilityPage(baseFacility, []);
@@ -101,5 +121,49 @@ describe("facilityPage", () => {
     expect(html).toContain('"item":"https://nursinghomegrade.com/state/alabama/birmingham"');
     expect(html).not.toContain("/states/al");
     expect(html).not.toContain("/city/al/birmingham");
+  });
+
+  it("renders enhanced NursingHome schema with geo and url", () => {
+    const html = facilityPage(baseFacility, []);
+    expect(html).toContain('"@type":"NursingHome"');
+    expect(html).toContain('"url":"https://nursinghomegrade.com/facility/015001-sunrise-care-center"');
+    expect(html).toContain('"@type":"GeoCoordinates"');
+    expect(html).toContain('"latitude":33.5186');
+    expect(html).toContain('"longitude":-86.8104');
+  });
+
+  it("omits geo from schema when coordinates are unavailable", () => {
+    const noGeo = { ...baseFacility, latitude: null, longitude: null };
+    const html = facilityPage(noGeo, []);
+    expect(html).toContain('"@type":"NursingHome"');
+    expect(html).not.toContain('"@type":"GeoCoordinates"');
+  });
+
+  it("renders trajectory badge when provided", () => {
+    const html = facilityPage(baseFacility, [], [], [], sampleTrajectory);
+    expect(html).toContain("improving");
+    expect(html).toContain("▲");
+    expect(html).toContain("Staffing +22%");
+    expect(html).toContain("Deficiencies -18%");
+  });
+
+  it("renders assessment when provided", () => {
+    const assessment = "This facility is improving. RN staffing up 22%.";
+    const html = facilityPage(baseFacility, [], [], [], null, assessment);
+    expect(html).toContain("Facility Assessment");
+    expect(html).toContain(assessment);
+  });
+
+  it("renders operator link when provided", () => {
+    const html = facilityPage(baseFacility, [], [], [], null, "", "", sampleOperator);
+    expect(html).toContain('href="/operator/sunrise-healthcare"');
+    expect(html).toContain("SUNRISE HEALTHCARE");
+    expect(html).toContain("12 facilities");
+  });
+
+  it("uses summary for meta description when provided", () => {
+    const summary = "Custom summary for SEO.";
+    const html = facilityPage(baseFacility, [], [], [], null, "", summary);
+    expect(html).toContain("Custom summary for SEO.");
   });
 });

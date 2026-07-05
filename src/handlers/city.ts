@@ -1,9 +1,10 @@
 import type { Env } from "../types";
-import { htmlCacheKey } from "../cache";
+import { htmlCacheKey, pageCache } from "../cache";
 import { getStateAbbreviation, getStateInfo } from "../states";
 import {
   getCitySnapshot,
   getNationalPctFailing,
+  getStateCityList,
 } from "../db";
 import { cityPage } from "../templates/city";
 import { notFoundPage, errorPage } from "../templates/subscribe";
@@ -23,7 +24,7 @@ export async function handleCity(request: Request, env: Env, stateSlug: string, 
     }
 
     const cacheKey = htmlCacheKey(`city:${stateSlug}:${citySlugParam}`);
-    const cached = await env.CACHE.get(cacheKey);
+    const cached = await pageCache.get(cacheKey);
     if (cached)
       return new Response(cached, {
         headers: {
@@ -32,9 +33,10 @@ export async function handleCity(request: Request, env: Env, stateSlug: string, 
         },
       });
 
-    const [snapshot, nationalPctFailing] = await Promise.all([
+    const [snapshot, nationalPctFailing, allCities] = await Promise.all([
       getCitySnapshot(env, stateAbbr, citySlugParam, 200),
       getNationalPctFailing(env),
+      getStateCityList(env, stateAbbr),
     ]);
 
     if (!snapshot) {
@@ -52,9 +54,10 @@ export async function handleCity(request: Request, env: Env, stateSlug: string, 
       nationalPctFailing,
       gradeDistribution: snapshot.gradeDistribution,
       facilities: snapshot.facilities,
+      siblingCities: allCities,
     });
 
-    await env.CACHE.put(cacheKey, html, { expirationTtl: 86400 });
+    await pageCache.put(cacheKey, html, { expirationTtl: 86400 });
     return new Response(html, {
       headers: {
         "Content-Type": "text/html;charset=UTF-8",

@@ -46,7 +46,7 @@ export function notFoundPage(path: string): string {
       Try searching for a ZIP code or browsing from the home page.
     </p>
     <form action="/search" method="GET" class="search-bar" style="margin-bottom:2rem;">
-      <input type="text" name="zip" placeholder="Enter ZIP code" maxlength="5" pattern="[0-9]{5}">
+      <input type="text" name="zip" placeholder="Enter ZIP code" maxlength="5" pattern="[0-9]{5}" autocomplete="postal-code" inputmode="numeric">
       <button type="submit" data-loading-text="Searching…">Search</button>
     </form>
     <p><a href="/">← Back to home</a></p>
@@ -64,7 +64,7 @@ export function errorPage(title: string, message: string, suggestion?: string): 
     <p class="lede">${escHtml(message)}</p>
     ${suggestion ? `<p style="color:var(--muted);margin-bottom:2rem;">${escHtml(suggestion)}</p>` : ""}
     <form action="/search" method="GET" class="search-bar" style="margin-bottom:2rem;">
-      <input type="text" name="zip" placeholder="Enter ZIP code" maxlength="5" pattern="[0-9]{5}">
+      <input type="text" name="zip" placeholder="Enter ZIP code" maxlength="5" pattern="[0-9]{5}" autocomplete="postal-code" inputmode="numeric">
       <button type="submit" data-loading-text="Searching…">Search</button>
     </form>
     <p><a href="/">← Back to home</a></p>

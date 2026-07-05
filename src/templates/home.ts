@@ -5,16 +5,16 @@ export function homePage(pctFailing: number): string {
   const body = `
     <h1 class="display">Find honest nursing home grades</h1>
     <p class="lede">
-      <strong>${pctFailing}% of U.S. nursing homes</strong> fail the federal staffing minimum.
-      We show you which ones — independent grades based on CMS data.
+      <strong>${pctFailing}% of U.S. nursing homes</strong> fall below safe RN staffing levels.
+      Independent grades based on CMS data — no facility payments, no conflicts.
     </p>
     <p style="color:var(--muted);font-size:0.9rem;margin-bottom:var(--space-m);">
-      Data from CMS Nursing Home Compare. Updated monthly.
+      Data from CMS Nursing Home Compare. Last updated: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long" })}.
     </p>
 
     <form action="/search" method="GET" class="search-bar">
       <label for="zip-search" class="visually-hidden">ZIP code</label>
-      <input type="text" id="zip-search" name="zip" placeholder="Enter ZIP code" maxlength="5" pattern="[0-9]{5}">
+      <input type="text" id="zip-search" name="zip" placeholder="Enter ZIP code" maxlength="5" pattern="[0-9]{5}" autocomplete="postal-code" inputmode="numeric">
       <button type="submit">Search</button>
       <button type="button" id="geo-btn" class="geo-btn">Use my location</button>
     </form>
@@ -47,10 +47,10 @@ export function homePage(pctFailing: number): string {
   ];
 
   return layout(
-    "NursingHomeGrade — Honest Nursing Home Ratings",
-    `${pctFailing}% of U.S. nursing homes fail the federal staffing minimum. Find unbiased nursing home grades based on CMS data — no commissions.`,
+    "NursingHomeGrade — Independent Nursing Home Ratings",
+    `${pctFailing}% of U.S. nursing homes fall below safe RN staffing levels. Find unbiased nursing home grades based on CMS data — no commissions.`,
     body,
-    { jsonLd, canonicalPath: "/" }
+    { jsonLd, canonicalPath: "/", ogImage: "https://nursinghomegrade.com/NHG.png" }
   );
 }
 
@@ -78,7 +78,7 @@ export function searchResultsPage(
         <p style="color:var(--muted);margin-bottom:1.5rem;">We search within 25 miles of the ZIP code. Try another ZIP or check that you entered it correctly.</p>
 
         <form action="/search" method="GET" class="search-bar" style="max-width:400px;">
-          <input type="text" name="zip" placeholder="Enter ZIP code" maxlength="5" pattern="[0-9]{5}">
+          <input type="text" name="zip" placeholder="Enter ZIP code" maxlength="5" pattern="[0-9]{5}" autocomplete="postal-code" inputmode="numeric">
           <button type="submit" class="btn" data-loading-text="Searching…">Search</button>
         </form>
 
@@ -151,10 +151,13 @@ export function searchResultsPage(
             <div class="result-info">
               <div style="display:flex; justify-content:space-between; align-items:start;">
                 <a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}" class="result-name">${escHtml(f.name)}</a>
-                <button onclick="toggleSave('${escHtml(f.cms_id)}', '${escHtml(f.name.replace(/'/g, "\\'"))}', '${f.grade_letter}', ${f.grade_score})" 
+                <button onclick="toggleSave('${escHtml(f.cms_id)}', '${escHtml(f.name.replace(/'/g, "\\'"))}', '${f.grade_letter}', ${f.grade_score})"
                         id="save-${escHtml(f.cms_id)}"
-                        style="background:none; border:1px solid var(--rule); padding:0.25rem 0.5rem; font-size:0.7rem; font-weight:700; text-transform:uppercase; cursor:pointer;">
-                  Save
+                        class="compare-toggle"
+                        aria-pressed="false"
+                        title="Add to compare">
+                  <span class="compare-toggle-box" aria-hidden="true"></span>
+                  <span class="compare-toggle-label">Compare</span>
                 </button>
               </div>
               <div class="result-meta">${escHtml(f.address)}, ${escHtml(f.city)}, ${escHtml(f.state)}</div>
@@ -196,34 +199,11 @@ const extraHead = `
 `;
 
 const extraScripts = `
-  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script>
     (function() {
       const facilities = ${JSON.stringify(mapData)};
       let map = null;
-
-      window.toggleSave = function(id, name, grade, score) {
-        let data = JSON.parse(localStorage.getItem('nhg_saved_facilities') || '[]');
-        const idx = data.findIndex(f => f.cms_id === id);
-        const btn = document.getElementById('save-' + id);
-        
-        if (idx > -1) {
-          data.splice(idx, 1);
-          btn.textContent = 'Save';
-        } else {
-          data.push({ cms_id: id, name, grade_letter: grade, grade_score: score });
-          btn.textContent = 'Saved';
-        }
-        localStorage.setItem('nhg_saved_facilities', JSON.stringify(data));
-        window.dispatchEvent(new Event('storage'));
-      };
-
-      // Set initial state
-      const saved = JSON.parse(localStorage.getItem('nhg_saved_facilities') || '[]');
-      saved.forEach(f => {
-        const btn = document.getElementById('save-' + f.cms_id);
-        if (btn) btn.textContent = 'Saved';
-      });
 
       window.toggleMap = function() {
         const body = document.body;
@@ -280,7 +260,7 @@ const body = `
   </div>
 
   <div id="results-map"></div>
-  <div class="results-list">${items}</div>
+  <div class="results-list" aria-live="polite" aria-atomic="false">${items}</div>
   <p style="margin-top:var(--space-l);"><a href="/">← New search</a></p>
 `;
 

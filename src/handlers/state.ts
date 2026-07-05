@@ -1,5 +1,5 @@
 import type { Env } from "../types";
-import { htmlCacheKey } from "../cache";
+import { htmlCacheKey, pageCache } from "../cache";
 import { getStateAbbreviation, getStateInfo, getAllStateSlugs } from "../states";
 import {
   countFacilitiesByState,
@@ -22,7 +22,7 @@ export async function handleState(request: Request, env: Env, stateSlug: string)
     }
 
     const cacheKey = htmlCacheKey(`state:${stateSlug}`);
-    const cached = await env.CACHE.get(cacheKey);
+    const cached = await pageCache.get(cacheKey);
     if (cached)
       return new Response(cached, {
         headers: {
@@ -58,7 +58,7 @@ export async function handleState(request: Request, env: Env, stateSlug: string)
       facilities,
     });
 
-    await env.CACHE.put(cacheKey, html, { expirationTtl: 86400 });
+    await pageCache.put(cacheKey, html, { expirationTtl: 86400 });
     return new Response(html, {
       headers: {
         "Content-Type": "text/html;charset=UTF-8",
@@ -75,7 +75,7 @@ export async function handleState(request: Request, env: Env, stateSlug: string)
 export async function handleStatesHub(request: Request, env: Env): Promise<Response> {
   try {
     const cacheKey = htmlCacheKey("page:states");
-    const cached = await env.CACHE.get(cacheKey);
+    const cached = await pageCache.get(cacheKey);
     if (cached)
       return new Response(cached, {
         headers: {
@@ -93,7 +93,7 @@ export async function handleStatesHub(request: Request, env: Env): Promise<Respo
       .filter((s): s is { state: string; count: number; slug: string } => s !== null);
 
     const html = statesHubPage(states);
-    await env.CACHE.put(cacheKey, html, { expirationTtl: 86400 });
+    await pageCache.put(cacheKey, html, { expirationTtl: 86400 });
     return new Response(html, {
       headers: {
         "Content-Type": "text/html;charset=UTF-8",

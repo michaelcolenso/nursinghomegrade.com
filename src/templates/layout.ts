@@ -70,8 +70,8 @@ export function layout(
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 48'%3E%3Crect width='60' height='48' rx='3' fill='%230B1D33'/%3E%3Crect x='8' y='8' width='10' height='28' fill='%23E6EBEF' rx='1'/%3E%3Crect x='28' y='8' width='10' height='28' fill='%23E6EBEF' rx='1'/%3E%3Cline x1='8' y1='36' x2='38' y2='8' stroke='%2316897A' stroke-width='3.5' stroke-linecap='round'/%3E%3Cline x1='14' y1='36' x2='44' y2='8' stroke='%2316897A' stroke-width='3.5' stroke-linecap='round'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Inter:wght@400;500;600;700;800&display=swap">
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Source+Sans+3:wght@400;500;600;700;800&display=swap">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Source+Sans+3:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
       /* Brand Colors */
@@ -79,8 +79,9 @@ export function layout(
       --ink: #0B1D33;
       --muted: #4A6272;
       --rule: #E6EBEF;
-      --accent: #0e6b60;
-      --accent-hover: #0a5249;
+      --accent: #9f1239;
+      --accent-hover: #7c0f2d;
+      --accent-positive: #0e6b60;
 
       /* Grade Palette */
       --grade-A: #12805D;
@@ -110,7 +111,7 @@ export function layout(
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'Source Sans 3', system-ui, sans-serif;
       color: var(--ink);
       background: var(--bg);
       line-height: 1.6;
@@ -131,6 +132,23 @@ export function layout(
       white-space: nowrap;
       border-width: 0;
     }
+
+    /* Skip link */
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: var(--ink);
+      color: #fff;
+      padding: 0.5rem 1rem;
+      text-decoration: none;
+      z-index: 1001;
+      font-weight: 700;
+      font-size: 0.9rem;
+      border: none;
+      transition: top 0.2s ease;
+    }
+    .skip-link:focus { top: 0; outline: 2px solid var(--accent); outline-offset: 2px; }
 
     /* Masthead */
     header { border-bottom: 1px solid var(--rule); padding: var(--space-s) 0; background: #fff; }
@@ -161,7 +179,7 @@ export function layout(
       gap: var(--space-m);
     }
     .masthead-nav-link {
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'Source Sans 3', system-ui, sans-serif;
       font-size: 0.875rem;
       font-weight: 500;
       color: var(--ink);
@@ -171,22 +189,61 @@ export function layout(
     }
     .masthead-nav-link:hover { color: var(--accent); border: none; }
     .masthead-search-btn {
-      font-family: 'Inter', system-ui, sans-serif;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      font-family: 'Source Sans 3', system-ui, sans-serif;
       font-size: 0.875rem;
       font-weight: 600;
+      line-height: 1;
       color: #fff;
       background: var(--accent);
       padding: 0.4rem 1rem;
-      border-radius: 4px;
+      border-radius: 0;
       text-decoration: none;
       border: none;
       transition: background 0.2s ease;
       white-space: nowrap;
     }
     .masthead-search-btn:hover { background: var(--accent-hover); border: none; }
+
+    /* Hamburger toggle — visible on mobile only */
+    .masthead-toggle {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      min-width: 44px;
+      min-height: 44px;
+      padding: 8px;
+      background: none;
+      border: 1px solid var(--rule);
+      cursor: pointer;
+      transition: border-color 0.2s ease;
+    }
+    .masthead-toggle:hover { border-color: var(--ink); }
+    .masthead-toggle-bar {
+      display: block;
+      width: 20px;
+      height: 2px;
+      background: var(--ink);
+      border-radius: 1px;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+    .masthead-toggle[aria-expanded="true"] .masthead-toggle-bar:nth-child(1) {
+      transform: translateY(6px) rotate(45deg);
+    }
+    .masthead-toggle[aria-expanded="true"] .masthead-toggle-bar:nth-child(2) {
+      opacity: 0;
+    }
+    .masthead-toggle[aria-expanded="true"] .masthead-toggle-bar:nth-child(3) {
+      transform: translateY(-6px) rotate(-45deg);
+    }
+
     @media (max-width: 640px) {
-      .masthead-nav-link { display: none; }
-      .masthead-search-btn { padding: 0.45rem 1rem; font-size: 0.9rem; }
+      .masthead-search-btn { min-height: 44px; padding: 0.45rem 1rem; font-size: 0.9rem; }
     }
 
     /* Typography */
@@ -194,7 +251,7 @@ export function layout(
       font-family: 'Playfair Display', Georgia, serif;
       font-size: clamp(3rem, 10vw, 5.5rem);
       font-weight: 800;
-      line-height: 0.9;
+      line-height: 1.0;
       letter-spacing: 0;
       margin-bottom: var(--space-l);
       color: var(--ink);
@@ -212,6 +269,7 @@ export function layout(
     p { margin-bottom: var(--space-s); }
     a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s ease; }
     a:hover { border-bottom-color: var(--accent); text-decoration: none; }
+    a:visited { color: var(--accent-hover); }
 
     /* Editorial components */
     .lede {
@@ -265,11 +323,12 @@ export function layout(
       border: 2px solid var(--ink);
       border-radius: 0;
       font-size: 1.125rem;
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'Source Sans 3', system-ui, sans-serif;
       background: #fff;
     }
     .search-bar input:focus { outline: 2px solid var(--accent); outline-offset: -2px; background: var(--bg); }
     .search-bar button {
+      min-height: 44px;
       background: var(--accent);
       color: #fff;
       padding: var(--space-s) var(--space-l);
@@ -278,11 +337,12 @@ export function layout(
       cursor: pointer;
       font-weight: 700;
       font-size: 1.125rem;
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'Source Sans 3', system-ui, sans-serif;
       transition: background 0.2s ease-out, color 0.2s ease-out;
     }
     .search-bar button:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
     .search-bar .geo-btn {
+      min-height: 44px;
       background: #fff;
       color: var(--ink);
       border: 2px solid var(--ink);
@@ -329,12 +389,96 @@ export function layout(
     }
     .btn-secondary:hover { color: var(--accent); text-decoration: underline; }
 
+    .compare-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: none;
+      border: 2px solid var(--rule);
+      padding: 0.4rem 0.75rem;
+      font-family: 'Source Sans 3', system-ui, sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-height: 44px;
+      color: var(--ink);
+    }
+    .compare-toggle:hover { border-color: var(--accent); }
+    .compare-toggle[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: #fff; }
+    .compare-toggle-box {
+      width: 16px;
+      height: 16px;
+      border: 2px solid currentColor;
+      display: inline-block;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .compare-toggle[aria-pressed="true"] .compare-toggle-box::after {
+      content: '✓';
+      position: absolute;
+      top: -3px;
+      left: 1px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
     /* Grade colors */
     .grade-A { color: var(--grade-A); }
     .grade-B { color: var(--grade-B); }
     .grade-C { color: var(--grade-C); }
     .grade-D { color: var(--grade-D); }
     .grade-F { color: var(--grade-F); }
+
+    /* Grade badge */
+    .grade-badge {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 80px;
+      height: 80px;
+      border-radius: 0;
+      background: var(--bg);
+      border: 2px solid var(--ink);
+    }
+    .grade-badge-letter {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 2.5rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .grade-badge-score {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin-top: 0.15rem;
+    }
+
+    /* Button on dark background */
+    .btn-on-dark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-xs) var(--space-l);
+      background: #fff;
+      color: var(--ink);
+      border: 2px solid #fff;
+      font-family: 'Source Sans 3', system-ui, sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.2s ease-out;
+      min-height: 44px;
+    }
+    .btn-on-dark:hover { background: transparent; color: #fff; }
+    .btn-on-dark:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 
     /* Responsive Tables */
     .table-container {
@@ -404,7 +548,7 @@ export function layout(
     .footer-tagline { font-size: 0.8rem; color: var(--muted); line-height: 1.6; margin: 0; }
     .footer-col { display: flex; flex-direction: column; gap: var(--space-2xs); }
     .footer-col-head {
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'Source Sans 3', system-ui, sans-serif;
       font-size: 0.7rem;
       font-weight: 800;
       text-transform: uppercase;
@@ -428,11 +572,12 @@ export function layout(
       border: 1px solid var(--rule);
       border-radius: 4px;
       font-size: 0.875rem;
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'Source Sans 3', system-ui, sans-serif;
       background: var(--bg);
     }
     .footer-newsletter-input:focus { outline: 2px solid var(--accent); outline-offset: 0; }
     .footer-newsletter-btn {
+      min-height: 44px;
       background: var(--accent);
       color: #fff;
       border: none;
@@ -440,7 +585,7 @@ export function layout(
       border-radius: 4px;
       font-size: 0.875rem;
       font-weight: 600;
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'Source Sans 3', system-ui, sans-serif;
       cursor: pointer;
       transition: background 0.2s ease;
     }
@@ -547,7 +692,7 @@ export function layout(
       border-radius: 0;
       font-size: 1rem;
       background: #fff;
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'Source Sans 3', system-ui, sans-serif;
       font-weight: 700;
     }
     .results-list { display: grid; gap: var(--space-l); }
@@ -711,6 +856,43 @@ export function layout(
       font-size: 1.05rem;
     }
 
+    /* Focus-visible for keyboard navigation */
+    .masthead-nav-link:focus-visible,
+    .masthead-search-btn:focus-visible,
+    .search-bar button:focus-visible,
+    .search-bar .geo-btn:focus-visible,
+    .btn:focus-visible,
+    .btn-secondary:focus-visible,
+    .footer-newsletter-btn:focus-visible,
+    .footer-link:focus-visible,
+    .footer-bottom-link:focus-visible,
+    .results-controls select:focus-visible,
+    a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .search-bar input:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; background: var(--bg); }
+    .btn-on-dark:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+    /* Active / pressed states */
+    .btn:active,
+    .masthead-search-btn:active,
+    .search-bar button:active,
+    .footer-newsletter-btn:active,
+    .btn-on-dark:active {
+      transform: translateY(1px);
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
     @media (max-width: 768px) {
       :root { --space-page: var(--space-m); }
       header { padding: var(--space-s) 0; }
@@ -722,21 +904,40 @@ export function layout(
         gap: var(--space-2xs) !important;
         flex-wrap: wrap;
       }
-      header nav a {
+      .masthead-toggle {
         display: inline-flex;
+      }
+      .masthead-nav-links {
+        display: none;
+        width: 100%;
+        flex-direction: column;
+        gap: var(--space-2xs);
+      }
+      .masthead-nav.is-open .masthead-nav-links {
+        display: flex;
+      }
+      header nav .masthead-nav-link {
+        display: flex;
         min-height: 44px;
         align-items: center;
-        padding: 0 var(--space-xs);
+        padding: var(--space-2xs) var(--space-xs);
         border: 1px solid var(--rule) !important;
         background: #fff;
+        width: 100%;
+      }
+      header nav .masthead-search-btn {
+        background: var(--accent);
+        color: #fff;
+        border: none !important;
+        padding: 0.45rem 1rem;
       }
       main.container { padding-top: var(--space-l) !important; }
       .facility-header { flex-direction: column-reverse; gap: var(--space-s); }
       .facility-grade-hero { font-size: 6rem; }
       .search-bar { flex-direction: column; }
       .search-bar input { border-bottom: none; }
-      .search-bar button { border-top: none; }
-      .search-bar .geo-btn { border-left: 2px solid var(--ink); border-top: none; }
+      .search-bar button { min-height: 44px; border-top: none; }
+      .search-bar .geo-btn { min-height: 44px; border-left: 2px solid var(--ink); border-top: none; }
       .cta-box { padding: var(--space-m); }
       .results-count { line-height: 1; }
       .results-controls { gap: var(--space-s); padding: var(--space-s); }
@@ -838,6 +1039,7 @@ export function layout(
   </style>
 </head>
 <body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
   <header>
     <div class="container">
       <div class="masthead">
@@ -852,15 +1054,25 @@ export function layout(
           <span class="masthead-name">NursingHomeGrade</span>
         </a>
         <nav class="masthead-nav" aria-label="Main navigation">
-          <a href="/explore" class="masthead-nav-link">Find Facilities</a>
-          <a href="/states" class="masthead-nav-link">Ratings</a>
-          <a href="/about" class="masthead-nav-link">About</a>
+          <button class="masthead-toggle" aria-label="Toggle menu" aria-expanded="false">
+            <span class="masthead-toggle-bar"></span>
+            <span class="masthead-toggle-bar"></span>
+            <span class="masthead-toggle-bar"></span>
+          </button>
+          <div class="masthead-nav-links">
+            <a href="/explore" class="masthead-nav-link">Find Facilities</a>
+            <a href="/states" class="masthead-nav-link">Ratings</a>
+            <a href="/compare" class="masthead-nav-link">Compare</a>
+            <a href="/best" class="masthead-nav-link">Best</a>
+            <a href="/worst" class="masthead-nav-link">Worst</a>
+            <a href="/about" class="masthead-nav-link">About</a>
+          </div>
           <a href="/search" class="masthead-search-btn">Search</a>
         </nav>
       </div>
     </div>
   </header>
-  <main class="container" style="padding-top: var(--space-xl); padding-bottom: var(--space-xl);">
+  <main id="main-content" class="container" style="padding-top: var(--space-xl); padding-bottom: var(--space-xl);">
     ${body}
   </main>
   <footer>
@@ -884,21 +1096,27 @@ export function layout(
           <div class="footer-col-head">Explore</div>
           <a href="/explore" class="footer-link">Find Facilities</a>
           <a href="/states" class="footer-link">Browse by State</a>
+          <a href="/compare" class="footer-link">Compare</a>
+          <a href="/best" class="footer-link">Best</a>
+          <a href="/worst" class="footer-link">Worst</a>
           <a href="/search" class="footer-link">Search</a>
         </nav>
 
         <nav class="footer-col" aria-label="Resources">
           <div class="footer-col-head">Resources</div>
           <a href="/about" class="footer-link">How We Grade</a>
-          <a href="/about" class="footer-link">FAQ</a>
-          <a href="/about" class="footer-link">Glossary</a>
+          <a href="/about" class="footer-link">Methodology</a>
+          <a href="/best" class="footer-link">Best Facilities</a>
+          <a href="/worst" class="footer-link">Worst Facilities</a>
+          <a href="/reports/staffing-failures" class="footer-link">Staffing Report</a>
         </nav>
 
         <nav class="footer-col" aria-label="Company">
           <div class="footer-col-head">Company</div>
           <a href="/about" class="footer-link">About Us</a>
-          <a href="/about" class="footer-link">Methodology</a>
+          <a href="/about" class="footer-link">FAQ</a>
           <a href="/about" class="footer-link">Contact</a>
+          <a href="/about" class="footer-link">Glossary</a>
         </nav>
 
         <div class="footer-col">
@@ -906,7 +1124,7 @@ export function layout(
           <p class="footer-newsletter-desc">Get updates on ratings, data releases, and important news.</p>
           <form action="/subscribe" method="POST" class="footer-newsletter-form">
             <input type="hidden" name="facility_name" value="newsletter">
-            <input type="email" name="email" placeholder="Enter your email" required class="footer-newsletter-input">
+            <input type="email" name="email" placeholder="Enter your email" required autocomplete="email" class="footer-newsletter-input">
             <button type="submit" class="footer-newsletter-btn">Subscribe</button>
           </form>
           <div class="footer-social">
@@ -942,10 +1160,27 @@ export function layout(
           if (btn) {
             btn.disabled = true;
             btn.style.opacity = '0.5';
-            btn.textContent = 'Loading...';
+            btn.textContent = btn.getAttribute('data-loading-text') || 'Loading...';
           }
         });
       });
+
+      // Mobile hamburger toggle
+      var toggle = document.querySelector('.masthead-toggle');
+      var nav = document.querySelector('.masthead-nav');
+      if (toggle && nav) {
+        toggle.addEventListener('click', function() {
+          var open = nav.classList.toggle('is-open');
+          toggle.setAttribute('aria-expanded', open);
+        });
+        // Close menu when clicking a nav link
+        nav.querySelectorAll('.masthead-nav-link').forEach(function(link) {
+          link.addEventListener('click', function() {
+            nav.classList.remove('is-open');
+            toggle.setAttribute('aria-expanded', 'false');
+          });
+        });
+      }
       
       // Location logic
       var geoBtn = document.getElementById('geo-btn');
@@ -976,27 +1211,63 @@ export function layout(
           });
         });
       }
+
+      window.toggleSave = function(id, name, grade, score) {
+        var data = JSON.parse(localStorage.getItem('nhg_saved_facilities') || '[]');
+        var idx = data.findIndex(function(f) { return f.cms_id === id; });
+        var btn = document.getElementById('save-' + id);
+        if (idx > -1) {
+          data.splice(idx, 1);
+          if (btn) {
+            btn.setAttribute('aria-pressed', 'false');
+            var label = btn.querySelector('.compare-toggle-label');
+            if (label) label.textContent = 'Compare';
+          }
+        } else {
+          data.push({ cms_id: id, name: name, grade_letter: grade, grade_score: score });
+          if (btn) {
+            btn.setAttribute('aria-pressed', 'true');
+            var label = btn.querySelector('.compare-toggle-label');
+            if (label) label.textContent = 'Added';
+          }
+        }
+        localStorage.setItem('nhg_saved_facilities', JSON.stringify(data));
+        window.dispatchEvent(new Event('storage'));
+      };
+
+      (function() {
+        var saved = JSON.parse(localStorage.getItem('nhg_saved_facilities') || '[]');
+        saved.forEach(function(f) {
+          var btn = document.getElementById('save-' + f.cms_id);
+          if (btn) {
+            btn.setAttribute('aria-pressed', 'true');
+            var label = btn.querySelector('.compare-toggle-label');
+            if (label) label.textContent = 'Added';
+          }
+        });
+      })();
     })();
   </script>
   ${extraScripts || ""}
-  <div id="comparison-bar" style="display:none; position:fixed; bottom:0; left:0; width:100%; background:var(--ink); color:#fff; padding:var(--space-s) var(--space-m); justify-content:space-between; align-items:center; z-index:1000;">
+  <div id="comparison-bar" style="display:none; position:fixed; bottom:0; left:0; width:100%; background:var(--ink); color:#fff; padding:var(--space-s) var(--space-m); justify-content:space-between; align-items:center; z-index:1000; border-top: 4px solid var(--accent); box-shadow: 0 -4px 12px rgba(0,0,0,0.15);">
     <div style="display:flex; align-items:center; gap:var(--space-s);">
       <div id="comparison-count" style="font-weight:700;"></div>
       <button id="comparison-clear" style="background:none; border:none; color:rgba(255,255,255,0.6); font-family:'Inter',system-ui,sans-serif; font-size:0.8rem; cursor:pointer; padding:0; text-decoration:underline;">Clear all</button>
     </div>
-    <a href="/compare" class="btn" style="background:#fff; color:var(--ink); border:none;">Compare Selected →</a>
+    <a href="/compare" class="btn" style="background:#fff; color:var(--ink); border:none;">Compare <span id="compare-btn-count"></span> →</a>
   </div>
   <script>
     (function() {
       const bar = document.getElementById('comparison-bar');
       const count = document.getElementById('comparison-count');
       const clearBtn = document.getElementById('comparison-clear');
-
+      const btnCount = document.getElementById('compare-btn-count');
       function update() {
-        const data = JSON.parse(localStorage.getItem('nhg_saved_facilities') || '[]');
+        var data = JSON.parse(localStorage.getItem('nhg_saved_facilities') || '[]');
         if (data.length > 0 && window.location.pathname !== '/compare') {
           bar.style.display = 'flex';
-          count.textContent = data.length + ' facilities selected';
+          count.textContent = data.length + ' facility' + (data.length !== 1 ? 'ies' : 'y') + ' selected';
+          if (btnCount) btnCount.textContent = '(' + data.length + ')';
         } else {
           bar.style.display = 'none';
         }
@@ -1009,6 +1280,112 @@ export function layout(
 
       window.addEventListener('storage', update);
       update();
+    })();
+  </script>
+  <script>
+    // WebMCP — Expose site tools to AI agents via navigator.modelContext
+    (function() {
+      if (!navigator.modelContext || !navigator.modelContext.registerTool) return;
+
+      var controller = new AbortController();
+      var signal = controller.signal;
+
+      // Search facilities by ZIP code
+      if (document.querySelector('input[name="zip"]')) {
+        navigator.modelContext.registerTool({
+          name: "search_facilities",
+          description: "Search nursing homes by ZIP code and return quality grades, staffing data, and deficiency reports.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              zip: { type: "string", description: "5-digit US ZIP code" },
+              sort: { type: "string", enum: ["grade", "distance", "name"], description: "Sort order (default: grade)" },
+              min_grade: { type: "string", enum: ["A", "B", "C", "D", "F"], description: "Minimum grade filter" },
+            },
+            required: ["zip"],
+          },
+          execute: function(params) {
+            var url = "/search?zip=" + encodeURIComponent(params.zip);
+            if (params.sort) url += "&sort=" + encodeURIComponent(params.sort);
+            if (params.min_grade) url += "&min_grade=" + encodeURIComponent(params.min_grade);
+            window.location.href = url;
+            return Promise.resolve({ navigated: url });
+          },
+        }, { signal: signal });
+      }
+
+      // Navigate to facility detail page
+      if (window.location.pathname === "/" || window.location.pathname === "/search" || window.location.pathname === "/explore") {
+        navigator.modelContext.registerTool({
+          name: "get_facility",
+          description: "View detailed information about a specific nursing home including grades, staffing data, and deficiency history.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              facility_id: { type: "string", description: "CMS certification number (CCN) or facility slug from the URL" },
+            },
+            required: ["facility_id"],
+          },
+          execute: function(params) {
+            window.location.href = "/facility/" + encodeURIComponent(params.facility_id);
+            return Promise.resolve({ navigated: "/facility/" + params.facility_id });
+          },
+        }, { signal: signal });
+      }
+
+      // Compare facilities
+      if (window.location.pathname === "/compare" || window.location.pathname === "/" || window.location.pathname === "/search") {
+        navigator.modelContext.registerTool({
+          name: "compare_facilities",
+          description: "Compare multiple nursing homes side-by-side on grades, staffing, inspection results, and deficiency data.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              ids: { type: "array", items: { type: "string" }, description: "Array of facility CCNs to compare (max 5)" },
+            },
+            required: ["ids"],
+          },
+          execute: function(params) {
+            var ids = params.ids.slice(0, 5).join(",");
+            window.location.href = "/compare?ids=" + encodeURIComponent(ids);
+            return Promise.resolve({ navigated: "/compare?ids=" + ids });
+          },
+        }, { signal: signal });
+      }
+
+      // Navigate to state rankings
+      navigator.modelContext.registerTool({
+        name: "get_state_rankings",
+        description: "Browse nursing home quality rankings and statistics for a specific state.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            state: { type: "string", description: "Two-letter US state abbreviation (e.g., CA, TX, FL)" },
+          },
+          required: ["state"],
+        },
+        execute: function(params) {
+          window.location.href = "/state/" + encodeURIComponent(params.state.toLowerCase());
+          return Promise.resolve({ navigated: "/state/" + params.state.toLowerCase() });
+        },
+      }, { signal: signal });
+
+      // Navigate to any page
+      navigator.modelContext.registerTool({
+        name: "navigate",
+        description: "Navigate to any page on NursingHomeGrade.com, including home, about, reports, operator pages, and search.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            path: { type: "string", description: "URL path on nursinghomegrade.com (e.g., /about, /best, /reports/staffing-failures)" },
+          },
+          required: ["path"],
+        },
+        execute: function(params) {
+          window.location.href = params.path.startsWith("/") ? params.path : "/" + params.path;
+          return Promise.resolve({ navigated: params.path });
+        },
+      }, { signal: signal });
     })();
   </script>
 </body>

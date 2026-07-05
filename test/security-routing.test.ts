@@ -29,21 +29,21 @@ const uppercaseCmsFacility: Facility = {
 function createFacilityEnv(): Env {
   const db = {
     prepare(query: string) {
-      return {
+      const statement = {
+        async first<T>() {
+          if (query.includes("SELECT * FROM facilities WHERE cms_id = ?")) {
+            return uppercaseCmsFacility as T;
+          }
+          return null as T | null;
+        },
+        async all<T>() {
+          return { results: [] as T[] };
+        },
         bind(..._args: unknown[]) {
-          return {
-            async first<T>() {
-              if (query.includes("SELECT * FROM facilities WHERE cms_id = ?")) {
-                return uppercaseCmsFacility as T;
-              }
-              return null as T | null;
-            },
-            async all<T>() {
-              return { results: [] as T[] };
-            },
-          };
+          return statement;
         },
       };
+      return statement;
     },
   };
 
@@ -58,6 +58,25 @@ function createFacilityEnv(): Env {
 
   return {
     DB: db as unknown as D1Database,
+    CACHE: cache as unknown as KVNamespace,
+  };
+}
+
+function createSitemapEnv(): Env {
+  const cache = {
+    async get(key: string) {
+      if (key === "sitemap-core") {
+        return '<?xml version="1.0" encoding="UTF-8"?><urlset></urlset>';
+      }
+      return null;
+    },
+    async put() {
+      return;
+    },
+  };
+
+  return {
+    DB: {} as D1Database,
     CACHE: cache as unknown as KVNamespace,
   };
 }
@@ -83,6 +102,19 @@ describe("facility routing safety", () => {
 
     expect(response.status).toBe(200);
     expect(await response.text()).toContain("Meadowbrook Behavioral Health Center");
+  });
+});
+
+describe("sitemap routing safety", () => {
+  it("serves child sitemap files from KV", async () => {
+    const response = await app.fetch(
+      new Request("http://127.0.0.1:8787/sitemap-core.xml"),
+      createSitemapEnv(),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("application/xml");
+    expect(await response.text()).toContain("<urlset>");
   });
 });
 
