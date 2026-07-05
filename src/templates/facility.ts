@@ -508,9 +508,19 @@ export function facilityPage(
     }
   ];
 
+  const title = `${f.name} Nursing Home Report | ${f.city}, ${f.state}`;
+  
+  const metaIntro = f.grade_score >= 80
+    ? `See the full quality report for ${f.name}: ${f.grade_score}/100 grade, staffing levels, deficiency history, and nearby alternatives.`
+    : `See the full quality report for ${f.name}: staffing levels, inspection history, deficiency records, and nearby nursing home alternatives.`;
+  
+  const metaDesc = metaIntro.length > 160 
+    ? metaIntro.substring(0, 157) + '...' 
+    : metaIntro;
+
   return layout(
-    `${f.name} — Ratings, Inspections & Staffing Data | ${f.city}, ${f.state}`,
-    `See the full quality report for ${f.name} in ${f.city}, ${f.state}: ${f.grade_score}/100 grade, staffing levels, deficiency history, and nearby alternatives.`,
+    title,
+    metaDesc,
     body,
     {
       canonicalPath,
