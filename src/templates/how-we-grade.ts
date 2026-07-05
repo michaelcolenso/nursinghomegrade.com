@@ -11,7 +11,7 @@ export function howWeGradePage(): string {
     </div>
 
     <h2>How the A–F grade is calculated</h2>
-    <p>The NursingHomeGrade Score (0–100) maps to letter grades: A (90–100), B (75–89), C (60–74), D (40–59), and F (0–39). The score is a weighted composite of four CMS data points:</p>
+    <p>The NursingHomeGrade Score (0–100) maps to letter grades: A (80–100), B (65–79), C (50–64), D (35–49), and F (0–34). The score is a weighted composite of four CMS data points:</p>
     <div class="results-list" style="margin: var(--space-l) 0;">
       <div class="result-stat" style="background:#fff;border-top:4px solid var(--ink);padding:var(--space-m);">
         <span class="result-stat-label">Staffing Compliance (35%)</span>
@@ -35,23 +35,23 @@ export function howWeGradePage(): string {
     <div class="results-list" style="margin: var(--space-l) 0; display: grid; gap: var(--space-s);">
       <div style="background:#fff;border-left:4px solid #2e7d32;padding:var(--space-s) var(--space-m);display:flex;align-items:center;gap:var(--space-s);">
         <span style="font-weight:800;font-size:1.3rem;color:#2e7d32;min-width:2rem;">A</span>
-        <span style="font-size:0.9rem;">Score 90–100. Excellent staffing, clean inspection records, strong quality measures.</span>
+        <span style="font-size:0.9rem;">Score 80–100. Excellent staffing, clean inspection records, strong quality measures.</span>
       </div>
       <div style="background:#fff;border-left:4px solid #558b2f;padding:var(--space-s) var(--space-m);display:flex;align-items:center;gap:var(--space-s);">
         <span style="font-weight:800;font-size:1.3rem;color:#558b2f;min-width:2rem;">B</span>
-        <span style="font-size:0.9rem;">Score 75–89. Above average. Meets or exceeds most standards.</span>
+        <span style="font-size:0.9rem;">Score 65–79. Above average. Meets or exceeds most standards.</span>
       </div>
       <div style="background:#fff;border-left:4px solid #f9a825;padding:var(--space-s) var(--space-m);display:flex;align-items:center;gap:var(--space-s);">
         <span style="font-weight:800;font-size:1.3rem;color:#f9a825;min-width:2rem;">C</span>
-        <span style="font-size:0.9rem;">Score 60–74. Average. Some deficiencies on record but no pattern of severe harm.</span>
+        <span style="font-size:0.9rem;">Score 50–64. Average. Some deficiencies on record but no pattern of severe harm.</span>
       </div>
       <div style="background:#fff;border-left:4px solid #ef6c00;padding:var(--space-s) var(--space-m);display:flex;align-items:center;gap:var(--space-s);">
         <span style="font-weight:800;font-size:1.3rem;color:#ef6c00;min-width:2rem;">D</span>
-        <span style="font-size:0.9rem;">Score 40–59. Below average. Multiple deficiencies or staffing below federal minimum.</span>
+        <span style="font-size:0.9rem;">Score 35–49. Below average. Multiple deficiencies or staffing below federal minimum.</span>
       </div>
       <div style="background:#fff;border-left:4px solid #c62828;padding:var(--space-s) var(--space-m);display:flex;align-items:center;gap:var(--space-s);">
         <span style="font-weight:800;font-size:1.3rem;color:#c62828;min-width:2rem;">F</span>
-        <span style="font-size:0.9rem;">Score 0–39. Well below acceptable standards. Serious inspection or staffing failures.</span>
+        <span style="font-size:0.9rem;">Score 0–34. Well below acceptable standards. Serious inspection or staffing failures.</span>
       </div>
     </div>
 

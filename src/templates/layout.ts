@@ -1275,7 +1275,9 @@ export function layout(
       clearBtn.addEventListener('click', function() {
         localStorage.removeItem('nhg_saved_facilities');
         document.querySelectorAll('[id^="save-"]').forEach(function(btn) {
-          btn.textContent = 'Save';
+          btn.setAttribute('aria-pressed', 'false');
+          var label = btn.querySelector('.compare-toggle-label');
+          if (label) label.textContent = 'Compare';
         });
         update();
       });
