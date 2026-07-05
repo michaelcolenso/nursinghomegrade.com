@@ -7,7 +7,7 @@ import { handleCity } from "./handlers/city";
 import { handleCompare, handleCompareApi } from "./handlers/comparison";
 import { handleExplore, handleMapApi } from "./handlers/map";
 import { handleOperator, handleOperatorsHub, handleOperatorsBest, handleOperatorsWorst } from "./handlers/operator";
-import { handleStaffingFailures, handleHighDeficiency, handleChainsReport } from "./handlers/reports";
+import { handleStaffingFailures, handleHighDeficiency, handleChainsReport, handleUncorrectedDeficiencies } from "./handlers/reports";
 import { handleBest, handleWorst } from "./handlers/best";
 import { handleStateReport } from "./handlers/state-report";
 import { handleWellKnown } from "./handlers/well-known";
@@ -194,6 +194,7 @@ export default {
     if (path === "/reports/staffing-failures") return handleStaffingFailures(request, env).then(r => wrapResponse(r, request));
     if (path === "/reports/high-deficiency-facilities") return handleHighDeficiency(request, env).then(r => wrapResponse(r, request));
     if (path === "/reports/chains") return handleChainsReport(request, env).then(r => wrapResponse(r, request));
+    if (path === "/reports/uncorrected-deficiencies") return handleUncorrectedDeficiencies(request, env).then(r => wrapResponse(r, request));
 
     if (path === "/best") return handleBest(request, env).then(r => wrapResponse(r, request));
     if (path === "/worst") return handleWorst(request, env).then(r => wrapResponse(r, request));

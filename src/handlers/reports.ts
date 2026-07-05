@@ -1,8 +1,8 @@
 import type { Env } from "../types";
 import { htmlCacheKey, pageCache } from "../cache";
 import { getStateAbbreviation, getStateInfo } from "../states";
-import { getOperatorsRanked, getNationalAverages } from "../db";
-import { staffingFailuresPage, highDeficiencyPage, staffingFailuresStatePage, chainsReportPage } from "../templates/reports";
+import { getOperatorsRanked, getNationalAverages, getFacilitiesWithUncorrectedDeficiencies } from "../db";
+import { staffingFailuresPage, highDeficiencyPage, staffingFailuresStatePage, chainsReportPage, uncorrectedDeficienciesPage } from "../templates/reports";
 import { notFoundPage, errorPage } from "../templates/subscribe";
 
 interface FacilityRow {
@@ -126,6 +126,29 @@ export async function handleChainsReport(request: Request, env: Env): Promise<Re
     });
   } catch (err) {
     console.error("handleChainsReport error", err);
+    const html = errorPage("Service unavailable", "We're experiencing a temporary issue. Please try again in a moment.");
+    return new Response(html, { status: 503, headers: { "Content-Type": "text/html;charset=UTF-8" } });
+  }
+}
+
+export async function handleUncorrectedDeficiencies(request: Request, env: Env): Promise<Response> {
+  try {
+    const cacheKey = htmlCacheKey("report:uncorrected-deficiencies");
+    const cached = await pageCache.get(cacheKey);
+    if (cached)
+      return new Response(cached, {
+        headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
+      });
+
+    const facilities = await getFacilitiesWithUncorrectedDeficiencies(env);
+
+    const html = uncorrectedDeficienciesPage(facilities);
+    await pageCache.put(cacheKey, html, { expirationTtl: 86400 });
+    return new Response(html, {
+      headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
+    });
+  } catch (err) {
+    console.error("handleUncorrectedDeficiencies error", err);
     const html = errorPage("Service unavailable", "We're experiencing a temporary issue. Please try again in a moment.");
     return new Response(html, { status: 503, headers: { "Content-Type": "text/html;charset=UTF-8" } });
   }

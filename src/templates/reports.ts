@@ -1,4 +1,5 @@
 import type { Operator } from "../types";
+import type { UncorrectedRow } from "../db";
 import { layout, escHtml } from "./layout";
 
 interface FacilityRow {
@@ -242,5 +243,91 @@ export function chainsReportPage(
     "Compare nursing home operators by average facility grade. Rankings of the best and worst chains based on independent CMS data analysis.",
     body,
     { canonicalPath: "/reports/chains" },
+  );
+}
+
+function severityLabel(code: string | null): string {
+  if (!code) return "Unknown";
+  const map: Record<string, string> = {
+    A: "No harm — isolated",
+    B: "No harm — pattern",
+    C: "No harm — widespread",
+    D: "Potential harm — isolated",
+    E: "Potential harm — pattern",
+    F: "Potential harm — widespread",
+    G: "Actual harm — isolated",
+    H: "Actual harm — pattern",
+    I: "Actual harm — widespread",
+    J: "Immediate jeopardy — isolated",
+    K: "Immediate jeopardy — pattern",
+    L: "Immediate jeopardy — widespread",
+  };
+  return map[code] ?? `Severity ${code}`;
+}
+
+export function uncorrectedDeficienciesPage(facilities: UncorrectedRow[]): string {
+  const rows = facilities.map((row) => {
+    const sevClass = row.worst_severity && row.worst_severity >= "J" ? "var(--grade-F)"
+      : row.worst_severity && row.worst_severity >= "G" ? "var(--grade-D)"
+      : "var(--muted)";
+
+    return `
+      <tr style="border-bottom:1px solid var(--rule);">
+        <td style="padding:var(--space-s) var(--space-xs);font-weight:700;">
+          <a href="/facility/${escHtml(row.cms_id)}-${escHtml(row.slug)}">${escHtml(row.name)}</a>
+        </td>
+        <td style="padding:var(--space-s) var(--space-xs);">${escHtml(row.city)}, ${escHtml(row.state)}</td>
+        <td style="padding:var(--space-s) var(--space-xs);font-weight:800;color:${sevClass};font-size:1.1rem;">${row.uncorrected_count}</td>
+        <td style="padding:var(--space-s) var(--space-xs);font-weight:700;color:${sevClass};">
+          ${escHtml(row.worst_severity ?? "?")} — ${escHtml(severityLabel(row.worst_severity))}
+        </td>
+        <td style="padding:var(--space-s) var(--space-xs);font-weight:800;color:var(--grade-${row.grade_letter});">${escHtml(row.grade_letter)}</td>
+      </tr>
+    `;
+  }).join("");
+
+  const body = `
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span class="breadcrumb-sep">›</span>
+      <span style="color:var(--ink);">Uncorrected Deficiencies</span>
+    </nav>
+
+    <h1>Uncorrected Deficiency Report</h1>
+    <p class="lede" style="max-width:800px;margin-bottom:var(--space-xl);">
+      Facilities with health inspection deficiencies that have <strong style="color:var(--grade-F);">not yet been corrected</strong>.
+      Sorted by severity: immediate jeopardy first, then actual harm, then all others.
+    </p>
+
+    <div class="table-container">
+      <table style="min-width:600px;">
+        <thead>
+          <tr style="border-bottom:2px solid var(--ink);">
+            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Facility</th>
+            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Location</th>
+            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Uncorrected</th>
+            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Worst Severity</th>
+            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Grade</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+
+    ${reportMethodology(new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }))}
+
+    <div class="cta-box" style="margin-top:var(--space-2xl);">
+      <h3>Explore more reports</h3>
+      <p>Browse other facility quality reports built from official CMS inspection data.</p>
+      <a class="btn" href="/reports/staffing-failures">Staffing Failures →</a>
+      <a href="/reports/high-deficiency-facilities" class="btn-secondary">High Deficiencies →</a>
+    </div>
+  `;
+
+  return layout(
+    "Uncorrected Deficiencies — NursingHomeGrade Report",
+    "Nursing facilities with outstanding health inspection deficiencies that have not yet been corrected. Sorted by severity.",
+    body,
+    { canonicalPath: "/reports/uncorrected-deficiencies" },
   );
 }

@@ -341,3 +341,38 @@ export async function getFacilitySnapshots(env: Env, cmsId: string): Promise<Fac
   ).bind(cmsId).all<FacilitySnapshot>();
   return results.results ?? [];
 }
+
+export interface UncorrectedRow {
+  cms_id: string;
+  name: string;
+  city: string;
+  state: string;
+  grade_score: number;
+  grade_letter: string;
+  slug: string;
+  uncorrected_count: number;
+  worst_severity: string | null;
+}
+
+export async function getFacilitiesWithUncorrectedDeficiencies(env: Env, limit = 200): Promise<UncorrectedRow[]> {
+  const results = await env.DB.prepare(
+    `SELECT
+      f.cms_id, f.name, f.city, f.state, f.grade_score, f.grade_letter, f.slug,
+      COUNT(fd.id) as uncorrected_count,
+      MAX(fd.scope_severity_code) as worst_severity
+    FROM facilities f
+    INNER JOIN facility_deficiencies fd ON f.cms_id = fd.cms_id
+    WHERE fd.correction_date IS NULL
+    GROUP BY f.cms_id
+    ORDER BY
+      CASE
+        WHEN MAX(fd.scope_severity_code) >= 'J' THEN 0
+        WHEN MAX(fd.scope_severity_code) >= 'G' THEN 1
+        WHEN MAX(fd.scope_severity_code) >= 'D' THEN 2
+        ELSE 3
+      END,
+      uncorrected_count DESC
+    LIMIT ?`
+  ).bind(limit).all<UncorrectedRow>();
+  return results.results ?? [];
+}
