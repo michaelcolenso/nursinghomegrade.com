@@ -7,6 +7,7 @@ import { handleState, handleStatesHub } from "./handlers/state";
 import { handleCity } from "./handlers/city";
 import { handleCompare, handleCompareApi } from "./handlers/comparison";
 import { handleExplore, handleMapApi } from "./handlers/map";
+import { handleHowWeGrade } from "./handlers/how-we-grade";
 import { handleOperator, handleOperatorsHub, handleOperatorsBest, handleOperatorsWorst } from "./handlers/operator";
 import { handleStaffingFailures, handleHighDeficiency, handleChainsReport } from "./handlers/reports";
 import { handleBest, handleWorst } from "./handlers/best";
@@ -159,6 +160,7 @@ export default {
     if (path === "/compare") return handleCompare(request, env).then(r => wrapResponse(r, request));
     if (path === "/search") return handleSearch(request, env).then(r => wrapResponse(r, request));
     if (path === "/explore") return handleExplore(request, env).then(r => wrapResponse(r, request));
+    if (path === "/how-we-grade") return handleHowWeGrade(request, env).then(r => wrapResponse(r, request));
     if (path === "/api/compare") return handleCompareApi(request, env).then(r => wrapResponse(r, request));
     if (path === "/api/map/facilities") return handleMapApi(request, env).then(r => wrapResponse(r, request));
 
