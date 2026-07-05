@@ -1109,6 +1109,7 @@ export function layout(
           <a href="/best" class="footer-link">Best Facilities</a>
           <a href="/worst" class="footer-link">Worst Facilities</a>
           <a href="/reports/staffing-failures" class="footer-link">Staffing Report</a>
+          <a href="/reports/uncorrected-deficiencies" class="footer-link">Uncorrected Deficiencies</a>
         </nav>
 
         <nav class="footer-col" aria-label="Company">
