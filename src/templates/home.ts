@@ -48,7 +48,7 @@ export function homePage(pctFailing: number): string {
 
   return layout(
     "NursingHomeGrade — Independent Nursing Home Ratings",
-    `${pctFailing}% of U.S. nursing homes fall below safe RN staffing levels. Find unbiased nursing home grades based on CMS data — no commissions.`,
+    `${pctFailing}% of U.S. nursing homes fall below safe RN staffing levels. Find unbiased nursing home grades based on CMS inspection, staffing, and quality data — no facility commissions, no conflicts of interest.`,
     body,
     { jsonLd, canonicalPath: "/", ogImage: "https://nursinghomegrade.com/NHG.png" }
   );
@@ -266,7 +266,7 @@ const body = `
 
 return layout(
   `Nursing Homes Near ${zip} — NursingHomeGrade`,
-  `Nursing home quality grades for facilities near ZIP code ${zip}.`,
+  `See nursing home quality grades, staffing levels, and inspection reports for facilities near ZIP code ${zip}. Compare A–F ratings to find the best care options in your area.`,
   body,
   { noindex: true, extraHead, extraScripts },
 );
