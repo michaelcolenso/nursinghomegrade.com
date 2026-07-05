@@ -207,8 +207,42 @@ export function layout(
       white-space: nowrap;
     }
     .masthead-search-btn:hover { background: var(--accent-hover); border: none; }
+
+    /* Hamburger toggle — visible on mobile only */
+    .masthead-toggle {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      min-width: 44px;
+      min-height: 44px;
+      padding: 8px;
+      background: none;
+      border: 1px solid var(--rule);
+      cursor: pointer;
+      transition: border-color 0.2s ease;
+    }
+    .masthead-toggle:hover { border-color: var(--ink); }
+    .masthead-toggle-bar {
+      display: block;
+      width: 20px;
+      height: 2px;
+      background: var(--ink);
+      border-radius: 1px;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+    .masthead-toggle[aria-expanded="true"] .masthead-toggle-bar:nth-child(1) {
+      transform: translateY(6px) rotate(45deg);
+    }
+    .masthead-toggle[aria-expanded="true"] .masthead-toggle-bar:nth-child(2) {
+      opacity: 0;
+    }
+    .masthead-toggle[aria-expanded="true"] .masthead-toggle-bar:nth-child(3) {
+      transform: translateY(-6px) rotate(-45deg);
+    }
+
     @media (max-width: 640px) {
-      .masthead-nav-link { display: none; }
       .masthead-search-btn { min-height: 44px; padding: 0.45rem 1rem; font-size: 0.9rem; }
     }
 
@@ -870,13 +904,26 @@ export function layout(
         gap: var(--space-2xs) !important;
         flex-wrap: wrap;
       }
-      header nav .masthead-nav-link {
+      .masthead-toggle {
         display: inline-flex;
+      }
+      .masthead-nav-links {
+        display: none;
+        width: 100%;
+        flex-direction: column;
+        gap: var(--space-2xs);
+      }
+      .masthead-nav.is-open .masthead-nav-links {
+        display: flex;
+      }
+      header nav .masthead-nav-link {
+        display: flex;
         min-height: 44px;
         align-items: center;
-        padding: 0 var(--space-xs);
+        padding: var(--space-2xs) var(--space-xs);
         border: 1px solid var(--rule) !important;
         background: #fff;
+        width: 100%;
       }
       header nav .masthead-search-btn {
         background: var(--accent);
@@ -1007,12 +1054,19 @@ export function layout(
           <span class="masthead-name">NursingHomeGrade</span>
         </a>
         <nav class="masthead-nav" aria-label="Main navigation">
-          <a href="/explore" class="masthead-nav-link">Find Facilities</a>
-          <a href="/states" class="masthead-nav-link">Ratings</a>
-          <a href="/compare" class="masthead-nav-link">Compare</a>
-          <a href="/best" class="masthead-nav-link">Best</a>
-          <a href="/worst" class="masthead-nav-link">Worst</a>
-          <a href="/about" class="masthead-nav-link">About</a>
+          <button class="masthead-toggle" aria-label="Toggle menu" aria-expanded="false">
+            <span class="masthead-toggle-bar"></span>
+            <span class="masthead-toggle-bar"></span>
+            <span class="masthead-toggle-bar"></span>
+          </button>
+          <div class="masthead-nav-links">
+            <a href="/explore" class="masthead-nav-link">Find Facilities</a>
+            <a href="/states" class="masthead-nav-link">Ratings</a>
+            <a href="/compare" class="masthead-nav-link">Compare</a>
+            <a href="/best" class="masthead-nav-link">Best</a>
+            <a href="/worst" class="masthead-nav-link">Worst</a>
+            <a href="/about" class="masthead-nav-link">About</a>
+          </div>
           <a href="/search" class="masthead-search-btn">Search</a>
         </nav>
       </div>
@@ -1110,6 +1164,23 @@ export function layout(
           }
         });
       });
+
+      // Mobile hamburger toggle
+      var toggle = document.querySelector('.masthead-toggle');
+      var nav = document.querySelector('.masthead-nav');
+      if (toggle && nav) {
+        toggle.addEventListener('click', function() {
+          var open = nav.classList.toggle('is-open');
+          toggle.setAttribute('aria-expanded', open);
+        });
+        // Close menu when clicking a nav link
+        nav.querySelectorAll('.masthead-nav-link').forEach(function(link) {
+          link.addEventListener('click', function() {
+            nav.classList.remove('is-open');
+            toggle.setAttribute('aria-expanded', 'false');
+          });
+        });
+      }
       
       // Location logic
       var geoBtn = document.getElementById('geo-btn');
