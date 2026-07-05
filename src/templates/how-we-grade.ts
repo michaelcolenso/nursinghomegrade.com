@@ -19,7 +19,7 @@ export function howWeGradePage(): string {
       </div>
       <div class="result-stat" style="background:#fff;border-top:4px solid var(--ink);padding:var(--space-m);">
         <span class="result-stat-label">Inspection Clean Rate (30%)</span>
-        <span class="result-stat-value">Number and severity of health deficiencies found during state surveys over the last 3 years.</span>
+        <span class="result-stat-value">Number of health deficiencies cited during the most recent CMS inspection cycle.</span>
       </div>
       <div class="result-stat" style="background:#fff;border-top:4px solid var(--ink);padding:var(--space-m);">
         <span class="result-stat-label">Quality Measures (20%)</span>
