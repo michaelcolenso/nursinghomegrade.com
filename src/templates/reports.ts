@@ -69,6 +69,7 @@ export function staffingFailuresPage(facilities: FacilityRow[]): string {
       Facilities with RN staffing below the federal minimum of 0.55 hours per resident per day.
     </p>
 
+    <h2>Facilities Below the Staffing Minimum</h2>
     ${renderReportTable(facilities, [
       { key: "name", label: "Facility" },
       { key: "city", label: "City" },
@@ -108,6 +109,7 @@ export function highDeficiencyPage(facilities: FacilityRow[]): string {
       Facilities with the highest number of health inspection deficiencies in the most recent cycle.
     </p>
 
+    <h2>Highest Deficiency Counts</h2>
     ${renderReportTable(facilities, [
       { key: "name", label: "Facility" },
       { key: "city", label: "City" },
@@ -150,6 +152,7 @@ export function staffingFailuresStatePage(stateName: string, facilities: Facilit
       <strong>${facilities.length} facilities</strong> in ${escHtml(stateName)} fall below the RN staffing benchmark of 0.55 hours per resident per day.
     </p>
 
+    <h2>Facilities Below the Staffing Minimum</h2>
     ${renderReportTable(facilities, [
       { key: "name", label: "Facility" },
       { key: "city", label: "City" },
@@ -320,6 +323,7 @@ export function uncorrectedDeficienciesPage(facilities: UncorrectedRow[]): strin
       Sorted by severity: immediate jeopardy first, then actual harm, then all others.
     </p>
 
+    <h2>Facilities With Outstanding Deficiencies</h2>
     <div class="table-container">
       <table style="min-width:600px;">
         <thead>

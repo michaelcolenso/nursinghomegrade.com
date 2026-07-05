@@ -101,6 +101,7 @@ export function bestPage(facilities: FacilityRow[], stateName?: string): string 
       ${escHtml(intro)}
     </p>
 
+    <h2>Rankings</h2>
     ${renderTable(facilities)}
 
     <div style="margin-top:var(--space-xl);display:flex;gap:var(--space-m);flex-wrap:wrap;">
@@ -154,6 +155,7 @@ export function worstPage(facilities: FacilityRow[], stateName?: string): string
       </p>
     </div>
 
+    <h2>Rankings</h2>
     ${renderTable(facilities)}
 
     <div style="margin-top:var(--space-xl);display:flex;gap:var(--space-m);flex-wrap:wrap;">

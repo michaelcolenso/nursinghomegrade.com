@@ -119,9 +119,10 @@ function renderDeficiencySummary(deficiencies: Deficiency[]): string {
   const uncorrectedAlert = uncorrectedCount > 0
     ? ` <span style="color:var(--grade-F);font-weight:800;">— ${uncorrectedCount} still outstanding</span>`
     : "";
+  const deficiencyWord = deficiencies.length === 1 ? "deficiency" : "deficiencies";
   const summaryText = alerts.length > 0
-    ? `${alerts.join(", ")} issue${(harmCount + jeopardyCount) !== 1 ? "s" : ""} found among ${deficiencies.length} total deficiency${deficiencies.length !== 1 ? "ies" : "y"}. ${correctedCount} corrected.${uncorrectedAlert}`
-    : `${deficiencies.length} deficiency${deficiencies.length !== 1 ? "ies" : "y"} found. ${correctedCount} corrected. None involved actual harm.${uncorrectedAlert}`;
+    ? `${alerts.join(", ")} issue${(harmCount + jeopardyCount) !== 1 ? "s" : ""} found among ${deficiencies.length} total ${deficiencyWord}. ${correctedCount} corrected.${uncorrectedAlert}`
+    : `${deficiencies.length} ${deficiencyWord} found. ${correctedCount} corrected. None involved actual harm.${uncorrectedAlert}`;
   return `<div style="background:var(--bg);border:2px solid var(--ink);padding:var(--space-l);margin-bottom:var(--space-xl);">
     <p style="margin:0;font-family:'Playfair Display',Georgia,serif;font-size:clamp(1.1rem,2vw,1.35rem);line-height:1.4;">${summaryText}</p>
   </div>`;
@@ -530,12 +531,12 @@ export function facilityPage(
 
   const title = `${f.name} Nursing Home Report | ${f.city}, ${f.state}`;
   
-  const metaIntro = f.grade_score >= 80
+  const metaIntro = summary || (f.grade_score >= 80
     ? `See the full quality report for ${f.name}: ${f.grade_score}/100 grade, staffing levels, deficiency history, and nearby alternatives.`
-    : `See the full quality report for ${f.name}: staffing levels, inspection history, deficiency records, and nearby nursing home alternatives.`;
-  
-  const metaDesc = metaIntro.length > 160 
-    ? metaIntro.substring(0, 157) + '...' 
+    : `See the full quality report for ${f.name}: staffing levels, inspection history, deficiency records, and nearby nursing home alternatives.`);
+
+  const metaDesc = metaIntro.length > 160
+    ? metaIntro.substring(0, 157) + '...'
     : metaIntro;
 
   return layout(
