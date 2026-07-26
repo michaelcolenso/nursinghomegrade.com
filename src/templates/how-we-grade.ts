@@ -7,7 +7,8 @@ export function howWeGradePage(): string {
     <div class="lede">
       Every nursing home in the U.S. that accepts Medicare or Medicaid is surveyed by federal inspectors.
       NursingHomeGrade takes that public CMS data and converts it into an A–F grade so you can compare
-      facilities at a glance.
+      facilities at a glance. Use our nursing home ratings to quickly evaluate staffing, inspection records, and
+      quality measures for any Medicare-certified facility in the country.
     </div>
 
     <h2>How the A–F grade is calculated</h2>
@@ -59,13 +60,13 @@ export function howWeGradePage(): string {
     <p>All data is sourced from <a href="https://data.cms.gov/provider-data/topics/nursing-homes">CMS Nursing Home Compare</a>, the official federal dataset covering 15,000+ Medicare- and Medicaid-certified nursing facilities. Updated monthly. No editorial adjustments — what CMS reports is what you see.</p>
 
     <h2>Start searching</h2>
-    <p>Ready to find ratings for a specific facility? Search by ZIP code or browse our <a href="/states">state directory</a> to compare nursing home grades in your area.</p>
-    <p style="margin-top:2rem;"><a href="/explore" class="btn">Browse the nursing home database →</a></p>
+    <p>Ready to browse nursing home ratings for a specific facility? Search by ZIP code or browse our <a href="/states">state directory</a> to compare nursing home grades in your area.</p>
+    <p style="margin-top:2rem;"><a href="/explore" class="btn">Search nursing home ratings →</a></p>
   `;
 
   return layout(
     "How Nursing Home Ratings Work — A–F Grades Explained | NursingHomeGrade",
-    "Learn how nursing home ratings are calculated. Our A–F grading system combines CMS staffing, inspection, and quality data into one clear score. No commissions, no conflicts.",
+    "Learn how nursing home ratings work. Our A–F system combines CMS staffing, inspection, and quality data into one clear score. No commissions, no conflicts.",
     body,
     { canonicalPath: "/how-we-grade" },
   );
