@@ -136,10 +136,10 @@ export function summarizeDeficiencies(deficiencies: Deficiency[]): DeficiencyCou
   };
 }
 
-function renderDeficiencyCluster(counts: DeficiencyCounts, hasDetail: boolean): string {
-  // With no detail rows we cannot honestly state a three-cycle total, so we say
-  // nothing rather than rendering a count we know is scoped to one cycle.
-  if (!hasDetail) {
+function renderDeficiencyCluster(counts: DeficiencyCounts, dataAvailable: boolean): string {
+  // Only when the lookup failed. A facility with zero citations renders zeros,
+  // matching "No deficiencies reported for this facility." in the section below.
+  if (!dataAvailable) {
     return `<span style="font-weight:700;font-size:1.5rem;">Not reported</span>`;
   }
   const row = (label: string, value: number, color: string) => `
@@ -341,7 +341,7 @@ function renderRelatedLinks(
 
 export function facilityPage(
   f: FacilityPageData,
-  deficiencies: Deficiency[] = [],
+  deficiencies: Deficiency[] | null = [],
   nearby: Facility[] = [],
   stateTopRated: Facility[] = [],
   trajectory: Trajectory | null = null,
@@ -356,7 +356,11 @@ export function facilityPage(
   const rnHours = f.rn_hours_per_resident_day;
   // One computation, used by both the Quality Breakdown table and the prose
   // summary below, so the two can no longer disagree.
-  const deficiencyCounts = summarizeDeficiencies(deficiencies);
+  const deficiencyDetail = deficiencies ?? [];
+  const deficiencyCounts = summarizeDeficiencies(deficiencyDetail);
+  // null means the lookup failed; [] means a clean record. Only the first is
+  // "Not reported".
+  const deficiencyDataAvailable = deficiencies !== null;
   // Source: CMS Provider Information file, column
   // `reported_rn_staffing_hours_per_resident_per_day`, compared against the
   // repealed 2024 benchmark — see src/staffing-standard.ts.
@@ -388,8 +392,8 @@ export function facilityPage(
     <p class="lede" style="font-size:1.125rem;margin-bottom:var(--space-l);">
       Health inspections identify violations of federal standards. Severity ranges from no actual harm (A–F) to immediate jeopardy (J–L).
     </p>
-    ${renderDeficiencySummary(deficiencies)}
-    ${renderDeficiencies(deficiencies)}
+    ${renderDeficiencySummary(deficiencyDetail)}
+    ${renderDeficiencies(deficiencyDetail)}
   `;
 
   const body = `
@@ -454,7 +458,7 @@ export function facilityPage(
             <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Violations found during federal inspections, with how many remain open and how many involved actual harm.</div>
           </td>
           <td class="quality-value-cell" style="padding:var(--space-m) 0;font-family:'Source Sans 3',system-ui,sans-serif;text-align:right;">
-            ${renderDeficiencyCluster(deficiencyCounts, deficiencies.length > 0)}
+            ${renderDeficiencyCluster(deficiencyCounts, deficiencyDataAvailable)}
           </td>
         </tr>
         <tr class="quality-row" style="border-bottom:1px solid var(--rule);">
@@ -567,8 +571,13 @@ export function facilityPage(
   if (rnHours !== null) {
     additionalProperty.push({ "@type": "PropertyValue", "name": "RN Staffing Hours per Resident Day", "value": rnHours, "unitText": "hours" });
   }
-  if (f.total_deficiencies !== null) {
-    additionalProperty.push({ "@type": "PropertyValue", "name": "Total Health Deficiencies", "value": f.total_deficiencies });
+  // Same three-cycle counts the page displays. Publishing
+  // facilities.total_deficiencies here would hand search consumers the cycle-1
+  // number under a "Total" label — the exact mismatch the table fix removed.
+  if (deficiencyDataAvailable) {
+    additionalProperty.push({ "@type": "PropertyValue", "name": "Total Health Deficiencies", "value": deficiencyCounts.total });
+    additionalProperty.push({ "@type": "PropertyValue", "name": "Outstanding Health Deficiencies", "value": deficiencyCounts.outstanding });
+    additionalProperty.push({ "@type": "PropertyValue", "name": "Deficiencies at Actual Harm or Worse", "value": deficiencyCounts.harm });
   }
   if (f.quality_rating !== null) {
     additionalProperty.push({ "@type": "PropertyValue", "name": "CMS Quality Rating", "value": f.quality_rating, "unitText": "out of 5 stars" });

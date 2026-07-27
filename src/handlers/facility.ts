@@ -73,7 +73,9 @@ export async function handleFacility(request: Request, env: Env, slugId: string)
       trajectory,
       operator,
       nationalAvg,
-      summarizeDeficiencies(deficiencies),
+      // Omit rather than pass zeros when the lookup failed: an assessment that
+      // says nothing is better than one implying a clean record we cannot verify.
+      deficiencies === null ? undefined : summarizeDeficiencies(deficiencies),
     );
     const summary = generateFacilitySummary(facility, trajectory);
 

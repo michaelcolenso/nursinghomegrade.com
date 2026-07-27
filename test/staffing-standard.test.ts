@@ -142,3 +142,44 @@ describe("grade summaries are derived, not read from the stored column", () => {
     expect(html).toContain("Below the repealed");
   });
 });
+
+describe("deficiency counts: empty vs unavailable", () => {
+  // A facility with zero citations and a facility whose lookup failed are
+  // different things. Showing "Not reported" for a spotless record misleads.
+  it("renders zeros for a facility with a genuinely clean record", () => {
+    const html = facilityPage(facility, []);
+    expect(html).toContain("No deficiencies reported for this facility");
+    expect(html).not.toContain("Not reported</span>");
+  });
+
+  it("renders Not reported only when the lookup failed", () => {
+    const html = facilityPage(facility, null);
+    expect(html).toContain("Not reported");
+  });
+
+  it("publishes the three-cycle total in JSON-LD, not the cycle-1 scalar", () => {
+    const defs = [1, 1, 2, 3].map((cycle, i) => ({
+      id: i,
+      cms_id: "015001",
+      survey_date: "2025-01-01",
+      deficiency_category: "Quality of Care",
+      deficiency_tag_number: "F684",
+      deficiency_description: "d",
+      scope_severity_code: "D",
+      deficiency_corrected: "Deficient, Provider has date of correction",
+      correction_date: "2025-02-01",
+      inspection_cycle: cycle,
+      standard_deficiency: "Y",
+      complaint_deficiency: "N",
+    }));
+    // f.total_deficiencies is 7 in the fixture; the detail rows total 4.
+    const html = facilityPage({ ...facility, total_deficiencies: 7 }, defs as never);
+    expect(html).toContain('"name":"Total Health Deficiencies","value":4');
+    expect(html).not.toContain('"name":"Total Health Deficiencies","value":7');
+  });
+
+  it("omits deficiency structured data entirely when the lookup failed", () => {
+    const html = facilityPage(facility, null);
+    expect(html).not.toContain("Total Health Deficiencies");
+  });
+});

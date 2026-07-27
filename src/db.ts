@@ -167,14 +167,20 @@ export async function getDataReleases(env: Env): Promise<DataRelease[]> {
   }
 }
 
-export async function getFacilityDeficiencies(env: Env, cmsId: string): Promise<Deficiency[]> {
+/**
+ * Returns null when the query fails, [] when the facility genuinely has no
+ * citations. Collapsing both to [] would make a clean facility indistinguishable
+ * from missing data — and "Not reported" on a facility with a spotless record is
+ * a materially misleading thing to show a family.
+ */
+export async function getFacilityDeficiencies(env: Env, cmsId: string): Promise<Deficiency[] | null> {
   try {
     const results = await env.DB.prepare(
       `SELECT * FROM facility_deficiencies WHERE cms_id = ? ORDER BY inspection_cycle ASC, deficiency_category ASC`
     ).bind(cmsId).all<Deficiency>();
     return results.results ?? [];
   } catch {
-    return [];
+    return null;
   }
 }
 
