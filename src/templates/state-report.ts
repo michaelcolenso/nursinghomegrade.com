@@ -1,4 +1,5 @@
 import { layout, escHtml } from "./layout";
+import { repealDisclosureHtml } from "../staffing-standard";
 
 export interface StateReportData {
   stateName: string;
@@ -134,7 +135,7 @@ export function stateReportPage(data: StateReportData): string {
 
     <h2>Staffing</h2>
     <div class="metric-row">
-      <span class="metric-label">% failing RN staffing benchmark (0.55 hrs)</span>
+      <span class="metric-label">% below the repealed 0.55 hr RN benchmark</span>
       <span class="metric-value" style="color:${pctFailing > nationalPctFailing ? "var(--grade-F)" : "var(--grade-A)"}">
         ${pctFailing}% ${pctFailing > nationalPctFailing ? "▴" : "▾"} (national: ${nationalPctFailing}%)
       </span>
@@ -144,8 +145,9 @@ export function stateReportPage(data: StateReportData): string {
       <span class="metric-value">${avgRnHours !== null ? avgRnHours.toFixed(2) : "N/A"} ${staffingComparison ? `(${escHtml(staffingComparison)})` : ""}</span>
     </div>
     <p style="font-size:0.9rem;color:var(--muted);margin-top:var(--space-xs);">
-      CMS repealed the federal staffing minimum in December 2025. NursingHomeGrade continues to use 0.55 RN hours per resident day as an evidence-based quality benchmark.
+      CMS repealed the federal staffing minimum effective February 2, 2026. NursingHomeGrade continues to use 0.55 RN hours per resident day as an evidence-based quality benchmark.
     </p>
+    ${repealDisclosureHtml()}
 
     <h2>Deficiencies</h2>
     <div class="metric-row">

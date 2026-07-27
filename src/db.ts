@@ -87,6 +87,12 @@ export async function getStatesWithCounts(env: Env): Promise<Array<{ state: stri
   return results.results ?? [];
 }
 
+/**
+ * Share of a state's facilities below the repealed 0.55 hr RN benchmark.
+ * Source: CMS Provider Information file, column
+ * `adjusted_rn_staffing_hours_per_resident_per_day`. The 0.55 threshold is the
+ * repealed 2024 CMS standard — see src/staffing-standard.ts.
+ */
 export async function getStatePctFailing(env: Env, state: string): Promise<number> {
   const result = await env.DB.prepare(
     `SELECT ROUND(100.0 * SUM(CASE WHEN rn_hours_per_resident_day < 0.55 THEN 1 ELSE 0 END) / COUNT(*), 1) as pct
@@ -97,12 +103,47 @@ export async function getStatePctFailing(env: Env, state: string): Promise<numbe
   return result?.pct ?? 0;
 }
 
+/** National counterpart to getStatePctFailing. Same source and threshold. */
 export async function getNationalPctFailing(env: Env): Promise<number> {
   const result = await env.DB.prepare(
     `SELECT ROUND(100.0 * SUM(CASE WHEN rn_hours_per_resident_day < 0.55 THEN 1 ELSE 0 END) / COUNT(*), 1) as pct
          FROM facilities`,
   ).first<{ pct: number }>();
   return result?.pct ?? 0;
+}
+
+export interface BenchmarkShortfall {
+  /** Facilities nationally with reported RN hours below the repealed 0.55 benchmark. */
+  belowNational: number;
+  /** Facilities nationally with RN hours reported at all (the denominator). */
+  reportedNational: number;
+  byState: Array<{ state: string; below: number; reported: number }>;
+}
+
+/**
+ * Live count of facilities below the repealed 0.55 RN benchmark, nationally and
+ * per state. Source: CMS Provider Information file, column
+ * `adjusted_rn_staffing_hours_per_resident_per_day` (stored as
+ * `facilities.rn_hours_per_resident_day`). Facilities that do not report the
+ * measure are excluded from both numerator and denominator.
+ */
+export async function getBenchmarkShortfall(env: Env): Promise<BenchmarkShortfall> {
+  const results = await env.DB.prepare(
+    `SELECT state,
+            SUM(CASE WHEN rn_hours_per_resident_day < 0.55 THEN 1 ELSE 0 END) as below,
+            COUNT(*) as reported
+       FROM facilities
+      WHERE rn_hours_per_resident_day IS NOT NULL
+      GROUP BY state
+      ORDER BY state ASC`,
+  ).all<{ state: string; below: number; reported: number }>();
+
+  const byState = results.results ?? [];
+  return {
+    belowNational: byState.reduce((sum, row) => sum + row.below, 0),
+    reportedNational: byState.reduce((sum, row) => sum + row.reported, 0),
+    byState,
+  };
 }
 
 export async function getFacilityDeficiencies(env: Env, cmsId: string): Promise<Deficiency[]> {
@@ -240,6 +281,7 @@ export async function getCitySnapshot(
 
   for (const facility of matchingFacilities) {
     gradeDistribution[facility.grade_letter] = (gradeDistribution[facility.grade_letter] ?? 0) + 1;
+    // Below the repealed 2024 benchmark — see src/staffing-standard.ts.
     if (facility.rn_hours_per_resident_day !== null && facility.rn_hours_per_resident_day < 0.55) {
       failingCount += 1;
     }

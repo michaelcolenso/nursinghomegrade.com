@@ -1,13 +1,15 @@
 import type { Facility } from "../types";
 import { layout, escHtml } from "./layout";
+import { RN_BENCHMARK, benchmarkLabel, repealDisclosureHtml } from "../staffing-standard";
 
 export function homePage(pctFailing: number): string {
   const body = `
     <h1 class="display">Find honest nursing home grades</h1>
     <p class="lede">
-      <strong>${pctFailing}% of U.S. nursing homes</strong> fall below safe RN staffing levels.
-      Independent grades based on CMS data — no facility payments, no conflicts.
+      <strong>${pctFailing}% of U.S. nursing homes</strong> staff below the RN level the 2024 federal
+      rule would have required. Independent grades based on CMS data — no facility payments, no conflicts.
     </p>
+    ${repealDisclosureHtml()}
     <p style="color:var(--muted);font-size:0.9rem;margin-bottom:var(--space-m);">
       Data from CMS Nursing Home Compare. Last updated: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long" })}.
     </p>
@@ -48,7 +50,7 @@ export function homePage(pctFailing: number): string {
 
   return layout(
     "NursingHomeGrade — Independent Nursing Home Ratings",
-    `${pctFailing}% of U.S. nursing homes fall below safe RN staffing levels. Find unbiased nursing home grades based on CMS inspection, staffing, and quality data — no facility commissions, no conflicts of interest.`,
+    `${pctFailing}% of U.S. nursing homes staff below the RN level the 2024 federal rule would have required. Find unbiased nursing home grades based on CMS inspection, staffing, and quality data — no facility commissions, no conflicts of interest.`,
     body,
     { jsonLd, canonicalPath: "/" }
   );
@@ -131,7 +133,7 @@ export function searchResultsPage(
       const gradeClass = `result-item-${f.grade_letter}`;
       const rnText =
         f.rn_hours_per_resident_day !== null
-          ? `${f.rn_hours_per_resident_day.toFixed(2)} ${f.rn_hours_per_resident_day >= 0.55 ? '<span style="color:var(--grade-A);">✓</span>' : '<span style="color:var(--grade-F);">✗</span>'}`
+          ? `${f.rn_hours_per_resident_day.toFixed(2)} ${f.rn_hours_per_resident_day >= RN_BENCHMARK ? `<span style="color:var(--grade-A);" title="${benchmarkLabel(true)}">✓</span>` : `<span style="color:var(--grade-F);" title="${benchmarkLabel(false)}">✗</span>`}`
           : "N/A";
       const stars =
         f.overall_rating !== null

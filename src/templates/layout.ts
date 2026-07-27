@@ -516,6 +516,15 @@ export function layout(
     .metric-value { font-family: 'Playfair Display', Georgia, serif; font-size: 1.25rem; font-weight: 700; }
 
     /* Footer */
+    .repeal-disclosure {
+      font-size: 0.8rem;
+      line-height: 1.5;
+      color: var(--muted);
+      margin: var(--space-2xs) 0 0;
+      max-width: 60ch;
+    }
+    .repeal-disclosure a { color: inherit; font-weight: 700; }
+
     footer {
       border-top: 1px solid var(--rule);
       margin-top: var(--space-3xl);
@@ -1111,6 +1120,7 @@ export function layout(
           <a href="/best" class="footer-link">Best Facilities</a>
           <a href="/worst" class="footer-link">Worst Facilities</a>
           <a href="/reports/staffing-failures" class="footer-link">Staffing Report</a>
+          <a href="/reports/staffing-standard-repeal" class="footer-link">The Repealed Staffing Rule</a>
           <a href="/reports/uncorrected-deficiencies" class="footer-link">Uncorrected Deficiencies</a>
         </nav>
 

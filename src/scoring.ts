@@ -1,3 +1,5 @@
+import { RN_BENCHMARK } from "./staffing-standard";
+
 export interface ScoreInputs {
   rnHoursPerResidentDay: number;
   totalDeficiencies: number;
@@ -5,7 +7,9 @@ export interface ScoreInputs {
   staffingRating: number; // 1–5
 }
 
-const FEDERAL_RN_MINIMUM = 0.55; // hours per resident per day (2024 mandate)
+// The 2024 CMS RN staffing benchmark. Repealed effective 2026-02-02; retained
+// here as an evidence-based grading benchmark. See src/staffing-standard.ts.
+const FEDERAL_RN_MINIMUM = RN_BENCHMARK;
 
 export function computeGradeScore(inputs: ScoreInputs): number {
   const { rnHoursPerResidentDay, totalDeficiencies, qualityRating, staffingRating } = inputs;
@@ -40,15 +44,17 @@ export function scoreToSummary(score: number, grade: string, rnHours: number | n
   if (rnHours === null) {
     return `Staffing data not reported — check the facility's inspection history.`;
   }
-  const meetsMinimum = rnHours >= FEDERAL_RN_MINIMUM;
-  if (grade === "A")
-    return `${meetsMinimum ? "Exceeds" : "Approaches"} federal staffing minimum — top tier inspection record.`;
-  if (grade === "B")
-    return `${meetsMinimum ? "Meets" : "Near"} federal staffing minimum — above average inspection record.`;
-  if (grade === "C") return `${meetsMinimum ? "Meets" : "Below"} federal staffing minimum — average inspection record.`;
-  if (grade === "D")
-    return `${meetsMinimum ? "Meets" : "Falls short of"} federal staffing minimum — elevated deficiency count.`;
-  return `Fails to meet federal staffing minimum — review inspection history before visiting.`;
+  const meetsBenchmark = rnHours >= FEDERAL_RN_MINIMUM;
+  // "benchmark" not "minimum": the 0.55 hr standard was repealed effective
+  // 2026-02-02 and is no longer a federal requirement.
+  const staffing = meetsBenchmark
+    ? "Above the 2024 benchmark"
+    : `Below the repealed ${FEDERAL_RN_MINIMUM} hr RN benchmark`;
+  if (grade === "A") return `${staffing} — top tier inspection record.`;
+  if (grade === "B") return `${staffing} — above average inspection record.`;
+  if (grade === "C") return `${staffing} — average inspection record.`;
+  if (grade === "D") return `${staffing} — elevated deficiency count.`;
+  return `${staffing} — review inspection history before visiting.`;
 }
 
 export function toSlug(name: string): string {

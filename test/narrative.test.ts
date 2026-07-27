@@ -63,9 +63,11 @@ describe("generateFacilityAssessment", () => {
     expect(text).toContain("Warning signs");
   });
 
-  it("flags failing staffing minimum", () => {
+  it("flags staffing below the repealed benchmark without calling it current law", () => {
     const text = generateFacilityAssessment(baseFacility, null, null, nationalAvg);
-    expect(text).toContain("federal RN staffing minimum");
+    expect(text).toContain("0.55 RN hours per resident day");
+    expect(text).toContain("repealed");
+    expect(text).not.toContain("federal RN staffing minimum");
   });
 
   it("mentions operator when below national average", () => {

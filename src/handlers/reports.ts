@@ -1,8 +1,9 @@
 import type { Env } from "../types";
 import { htmlCacheKey, pageCache } from "../cache";
 import { getStateAbbreviation, getStateInfo } from "../states";
-import { getOperatorsRanked, getNationalAverages, getFacilitiesWithUncorrectedDeficiencies } from "../db";
+import { getOperatorsRanked, getNationalAverages, getFacilitiesWithUncorrectedDeficiencies, getBenchmarkShortfall } from "../db";
 import { staffingFailuresPage, highDeficiencyPage, staffingFailuresStatePage, chainsReportPage, uncorrectedDeficienciesPage } from "../templates/reports";
+import { staffingStandardRepealPage } from "../templates/staffing-repeal";
 import { notFoundPage, errorPage } from "../templates/subscribe";
 
 interface FacilityRow {
@@ -39,6 +40,8 @@ export async function handleStaffingFailures(request: Request, env: Env, stateSl
         headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
       });
 
+    // Threshold is the repealed 2024 CMS benchmark (see src/staffing-standard.ts).
+    // Source column: CMS Provider Information `adjusted_rn_staffing_hours_per_resident_per_day`.
     let query: string;
     let bindings: string[];
 
@@ -70,6 +73,30 @@ export async function handleStaffingFailures(request: Request, env: Env, stateSl
     });
   } catch (err) {
     console.error("handleStaffingFailures error", err);
+    const html = errorPage("Service unavailable", "We're experiencing a temporary issue. Please try again in a moment.");
+    return new Response(html, { status: 503, headers: { "Content-Type": "text/html;charset=UTF-8" } });
+  }
+}
+
+export async function handleStaffingStandardRepeal(request: Request, env: Env): Promise<Response> {
+  try {
+    const cacheKey = htmlCacheKey("report:staffing-standard-repeal");
+    const cached = await pageCache.get(cacheKey);
+    if (cached)
+      return new Response(cached, {
+        headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
+      });
+
+    // Live counts, cached for a day alongside the rendered page — never hardcoded.
+    const shortfall = await getBenchmarkShortfall(env);
+    const html = staffingStandardRepealPage(shortfall);
+
+    await pageCache.put(cacheKey, html, { expirationTtl: 86400 });
+    return new Response(html, {
+      headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
+    });
+  } catch (err) {
+    console.error("handleStaffingStandardRepeal error", err);
     const html = errorPage("Service unavailable", "We're experiencing a temporary issue. Please try again in a moment.");
     return new Response(html, { status: 503, headers: { "Content-Type": "text/html;charset=UTF-8" } });
   }

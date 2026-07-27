@@ -2,6 +2,7 @@ import type { FacilityPageData, Deficiency, Facility, Trajectory, Operator } fro
 import { citySlug, getStateInfo } from "../states";
 import { layout, escHtml } from "./layout";
 import { renderTrustModule } from "./trust";
+import { RN_BENCHMARK, BENCHMARK_ROW_NOTE, benchmarkLabel, repealDisclosureHtml } from "../staffing-standard";
 
 // Number of same-city facilities shown as rich cards. The related-links block
 // skips these so the same facility isn't linked twice on one page.
@@ -306,10 +307,13 @@ export function facilityPage(
   const statePath = `/state/${stateSlug}`;
   const cityPath = `${statePath}/${citySlug(f.city)}`;
   const rnHours = f.rn_hours_per_resident_day;
-  const meetsMinimum = rnHours !== null && rnHours >= 0.55;
+  // Source: CMS Provider Information file, column
+  // `adjusted_rn_staffing_hours_per_resident_per_day`, compared against the
+  // repealed 2024 benchmark — see src/staffing-standard.ts.
+  const meetsMinimum = rnHours !== null && rnHours >= RN_BENCHMARK;
   const rnDisplay =
     rnHours !== null
-      ? `${rnHours.toFixed(2)} ${meetsMinimum ? "✓ Meets federal minimum" : "✗ Below federal minimum (0.55)"}`
+      ? `${rnHours.toFixed(2)} — ${benchmarkLabel(meetsMinimum)}`
       : "Not reported";
 
   const qualityStars =
@@ -385,11 +389,14 @@ export function facilityPage(
         <tr class="quality-row" style="border-bottom:1px solid var(--rule);">
           <td class="quality-label-cell" style="padding:var(--space-m) 0;">
             <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">RN Staffing</div>
-            <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Registered nurse time each resident receives daily. Federal minimum: 0.55 hrs.</div>
+            <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Registered nurse time each resident receives daily. ${escHtml(BENCHMARK_ROW_NOTE)}</div>
           </td>
           <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Source Sans 3',system-ui,sans-serif;font-size:1.5rem;text-align:right;color:${meetsMinimum ? "var(--accent-positive)" : "var(--grade-F)"}">
             ${escHtml(rnDisplay)}
           </td>
+        </tr>
+        <tr class="quality-row" style="border-bottom:1px solid var(--rule);">
+          <td colspan="2" style="padding:0 0 var(--space-s);">${repealDisclosureHtml()}</td>
         </tr>
         <tr class="quality-row" style="border-bottom:1px solid var(--rule);">
           <td class="quality-label-cell" style="padding:var(--space-m) 0;">

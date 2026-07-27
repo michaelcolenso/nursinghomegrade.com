@@ -1,3 +1,4 @@
+import { RN_BENCHMARK, REPEAL_EFFECTIVE_DATE } from "./staffing-standard";
 import type { Facility, Operator, Trajectory } from "./types";
 
 export interface NationalAverages {
@@ -69,8 +70,8 @@ export function generateFacilityAssessment(
     }
   }
 
-  if (facility.rn_hours_per_resident_day !== null && facility.rn_hours_per_resident_day < 0.55) {
-    sentences.push("This facility currently fails to meet the federal RN staffing minimum of 0.55 hours per resident day.");
+  if (facility.rn_hours_per_resident_day !== null && facility.rn_hours_per_resident_day < RN_BENCHMARK) {
+    sentences.push(`This facility staffs below ${RN_BENCHMARK} RN hours per resident day — the level the 2024 federal rule, repealed in ${REPEAL_EFFECTIVE_DATE.replace(/ \d+,/, "")}, would have required.`);
   }
 
   if (sentences.length === 0) {
@@ -86,7 +87,7 @@ export function computeOperatorInsights(
   nationalAvg: NationalAverages,
 ): OperatorInsights {
   const failingCount = facilities.filter(
-    (f) => f.rn_hours_per_resident_day !== null && f.rn_hours_per_resident_day < 0.55
+    (f) => f.rn_hours_per_resident_day !== null && f.rn_hours_per_resident_day < RN_BENCHMARK
   ).length;
   const pctFailingStaffing = facilities.length > 0
     ? Math.round((failingCount / facilities.length) * 100)
@@ -119,9 +120,9 @@ export function generateOperatorInsightsText(insights: OperatorInsights, operato
   }
 
   if (insights.pctFailingStaffing > 30) {
-    lines.push(`${insights.pctFailingStaffing}% of facilities owned by this operator fail federal staffing minimums.`);
+    lines.push(`${insights.pctFailingStaffing}% of facilities owned by this operator fall below the repealed ${RN_BENCHMARK} hr RN benchmark.`);
   } else if (insights.pctFailingStaffing === 0) {
-    lines.push("All facilities owned by this operator meet federal staffing minimums.");
+    lines.push(`All facilities owned by this operator staff above the repealed ${RN_BENCHMARK} hr RN benchmark.`);
   }
 
   if (insights.staffingVsNational < -0.1) {

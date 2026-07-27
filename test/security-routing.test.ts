@@ -21,7 +21,7 @@ const uppercaseCmsFacility: Facility = {
   total_deficiencies: 21,
   grade_score: 18,
   grade_letter: "F",
-  grade_summary: "Below federal staffing minimum.",
+  grade_summary: "Below the repealed 0.55 hr RN benchmark — average inspection record.",
   slug: "meadowbrook-behavioral-health-center",
   updated_at: "2026-01-01T00:00:00.000Z",
 };

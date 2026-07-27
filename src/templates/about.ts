@@ -9,7 +9,7 @@ const FAQ_JSON_LD = {
       "name": "How does NursingHomeGrade calculate facility scores?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "The NursingHomeGrade Score (0–100) is a weighted composite of four CMS data points: Staffing compliance (35%) based on RN hours vs the federal minimum of 0.55 hrs/resident/day, Inspection clean rate (30%) based on health inspection deficiencies and severity, Quality measures (20%) based on CMS quality star rating, and Staffing consistency (15%) based on CMS staffing star rating."
+        "text": "The NursingHomeGrade Score (0–100) is a weighted composite of four CMS data points: Staffing compliance (35%) based on RN hours vs the 2024 federal benchmark of 0.55 hrs/resident/day (repealed February 2026; retained as a quality benchmark), Inspection clean rate (30%) based on health inspection deficiencies and severity, Quality measures (20%) based on CMS quality star rating, and Staffing consistency (15%) based on CMS staffing star rating."
       }
     },
     {
@@ -38,10 +38,10 @@ const FAQ_JSON_LD = {
     },
     {
       "@type": "Question",
-      "name": "What is the federal staffing minimum for nursing homes?",
+      "name": "Is there a federal minimum staffing standard for nursing homes?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "The federal minimum is 0.55 registered nurse (RN) hours per resident per day. NursingHomeGrade flags any facility that falls below this threshold."
+        "text": "Not a numeric one. The 2024 CMS rule setting 0.55 registered nurse (RN) hours per resident per day was vacated in court, blocked by Congress, and repealed by CMS effective February 2, 2026. Current federal law requires only an RN on duty 8 consecutive hours a day, 7 days a week, plus a full-time director of nursing. NursingHomeGrade still grades facilities against the repealed 0.55 hour benchmark and flags any facility below it."
       }
     }
   ]
@@ -82,7 +82,7 @@ export function aboutPage(): string {
     <div class="results-list" style="margin: var(--space-l) 0;">
       <div class="result-stat" style="background:#fff;border-top:4px solid var(--ink);padding:var(--space-m);">
         <span class="result-stat-label">Staffing compliance (35%)</span>
-        <span class="result-stat-value">RN hours vs federal minimum of 0.55</span>
+        <span class="result-stat-value">RN hours vs the repealed 2024 benchmark of 0.55</span>
       </div>
       <div class="result-stat" style="background:#fff;border-top:4px solid var(--ink);padding:var(--space-m);">
         <span class="result-stat-label">Inspection clean rate (30%)</span>
@@ -98,6 +98,15 @@ export function aboutPage(): string {
       </div>
     </div>
 
+
+    <h2>The repealed federal staffing standard</h2>
+    <p>
+      The 0.55 RN hours per resident per day figure in our staffing component came from the CMS 2024
+      minimum staffing rule. That rule was vacated by two federal district courts, blocked by Congress
+      through 2034, and repealed by CMS effective February 2, 2026. It is not currently enforced.
+      We still grade against it, and we say so everywhere we cite it.
+      <a href="/reports/staffing-standard-repeal">Read the full explanation →</a>
+    </p>
 
     <h2>Data source</h2>
     <p>
