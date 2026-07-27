@@ -88,7 +88,10 @@ export async function getStatesWithCounts(env: Env): Promise<Array<{ state: stri
 }
 
 /**
- * Share of a state's facilities below the repealed 0.55 hr RN benchmark.
+ * Share of a state's *reporting* facilities below the repealed 0.55 hr RN
+ * benchmark. Facilities that do not report RN hours are excluded from the
+ * denominator so this matches getBenchmarkShortfall — counting them as passing
+ * would understate the shortfall and disagree with the repeal report.
  * Source: CMS Provider Information file, column
  * `adjusted_rn_staffing_hours_per_resident_per_day`. The 0.55 threshold is the
  * repealed 2024 CMS standard — see src/staffing-standard.ts.
@@ -96,7 +99,7 @@ export async function getStatesWithCounts(env: Env): Promise<Array<{ state: stri
 export async function getStatePctFailing(env: Env, state: string): Promise<number> {
   const result = await env.DB.prepare(
     `SELECT ROUND(100.0 * SUM(CASE WHEN rn_hours_per_resident_day < 0.55 THEN 1 ELSE 0 END) / COUNT(*), 1) as pct
-         FROM facilities WHERE state = ?`,
+         FROM facilities WHERE state = ? AND rn_hours_per_resident_day IS NOT NULL`,
   )
     .bind(state)
     .first<{ pct: number }>();
@@ -107,7 +110,7 @@ export async function getStatePctFailing(env: Env, state: string): Promise<numbe
 export async function getNationalPctFailing(env: Env): Promise<number> {
   const result = await env.DB.prepare(
     `SELECT ROUND(100.0 * SUM(CASE WHEN rn_hours_per_resident_day < 0.55 THEN 1 ELSE 0 END) / COUNT(*), 1) as pct
-         FROM facilities`,
+         FROM facilities WHERE rn_hours_per_resident_day IS NOT NULL`,
   ).first<{ pct: number }>();
   return result?.pct ?? 0;
 }

@@ -48,7 +48,7 @@ export function scoreToSummary(score: number, grade: string, rnHours: number | n
   // "benchmark" not "minimum": the 0.55 hr standard was repealed effective
   // 2026-02-02 and is no longer a federal requirement.
   const staffing = meetsBenchmark
-    ? "Above the 2024 benchmark"
+    ? "At or above the 2024 benchmark"
     : `Below the repealed ${FEDERAL_RN_MINIMUM} hr RN benchmark`;
   if (grade === "A") return `${staffing} — top tier inspection record.`;
   if (grade === "B") return `${staffing} — above average inspection record.`;

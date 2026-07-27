@@ -26,8 +26,10 @@ export const REPEAL_REPORT_PATH = "/reports/staffing-standard-repeal";
  * Source: CMS Provider Information file, column `adjusted_rn_staffing_hours_per_resident_per_day`.
  */
 export function benchmarkLabel(meetsBenchmark: boolean): string {
+  // "At or above", not "Above": the comparison is `>=`, so a facility reporting
+  // exactly 0.55 satisfies it. Saying "above" of an equal value is false.
   return meetsBenchmark
-    ? `Above the repealed ${RN_BENCHMARK} hr benchmark`
+    ? `At or above the repealed ${RN_BENCHMARK} hr benchmark`
     : `Below the repealed ${RN_BENCHMARK} hr benchmark`;
 }
 

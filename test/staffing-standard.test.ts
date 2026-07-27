@@ -3,7 +3,8 @@ import { facilityPage } from "../src/templates/facility";
 import { homePage } from "../src/templates/home";
 import { statePage } from "../src/templates/state";
 import { staffingStandardRepealPage } from "../src/templates/staffing-repeal";
-import { REPEAL_REPORT_PATH, REPEAL_DISCLOSURE_TEXT } from "../src/staffing-standard";
+import { REPEAL_REPORT_PATH, REPEAL_DISCLOSURE_TEXT, RN_BENCHMARK, benchmarkLabel } from "../src/staffing-standard";
+import { scoreToSummary } from "../src/scoring";
 import type { FacilityPageData } from "../src/types";
 
 // The 0.55 hr RN standard was repealed effective 2026-02-02. Anywhere the site
@@ -98,5 +99,25 @@ describe("staffing standard repeal report", () => {
     expect(empty).not.toContain("How many facilities fall below");
     expect(empty).not.toContain("undefined");
     expect(empty).not.toContain("NaN");
+  });
+});
+
+describe("benchmark boundary", () => {
+  // The comparison is `>=`, so exactly 0.55 satisfies the benchmark. Claiming a
+  // facility is "above" a value it merely equals is a false statement about a
+  // real facility, so the label must say "at or above".
+  it("does not claim a facility at exactly the benchmark is above it", () => {
+    expect(benchmarkLabel(true)).toBe(`At or above the repealed ${RN_BENCHMARK} hr benchmark`);
+    expect(benchmarkLabel(true)).not.toMatch(/^Above/);
+  });
+
+  it("renders the exact threshold as at-or-above in the grade summary", () => {
+    const summary = scoreToSummary(70, "B", RN_BENCHMARK);
+    expect(summary).toContain("At or above the 2024 benchmark");
+  });
+
+  it("still reports values below the benchmark as below", () => {
+    expect(benchmarkLabel(false)).toBe(`Below the repealed ${RN_BENCHMARK} hr benchmark`);
+    expect(scoreToSummary(30, "F", 0.2)).toContain("Below the repealed");
   });
 });
