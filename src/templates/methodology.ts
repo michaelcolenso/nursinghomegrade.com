@@ -133,10 +133,14 @@ export function methodologyPage(): string {
     <h2 id="cadence">Update cadence</h2>
     <p>
       CMS publishes Nursing Home Compare data monthly, and the underlying health inspection surveys
-      on a rolling basis. We re-ingest monthly and recompute all grades on each ingest. Individual
-      facility pages show the CMS release date for the data behind them, not the date we happened to
-      load it — those are different dates and conflating them would overstate how current the
-      information is.
+      on a rolling basis. We re-ingest monthly and recompute all grades on each ingest.
+    </p>
+    <p>
+      <strong>Known gap:</strong> the date shown on a facility page is currently the date we loaded
+      the record, not the date CMS published it. Those are different, sometimes by months, and the
+      load date overstates how current the information is. The
+      <a href="/data-sources">data sources page</a> carries the dates to rely on until this is
+      fixed.
     </p>
 
     <h2 id="changelog">Grade changelog</h2>

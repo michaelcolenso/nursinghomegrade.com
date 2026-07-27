@@ -154,8 +154,8 @@ function renderDeficiencyCluster(counts: DeficiencyCounts, dataAvailable: boolea
   `;
 }
 
-function renderDeficiencySummary(deficiencies: Deficiency[]): string {
-  if (deficiencies.length === 0) return "";
+function renderDeficiencySummary(deficiencies: Deficiency[] | null): string {
+  if (deficiencies === null || deficiencies.length === 0) return "";
   const counts = summarizeDeficiencies(deficiencies);
   const harmCount = deficiencies.filter(d => d.scope_severity_code && d.scope_severity_code >= "G" && d.scope_severity_code < "J").length;
   const jeopardyCount = deficiencies.filter(d => d.scope_severity_code && d.scope_severity_code >= "J").length;
@@ -176,7 +176,12 @@ function renderDeficiencySummary(deficiencies: Deficiency[]): string {
   </div>`;
 }
 
-function renderDeficiencies(deficiencies: Deficiency[]): string {
+function renderDeficiencies(deficiencies: Deficiency[] | null): string {
+  // null is a failed lookup, not a clean record. Saying "no deficiencies" here
+  // would assert a spotless inspection history we were unable to read.
+  if (deficiencies === null) {
+    return `<p style="color:var(--muted);margin-bottom:var(--space-l);">Inspection records could not be loaded for this facility. This is not a statement that none exist.</p>`;
+  }
   if (deficiencies.length === 0) {
     return `<p style="color:var(--muted);margin-bottom:var(--space-l);">No deficiencies reported for this facility.</p>`;
   }
@@ -392,8 +397,8 @@ export function facilityPage(
     <p class="lede" style="font-size:1.125rem;margin-bottom:var(--space-l);">
       Health inspections identify violations of federal standards. Severity ranges from no actual harm (A–F) to immediate jeopardy (J–L).
     </p>
-    ${renderDeficiencySummary(deficiencyDetail)}
-    ${renderDeficiencies(deficiencyDetail)}
+    ${renderDeficiencySummary(deficiencies)}
+    ${renderDeficiencies(deficiencies)}
   `;
 
   const body = `

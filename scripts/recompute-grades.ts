@@ -182,6 +182,25 @@ async function main() {
   // which ingest computed from base scores. Left stale, those pages would
   // contradict their own penalty-adjusted facility rows and rank chains on
   // superseded numbers.
+  // Trajectory is computed from facility_snapshots. Left on old-formula scores,
+  // a facility could keep announcing "the overall grade improved" immediately
+  // after this migration lowered it. Update the most recent snapshot only —
+  // older snapshots stay as they were, and the pre-change grade is preserved in
+  // grade_history.
+  console.log("\nAligning latest facility snapshot with the new grade...");
+  for (let i = 0; i < changes.length; i += BATCH_SIZE) {
+    const sql = changes
+      .slice(i, i + BATCH_SIZE)
+      .map(
+        (c) =>
+          `UPDATE facility_snapshots SET grade_score=${c.score}, grade_letter='${esc(c.letter)}'
+             WHERE cms_id='${esc(c.cms_id)}'
+               AND snapshot_date=(SELECT MAX(snapshot_date) FROM facility_snapshots WHERE cms_id='${esc(c.cms_id)}');`,
+      )
+      .join("\n");
+    query(sql);
+  }
+
   console.log("\nRefreshing operator aggregates...");
   query(
     `UPDATE operators SET avg_grade = (

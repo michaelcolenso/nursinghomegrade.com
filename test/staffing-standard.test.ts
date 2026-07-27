@@ -157,6 +157,18 @@ describe("deficiency counts: empty vs unavailable", () => {
     expect(html).toContain("Not reported");
   });
 
+  it("does not claim a clean inspection history when the lookup failed", () => {
+    const html = facilityPage(facility, null);
+    expect(html).toContain("could not be loaded");
+    expect(html).not.toContain("No deficiencies reported for this facility");
+  });
+
+  it("keeps the two renderers consistent for a genuinely clean facility", () => {
+    const html = facilityPage(facility, []);
+    expect(html).toContain("No deficiencies reported for this facility");
+    expect(html).not.toContain("could not be loaded");
+  });
+
   it("publishes the three-cycle total in JSON-LD, not the cycle-1 scalar", () => {
     const defs = [1, 1, 2, 3].map((cycle, i) => ({
       id: i,
