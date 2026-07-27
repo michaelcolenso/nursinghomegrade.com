@@ -516,6 +516,15 @@ export function layout(
     .metric-value { font-family: 'Playfair Display', Georgia, serif; font-size: 1.25rem; font-weight: 700; }
 
     /* Footer */
+    .repeal-disclosure {
+      font-size: 0.8rem;
+      line-height: 1.5;
+      color: var(--muted);
+      margin: var(--space-2xs) 0 0;
+      max-width: 60ch;
+    }
+    .repeal-disclosure a { color: inherit; font-weight: 700; }
+
     footer {
       border-top: 1px solid var(--rule);
       margin-top: var(--space-3xl);
@@ -1106,11 +1115,12 @@ export function layout(
 
         <nav class="footer-col" aria-label="Resources">
           <div class="footer-col-head">Resources</div>
-          <a href="/about" class="footer-link">How We Grade</a>
-          <a href="/about" class="footer-link">Methodology</a>
+          <a href="/how-we-grade" class="footer-link">How We Grade</a>
+          <a href="/methodology" class="footer-link">Methodology</a>
           <a href="/best" class="footer-link">Best Facilities</a>
           <a href="/worst" class="footer-link">Worst Facilities</a>
           <a href="/reports/staffing-failures" class="footer-link">Staffing Report</a>
+          <a href="/reports/staffing-standard-repeal" class="footer-link">The Repealed Staffing Rule</a>
           <a href="/reports/uncorrected-deficiencies" class="footer-link">Uncorrected Deficiencies</a>
         </nav>
 
@@ -1118,7 +1128,7 @@ export function layout(
           <div class="footer-col-head">Company</div>
           <a href="/about" class="footer-link">About Us</a>
           <a href="/about" class="footer-link">FAQ</a>
-          <a href="/about" class="footer-link">Contact</a>
+          <a href="/contact" class="footer-link">Contact</a>
           <a href="/about" class="footer-link">Glossary</a>
         </nav>
 
@@ -1149,7 +1159,7 @@ export function layout(
         <nav class="footer-bottom-links" aria-label="Legal">
           <a href="/about" class="footer-bottom-link">Terms of Use</a>
           <a href="/about" class="footer-bottom-link">Privacy Policy</a>
-          <a href="/about" class="footer-bottom-link">Data Sources</a>
+          <a href="/data-sources" class="footer-bottom-link">Data Sources</a>
         </nav>
       </div>
     </div>

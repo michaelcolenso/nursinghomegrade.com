@@ -95,6 +95,12 @@ async function main() {
       priority: "0.5",
     },
     {
+      loc: `${BASE}/reports/staffing-standard-repeal`,
+      lastmod: now,
+      changefreq: "monthly",
+      priority: "0.7",
+    },
+    {
       loc: `${BASE}/states`,
       lastmod: now,
       changefreq: "weekly",

@@ -75,3 +75,53 @@ describe("buildFacilitySlugId", () => {
     expect(buildFacilitySlugId("015001", "sunrise-care-center")).toBe("015001-sunrise-care-center");
   });
 });
+
+describe("ingest applies the penalty terms", () => {
+  // The monthly ingest INSERT OR REPLACEs grade_score and grade_letter. If it
+  // computed base-formula grades, every ingest would silently erase the harm and
+  // uncorrected penalties and the no-plan cap.
+  const openHarm = [
+    {
+      scope_severity_code: "G",
+      deficiency_corrected: "Deficient, Provider has no plan of correction",
+      inspection_cycle: 1,
+    },
+  ];
+
+  it("produces a lower grade when deficiencies carry harm and no plan", () => {
+    const clean = mapCMSFacility(SAMPLE_CMS);
+    const penalized = mapCMSFacility(SAMPLE_CMS, openHarm);
+    expect(penalized.grade_score).toBeLessThan(clean.grade_score);
+  });
+
+  it("applies the no-plan cap so ingest cannot write an A", () => {
+    const strong: CMSFacility = {
+      ...SAMPLE_CMS,
+      reported_rn_staffing_hours_per_resident_per_day: "1.2",
+      rating_cycle_1_total_number_of_health_deficiencies: "0",
+      qm_rating: "5",
+      staffing_rating: "5",
+    };
+    expect(mapCMSFacility(strong).grade_letter).toBe("A");
+    expect(
+      mapCMSFacility(strong, [
+        {
+          scope_severity_code: "B",
+          deficiency_corrected: "Deficient, Provider has no plan of correction",
+          inspection_cycle: 1,
+        },
+      ]).grade_letter,
+    ).toBe("B");
+  });
+
+  it("is unchanged for a facility whose deficiencies are all resolved", () => {
+    const resolved = [
+      {
+        scope_severity_code: "D",
+        deficiency_corrected: "Deficient, Provider has date of correction",
+        inspection_cycle: 1,
+      },
+    ];
+    expect(mapCMSFacility(SAMPLE_CMS, resolved).grade_score).toBe(mapCMSFacility(SAMPLE_CMS).grade_score);
+  });
+});

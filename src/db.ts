@@ -1,5 +1,6 @@
 import type { Facility, FacilityInspectionDetails, Deficiency, Env, Operator, FacilitySnapshot } from "./types";
 import { cityDisplayName, citySlug } from "./states";
+import type { DataRelease } from "./templates/data-sources";
 
 export async function getFacilityById(env: Env, cmsId: string): Promise<Facility | null> {
   const result = await env.DB.prepare("SELECT * FROM facilities WHERE cms_id = ?").bind(cmsId).first<Facility>();
@@ -87,32 +88,99 @@ export async function getStatesWithCounts(env: Env): Promise<Array<{ state: stri
   return results.results ?? [];
 }
 
+/**
+ * Share of a state's *reporting* facilities below the repealed 0.55 hr RN
+ * benchmark. Facilities that do not report RN hours are excluded from the
+ * denominator so this matches getBenchmarkShortfall — counting them as passing
+ * would understate the shortfall and disagree with the repeal report.
+ * Source: CMS Provider Information file, column
+ * `reported_rn_staffing_hours_per_resident_per_day`. The 0.55 threshold is the
+ * repealed 2024 CMS standard — see src/staffing-standard.ts.
+ */
 export async function getStatePctFailing(env: Env, state: string): Promise<number> {
   const result = await env.DB.prepare(
     `SELECT ROUND(100.0 * SUM(CASE WHEN rn_hours_per_resident_day < 0.55 THEN 1 ELSE 0 END) / COUNT(*), 1) as pct
-         FROM facilities WHERE state = ?`,
+         FROM facilities WHERE state = ? AND rn_hours_per_resident_day IS NOT NULL`,
   )
     .bind(state)
     .first<{ pct: number }>();
   return result?.pct ?? 0;
 }
 
+/** National counterpart to getStatePctFailing. Same source and threshold. */
 export async function getNationalPctFailing(env: Env): Promise<number> {
   const result = await env.DB.prepare(
     `SELECT ROUND(100.0 * SUM(CASE WHEN rn_hours_per_resident_day < 0.55 THEN 1 ELSE 0 END) / COUNT(*), 1) as pct
-         FROM facilities`,
+         FROM facilities WHERE rn_hours_per_resident_day IS NOT NULL`,
   ).first<{ pct: number }>();
   return result?.pct ?? 0;
 }
 
-export async function getFacilityDeficiencies(env: Env, cmsId: string): Promise<Deficiency[]> {
+export interface BenchmarkShortfall {
+  /** Facilities nationally with reported RN hours below the repealed 0.55 benchmark. */
+  belowNational: number;
+  /** Facilities nationally with RN hours reported at all (the denominator). */
+  reportedNational: number;
+  byState: Array<{ state: string; below: number; reported: number }>;
+}
+
+/**
+ * Live count of facilities below the repealed 0.55 RN benchmark, nationally and
+ * per state. Source: CMS Provider Information file, column
+ * `reported_rn_staffing_hours_per_resident_per_day` (stored as
+ * `facilities.rn_hours_per_resident_day`). Facilities that do not report the
+ * measure are excluded from both numerator and denominator.
+ */
+export async function getBenchmarkShortfall(env: Env): Promise<BenchmarkShortfall> {
+  const results = await env.DB.prepare(
+    `SELECT state,
+            SUM(CASE WHEN rn_hours_per_resident_day < 0.55 THEN 1 ELSE 0 END) as below,
+            COUNT(*) as reported
+       FROM facilities
+      WHERE rn_hours_per_resident_day IS NOT NULL
+      GROUP BY state
+      ORDER BY state ASC`,
+  ).all<{ state: string; below: number; reported: number }>();
+
+  const byState = results.results ?? [];
+  return {
+    belowNational: byState.reduce((sum, row) => sum + row.below, 0),
+    reportedNational: byState.reduce((sum, row) => sum + row.reported, 0),
+    byState,
+  };
+}
+
+/**
+ * CMS source files and the release dates of the copies in production.
+ * Returns [] if the table has not been populated yet, so the page degrades to
+ * its prose rather than rendering an empty or invented date.
+ */
+export async function getDataReleases(env: Env): Promise<DataRelease[]> {
+  try {
+    const results = await env.DB.prepare(
+      `SELECT source_key, label, cms_release_date, ingested_at, source_url
+         FROM data_releases ORDER BY label ASC`,
+    ).all<DataRelease>();
+    return results.results ?? [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Returns null when the query fails, [] when the facility genuinely has no
+ * citations. Collapsing both to [] would make a clean facility indistinguishable
+ * from missing data — and "Not reported" on a facility with a spotless record is
+ * a materially misleading thing to show a family.
+ */
+export async function getFacilityDeficiencies(env: Env, cmsId: string): Promise<Deficiency[] | null> {
   try {
     const results = await env.DB.prepare(
       `SELECT * FROM facility_deficiencies WHERE cms_id = ? ORDER BY inspection_cycle ASC, deficiency_category ASC`
     ).bind(cmsId).all<Deficiency>();
     return results.results ?? [];
   } catch {
-    return [];
+    return null;
   }
 }
 
@@ -240,6 +308,7 @@ export async function getCitySnapshot(
 
   for (const facility of matchingFacilities) {
     gradeDistribution[facility.grade_letter] = (gradeDistribution[facility.grade_letter] ?? 0) + 1;
+    // Below the repealed 2024 benchmark — see src/staffing-standard.ts.
     if (facility.rn_hours_per_resident_day !== null && facility.rn_hours_per_resident_day < 0.55) {
       failingCount += 1;
     }

@@ -8,7 +8,7 @@ import { handleCompare, handleCompareApi } from "./handlers/comparison";
 import { handleExplore, handleMapApi } from "./handlers/map";
 import { handleHowWeGrade } from "./handlers/how-we-grade";
 import { handleOperator, handleOperatorsHub, handleOperatorsBest, handleOperatorsWorst } from "./handlers/operator";
-import { handleStaffingFailures, handleHighDeficiency, handleChainsReport, handleUncorrectedDeficiencies } from "./handlers/reports";
+import { handleStaffingFailures, handleHighDeficiency, handleChainsReport, handleUncorrectedDeficiencies, handleStaffingStandardRepeal } from "./handlers/reports";
 import { handleBest, handleWorst } from "./handlers/best";
 import { handleStateReport } from "./handlers/state-report";
 import { handleWellKnown } from "./handlers/well-known";
@@ -16,6 +16,9 @@ import { subscribePage, notFoundPage, errorPage } from "./templates/subscribe";
 import { htmlToMarkdown } from "./markdown";
 import { OG_SVG } from "./og-svg";
 import { OG_PNG_BASE64 } from "./og-png.generated";
+import { methodologyPage } from "./templates/methodology";
+import { contactPage } from "./templates/contact";
+import { handleDataSources } from "./handlers/data-sources";
 
 // ── Agent Discovery Link Headers (RFC 8288) ──────────────────────────────
 const AGENT_LINKS = [
@@ -188,6 +191,9 @@ export default {
     if (path === "/compare") return handleCompare(request, env).then(r => wrapResponse(r, request));
     if (path === "/search") return handleSearch(request, env).then(r => wrapResponse(r, request));
     if (path === "/explore") return handleExplore(request, env).then(r => wrapResponse(r, request));
+    if (path === "/methodology") return wrapResponse(new Response(methodologyPage(), { headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" } }), request);
+    if (path === "/data-sources") return handleDataSources(request, env).then(r => wrapResponse(r, request));
+    if (path === "/contact") return wrapResponse(new Response(contactPage(), { headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" } }), request);
     if (path === "/how-we-grade") return handleHowWeGrade(request, env).then(r => wrapResponse(r, request));
     if (path === "/api/compare") return handleCompareApi(request, env).then(r => wrapResponse(r, request));
     if (path === "/api/map/facilities") return handleMapApi(request, env).then(r => wrapResponse(r, request));
@@ -195,6 +201,7 @@ export default {
     if (path === "/operators") return handleOperatorsHub(request, env).then(r => wrapResponse(r, request));
     if (path === "/operators/best") return handleOperatorsBest(request, env).then(r => wrapResponse(r, request));
     if (path === "/operators/worst") return handleOperatorsWorst(request, env).then(r => wrapResponse(r, request));
+    if (path === "/reports/staffing-standard-repeal") return handleStaffingStandardRepeal(request, env).then(r => wrapResponse(r, request));
     if (path === "/reports/staffing-failures") return handleStaffingFailures(request, env).then(r => wrapResponse(r, request));
     if (path === "/reports/high-deficiency-facilities") return handleHighDeficiency(request, env).then(r => wrapResponse(r, request));
     if (path === "/reports/chains") return handleChainsReport(request, env).then(r => wrapResponse(r, request));

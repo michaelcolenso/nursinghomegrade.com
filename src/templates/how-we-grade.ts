@@ -15,7 +15,7 @@ export function howWeGradePage(): string {
     <div class="results-list" style="margin: var(--space-l) 0;">
       <div class="result-stat" style="background:#fff;border-top:4px solid var(--ink);padding:var(--space-m);">
         <span class="result-stat-label">Staffing Compliance (35%)</span>
-        <span class="result-stat-value">RN hours per resident per day vs. the federal minimum of 0.55. Facilities below this threshold are flagged.</span>
+        <span class="result-stat-value">RN hours per resident per day vs. the 2024 federal benchmark of 0.55, repealed February 2026. Facilities below this threshold are flagged.</span>
       </div>
       <div class="result-stat" style="background:#fff;border-top:4px solid var(--ink);padding:var(--space-m);">
         <span class="result-stat-label">Inspection Clean Rate (30%)</span>
@@ -47,7 +47,7 @@ export function howWeGradePage(): string {
       </div>
       <div style="background:#fff;border-left:4px solid #ef6c00;padding:var(--space-s) var(--space-m);display:flex;align-items:center;gap:var(--space-s);">
         <span style="font-weight:800;font-size:1.3rem;color:#ef6c00;min-width:2rem;">D</span>
-        <span style="font-size:0.9rem;">Score 35–49. Below average. Multiple deficiencies or staffing below federal minimum.</span>
+        <span style="font-size:0.9rem;">Score 35–49. Below average. Multiple deficiencies or staffing below the repealed 0.55 hr RN benchmark.</span>
       </div>
       <div style="background:#fff;border-left:4px solid #c62828;padding:var(--space-s) var(--space-m);display:flex;align-items:center;gap:var(--space-s);">
         <span style="font-weight:800;font-size:1.3rem;color:#c62828;min-width:2rem;">F</span>

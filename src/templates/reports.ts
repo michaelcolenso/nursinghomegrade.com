@@ -1,6 +1,7 @@
 import type { Operator } from "../types";
 import type { UncorrectedRow } from "../db";
 import { layout, escHtml } from "./layout";
+import { repealDisclosureHtml } from "../staffing-standard";
 
 interface FacilityRow {
   cms_id: string;
@@ -64,12 +65,13 @@ export function staffingFailuresPage(facilities: FacilityRow[]): string {
       <span style="color:var(--ink);">Staffing Failures Report</span>
     </nav>
 
-    <h1>Federal Staffing Failures</h1>
+    <h1>Facilities Below the 2024 RN Staffing Benchmark</h1>
     <p class="lede" style="max-width:800px;margin-bottom:var(--space-xl);">
-      Facilities with RN staffing below the federal minimum of 0.55 hours per resident per day.
+      Facilities with RN staffing below 0.55 hours per resident per day — the level the 2024 federal rule would have required.
     </p>
+    ${repealDisclosureHtml()}
 
-    <h2>Facilities Below the Staffing Minimum</h2>
+    <h2>Facilities Below the 0.55 Hour Benchmark</h2>
     ${renderReportTable(facilities, [
       { key: "name", label: "Facility" },
       { key: "city", label: "City" },
@@ -85,12 +87,13 @@ export function staffingFailuresPage(facilities: FacilityRow[]): string {
       <p>Explore other facility quality reports built from official CMS inspection data.</p>
       <a class="btn" href="/reports/uncorrected-deficiencies">Uncorrected Deficiencies →</a>
       <a href="/reports/high-deficiency-facilities" class="btn-secondary">High Deficiencies →</a>
+      <a href="/reports/staffing-standard-repeal" class="btn-secondary">Why the staffing rule was repealed →</a>
     </div>
   `;
 
   return layout(
     "Federal Staffing Failures — NursingHomeGrade Report",
-    "Nursing facilities failing to meet federal RN staffing minimums of 0.55 hours per resident day.",
+    "Nursing facilities staffing below 0.55 RN hours per resident day — the repealed 2024 federal benchmark.",
     body,
     { canonicalPath: "/reports/staffing-failures" },
   );
@@ -149,10 +152,10 @@ export function staffingFailuresStatePage(stateName: string, facilities: Facilit
 
     <h1>${escHtml(scope)}</h1>
     <p class="lede" style="max-width:800px;margin-bottom:var(--space-xl);">
-      <strong>${facilities.length} facilities</strong> in ${escHtml(stateName)} fall below the RN staffing benchmark of 0.55 hours per resident per day.
+      <strong>${facilities.length} facilities</strong> in ${escHtml(stateName)} fall below 0.55 RN hours per resident per day, the repealed 2024 federal benchmark.
     </p>
 
-    <h2>Facilities Below the Staffing Minimum</h2>
+    <h2>Facilities Below the 0.55 Hour Benchmark</h2>
     ${renderReportTable(facilities, [
       { key: "name", label: "Facility" },
       { key: "city", label: "City" },
@@ -172,7 +175,7 @@ export function staffingFailuresStatePage(stateName: string, facilities: Facilit
 
   return layout(
     `${scope} — NursingHomeGrade Report`,
-    `${facilities.length} nursing facilities in ${stateName} fall below the RN staffing benchmark of 0.55 hours per resident day.`,
+    `${facilities.length} nursing facilities in ${stateName} fall below the repealed 0.55 hr federal RN benchmark.`,
     body,
     { canonicalPath: `/reports/staffing-failures/${stateName.toLowerCase().replace(/\s+/g, "-")}` },
   );

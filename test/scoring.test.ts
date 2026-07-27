@@ -22,9 +22,9 @@ describe("computeGradeScore", () => {
     expect(score).toBe(0);
   });
 
-  it("caps staffing compliance at 150% of federal minimum", () => {
+  it("caps staffing compliance at 150% of the benchmark", () => {
     const capped = computeGradeScore({
-      rnHoursPerResidentDay: 10.0, // way above minimum
+      rnHoursPerResidentDay: 10.0, // way above the benchmark
       totalDeficiencies: 0,
       qualityRating: 5,
       staffingRating: 5,
@@ -59,9 +59,10 @@ describe("scoreToGrade", () => {
 });
 
 describe("scoreToSummary", () => {
-  it("returns a string mentioning federal staffing minimum for failing facilities", () => {
+  it("describes failing facilities against the repealed benchmark, not a current minimum", () => {
     const summary = scoreToSummary(20, "F", 0.2);
-    expect(summary).toContain("federal staffing minimum");
+    expect(summary).toContain("repealed 0.55 hr RN benchmark");
+    expect(summary).not.toContain("federal staffing minimum");
   });
 
   it("returns a positive string for A-grade facilities", () => {

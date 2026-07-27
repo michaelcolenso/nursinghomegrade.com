@@ -1,6 +1,7 @@
 import type { Env } from "../types";
 import type { Facility } from "../types";
 import { comparePage } from "../templates/compare";
+import { scoreToSummary } from "../scoring";
 
 export async function handleCompare(request: Request, env: Env): Promise<Response> {
   const html = comparePage();
@@ -59,7 +60,9 @@ export async function handleCompareApi(request: Request, env: Env): Promise<Resp
       total_deficiencies: facility.total_deficiencies,
       grade_score: facility.grade_score,
       grade_letter: facility.grade_letter,
-      grade_summary: facility.grade_summary,
+      // Derived at render, not read from the stored column: persisted summaries
+      // were written by an earlier formula and still carry repealed-rule wording.
+      grade_summary: scoreToSummary(facility.grade_score, facility.grade_letter, facility.rn_hours_per_resident_day),
       report_path: `/facility/${facility.cms_id}-${facility.slug}`,
     }));
 
