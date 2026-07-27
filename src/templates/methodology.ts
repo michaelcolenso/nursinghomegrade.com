@@ -154,10 +154,10 @@ export function methodologyPage(): string {
               Added the uncorrected-findings and actual-harm penalty terms and the no-plan rule
               described above. Before this change the grade counted deficiencies but ignored both
               their severity and whether they had been fixed, which allowed facilities with open,
-              unaddressed harm citations to hold an A. Roughly 27% of facilities moved down a letter;
-              about 4% of facilities holding an A no longer do. No facility's grade improved as a
-              result of this change. Grades held before this date are retained and can be supplied on
-              request.
+              unaddressed harm citations to hold an A. Of 14,703 facilities, 3,858 (26%) moved down
+              at least one letter grade and 10,845 were unchanged. The number of A grades fell from
+              2,677 to 2,184, so 493 facilities lost an A. No facility's grade improved as a result
+              of this change. Every pre-change grade is retained and can be supplied on request.
             </td>
           </tr>
         </tbody>
