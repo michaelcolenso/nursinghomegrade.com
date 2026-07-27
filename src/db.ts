@@ -1,5 +1,6 @@
 import type { Facility, FacilityInspectionDetails, Deficiency, Env, Operator, FacilitySnapshot } from "./types";
 import { cityDisplayName, citySlug } from "./states";
+import type { DataRelease } from "./templates/data-sources";
 
 export async function getFacilityById(env: Env, cmsId: string): Promise<Facility | null> {
   const result = await env.DB.prepare("SELECT * FROM facilities WHERE cms_id = ?").bind(cmsId).first<Facility>();
@@ -147,6 +148,23 @@ export async function getBenchmarkShortfall(env: Env): Promise<BenchmarkShortfal
     reportedNational: byState.reduce((sum, row) => sum + row.reported, 0),
     byState,
   };
+}
+
+/**
+ * CMS source files and the release dates of the copies in production.
+ * Returns [] if the table has not been populated yet, so the page degrades to
+ * its prose rather than rendering an empty or invented date.
+ */
+export async function getDataReleases(env: Env): Promise<DataRelease[]> {
+  try {
+    const results = await env.DB.prepare(
+      `SELECT source_key, label, cms_release_date, ingested_at, source_url
+         FROM data_releases ORDER BY label ASC`,
+    ).all<DataRelease>();
+    return results.results ?? [];
+  } catch {
+    return [];
+  }
 }
 
 export async function getFacilityDeficiencies(env: Env, cmsId: string): Promise<Deficiency[]> {

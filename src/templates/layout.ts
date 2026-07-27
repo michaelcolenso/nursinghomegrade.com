@@ -1159,7 +1159,7 @@ export function layout(
         <nav class="footer-bottom-links" aria-label="Legal">
           <a href="/about" class="footer-bottom-link">Terms of Use</a>
           <a href="/about" class="footer-bottom-link">Privacy Policy</a>
-          <a href="/about" class="footer-bottom-link">Data Sources</a>
+          <a href="/data-sources" class="footer-bottom-link">Data Sources</a>
         </nav>
       </div>
     </div>

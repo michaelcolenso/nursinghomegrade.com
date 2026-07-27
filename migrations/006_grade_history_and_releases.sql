@@ -34,3 +34,12 @@ CREATE TABLE IF NOT EXISTS data_releases (
   ingested_at TEXT,
   source_url TEXT
 );
+
+-- Seed the files we actually read today. Release dates are deliberately left
+-- NULL: we do not know them until an ingest records them, and inventing a
+-- freshness date is the exact failure this table exists to prevent. The
+-- /data-sources page renders "Not recorded" until ingest populates them.
+INSERT OR IGNORE INTO data_releases (source_key, label, cms_release_date, ingested_at, source_url) VALUES
+  ('provider_info', 'Provider Information', NULL, NULL, 'https://data.cms.gov/provider-data/dataset/4pq5-n9py'),
+  ('health_deficiencies', 'Health Deficiencies', NULL, NULL, 'https://data.cms.gov/provider-data/dataset/r5ix-sfxw'),
+  ('ownership', 'Ownership', NULL, NULL, 'https://data.cms.gov/provider-data/dataset/y2hd-n93e');
