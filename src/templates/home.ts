@@ -13,7 +13,7 @@ export function homePage(pctFailing: number): string {
     </p>
     ${repealDisclosureHtml()}
     <p style="color:var(--muted);font-size:0.9rem;margin-bottom:var(--space-m);">
-      Data from CMS Nursing Home Compare. Last updated: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long" })}.
+      Data from CMS Nursing Home Compare. <a href="/data-sources">See release dates</a>.
     </p>
 
     <form action="/search" method="GET" class="search-bar">

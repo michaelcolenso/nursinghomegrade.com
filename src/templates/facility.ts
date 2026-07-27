@@ -484,7 +484,7 @@ export function facilityPage(
         </tr>
       </table>
     </div>
-    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:var(--space-xl);">Data last updated: ${new Date(f.updated_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:var(--space-xl);">Loaded into NursingHomeGrade on ${new Date(f.updated_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}. This is the load date, not the date CMS published the underlying survey data — <a href="/data-sources">see release dates</a>.</p>
 
     ${deficiencySection}
     ${renderTrustModule()}

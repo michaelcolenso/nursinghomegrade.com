@@ -195,3 +195,23 @@ describe("deficiency counts: empty vs unavailable", () => {
     expect(html).not.toContain("Total Health Deficiencies");
   });
 });
+
+describe("freshness labels do not overstate how current the data is", () => {
+  // The homepage previously rendered new Date(), so it always claimed the data
+  // was updated this month no matter how old it actually was.
+  it("homepage does not assert an update date", () => {
+    const html = homePage(41);
+    expect(html).not.toContain("Last updated:");
+  });
+
+  it("facility page labels the ingest timestamp as a load date", () => {
+    const html = facilityPage(facility, []);
+    expect(html).toContain("Loaded into NursingHomeGrade on");
+    expect(html).not.toContain("Data last updated:");
+  });
+
+  it("both point at the page that carries real release dates", () => {
+    expect(homePage(41)).toContain("/data-sources");
+    expect(facilityPage(facility, [])).toContain("/data-sources");
+  });
+});
