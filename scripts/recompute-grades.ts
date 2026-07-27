@@ -208,16 +208,24 @@ async function main() {
   );
 
   console.log("\nRefreshing operator aggregates...");
+  // Averaged over DISTINCT facilities, not over facility_owners rows. An
+  // operator can hold several ownership rows for the same facility, which would
+  // weight that facility's score multiple times and produce a record-weighted
+  // average. Ingest deduplicates via op.cmsIds; this must match, or the refresh
+  // would change chain headlines and best/worst rankings to a different figure.
   query(
     `UPDATE operators SET avg_grade = (
-       SELECT ROUND(AVG(f.grade_score))
-         FROM facilities f
-         JOIN facility_owners o ON o.cms_id = f.cms_id
-        WHERE o.normalized_name = operators.normalized_name
+       SELECT ROUND(AVG(t.grade_score)) FROM (
+         SELECT DISTINCT o.cms_id, f.grade_score
+           FROM facility_owners o
+           JOIN facilities f ON f.cms_id = o.cms_id
+          WHERE o.normalized_name = operators.normalized_name
+       ) t
      ) WHERE EXISTS (
        SELECT 1 FROM facility_owners o WHERE o.normalized_name = operators.normalized_name
      );`,
   );
+
   console.log("Done.");
 }
 
