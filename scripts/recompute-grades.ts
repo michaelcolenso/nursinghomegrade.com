@@ -10,6 +10,10 @@
  * held before and why it moved, and so Phase 5 can render grade trends. Never
  * run step 2 without step 1 having succeeded.
  *
+ * This is a one-time migration for the existing database. Ongoing grades are
+ * computed with the same penalties by scripts/ingest.ts on every run, so this
+ * script does not need to be re-run after a normal ingest.
+ *
  * Usage:
  *   npx tsx scripts/recompute-grades.ts --local          # dry run against local D1
  *   npx tsx scripts/recompute-grades.ts --local --apply
@@ -83,16 +87,34 @@ async function main() {
   }
 
   // Step 1 — snapshot before touching anything.
-  if (apply) {
+  //
+  // Exactly one baseline row per facility, ever. Re-running this command (after a
+  // failed update batch, say) must not record already-penalized grades as a
+  // second "pre-penalty" baseline — that would corrupt the very provenance the
+  // table exists to preserve for disputes.
+  const alreadySnapshotted = new Set(
+    query<{ cms_id: string }>(
+      `SELECT DISTINCT cms_id FROM grade_history WHERE reason = '${REASON}'`,
+    ).map((r) => r.cms_id),
+  );
+  const needsSnapshot = facilities.filter((f) => !alreadySnapshotted.has(f.cms_id));
+
+  if (alreadySnapshotted.size > 0) {
+    console.log(
+      `${alreadySnapshotted.size} facilities already have a '${REASON}' baseline; ${needsSnapshot.length} still need one.`,
+    );
+  }
+
+  if (apply && needsSnapshot.length > 0) {
     console.log("Snapshotting current grades into grade_history...");
-    for (let i = 0; i < facilities.length; i += BATCH_SIZE) {
-      const values = facilities
+    for (let i = 0; i < needsSnapshot.length; i += BATCH_SIZE) {
+      const values = needsSnapshot
         .slice(i, i + BATCH_SIZE)
         .map((f) => `('${esc(f.cms_id)}',${f.grade_score},'${esc(f.grade_letter)}','${REASON}')`)
         .join(",\n");
       query(`INSERT INTO grade_history (cms_id,grade_score,grade_letter,reason) VALUES\n${values};`);
     }
-    console.log(`Snapshotted ${facilities.length} rows.`);
+    console.log(`Snapshotted ${needsSnapshot.length} rows.`);
   }
 
   // Step 2 — recompute.
@@ -155,6 +177,22 @@ async function main() {
     query(sql);
     console.log(`  ${Math.min(i + BATCH_SIZE, changes.length)}/${changes.length}`);
   }
+
+  // Operator pages and the best/worst chain reports read operators.avg_grade,
+  // which ingest computed from base scores. Left stale, those pages would
+  // contradict their own penalty-adjusted facility rows and rank chains on
+  // superseded numbers.
+  console.log("\nRefreshing operator aggregates...");
+  query(
+    `UPDATE operators SET avg_grade = (
+       SELECT ROUND(AVG(f.grade_score))
+         FROM facilities f
+         JOIN facility_owners o ON o.cms_id = f.cms_id
+        WHERE o.normalized_name = operators.normalized_name
+     ) WHERE EXISTS (
+       SELECT 1 FROM facility_owners o WHERE o.normalized_name = operators.normalized_name
+     );`,
+  );
   console.log("Done.");
 }
 

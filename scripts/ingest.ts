@@ -1,5 +1,5 @@
 import type { CMSFacility, Facility } from "../src/types";
-import { computeGradeScore, scoreToGrade, scoreToSummary, toSlug } from "../src/scoring";
+import { computeGrade, scoreToSummary, toSlug, type PenaltyDeficiency } from "../src/scoring";
 import { normalizeOwnerName, toOperatorSlug } from "../src/ownership";
 
 const PROVIDER_API_URL = "https://data.cms.gov/provider-data/api/1/datastore/query/4pq5-n9py/0";
@@ -19,20 +19,32 @@ function parseIntOrNull(val: string): number | null {
   return isNaN(n) ? null : n;
 }
 
-export function mapCMSFacility(raw: CMSFacility): Facility {
+/**
+ * `deficiencies` carries the facility's rows from the CMS Health Deficiencies
+ * file. They are required for the harm and uncorrected penalties — without them
+ * this returns the base-formula grade only, which would silently undo the
+ * penalty terms on the next monthly ingest.
+ */
+export function mapCMSFacility(
+  raw: CMSFacility,
+  deficiencies: PenaltyDeficiency[] = [],
+): Facility {
   const rnHours = parseNum(raw.reported_rn_staffing_hours_per_resident_per_day);
-  const deficiencies = parseIntOrNull(raw.rating_cycle_1_total_number_of_health_deficiencies);
+  const cycle1Deficiencies = parseIntOrNull(raw.rating_cycle_1_total_number_of_health_deficiencies);
   const qualityRating = parseIntOrNull(raw.qm_rating);
   const staffingRating = parseIntOrNull(raw.staffing_rating);
 
-  const grade_score = computeGradeScore({
-    rnHoursPerResidentDay: rnHours ?? 0,
-    totalDeficiencies: deficiencies ?? 0,
-    qualityRating: qualityRating ?? 1,
-    staffingRating: staffingRating ?? 1,
-  });
-  const safeScore = Number.isFinite(grade_score) ? grade_score : 0;
-  const grade_letter = scoreToGrade(safeScore);
+  const graded = computeGrade(
+    {
+      rnHoursPerResidentDay: rnHours ?? 0,
+      totalDeficiencies: cycle1Deficiencies ?? 0,
+      qualityRating: qualityRating ?? 1,
+      staffingRating: staffingRating ?? 1,
+    },
+    deficiencies,
+  );
+  const safeScore = Number.isFinite(graded.score) ? graded.score : 0;
+  const grade_letter = graded.letter;
   const grade_summary = scoreToSummary(safeScore, grade_letter, rnHours);
 
   return {
@@ -49,7 +61,7 @@ export function mapCMSFacility(raw: CMSFacility): Facility {
     staffing_rating: staffingRating,
     inspection_rating: parseIntOrNull(raw.health_inspection_rating),
     rn_hours_per_resident_day: rnHours,
-    total_deficiencies: deficiencies,
+    total_deficiencies: cycle1Deficiencies,
     grade_score: safeScore,
     grade_letter,
     grade_summary,
@@ -170,7 +182,19 @@ async function main() {
   }
 
   // Map + score facilities
-  const mapped = allFacilities.map(mapCMSFacility);
+  // Deficiencies are grouped above, so the grade computed here already carries
+  // the harm and uncorrected penalties. facilityByCmsId feeds the operator
+  // aggregates below, so those pick up the penalized scores too.
+  const mapped = allFacilities.map((raw) =>
+    mapCMSFacility(
+      raw,
+      (deficienciesByCmsId.get(raw.cms_certification_number_ccn) ?? []).map((d) => ({
+        scope_severity_code: d.scope_severity_code || null,
+        deficiency_corrected: d.deficiency_corrected || null,
+        inspection_cycle: parseIntOrNull(d.inspection_cycle),
+      })),
+    ),
+  );
   const facilityByCmsId = new Map(mapped.map((f) => [f.cms_id, f]));
 
   const { writeFileSync } = await import("fs");
@@ -287,12 +311,23 @@ async function main() {
   }
 
   // Write seed file with facilities, snapshots, and operators
+  // Record when each CMS file was pulled. cms_release_date is deliberately not
+  // written here: CMS does not expose a release date on these endpoints, and
+  // inventing one would defeat the purpose of the table. It stays NULL until a
+  // real release date is available.
+  const releaseSql = `INSERT INTO data_releases (source_key,label,cms_release_date,ingested_at,source_url) VALUES
+  ('provider_info','Provider Information',NULL,datetime('now'),'${PROVIDER_API_URL}'),
+  ('health_deficiencies','Health Deficiencies',NULL,datetime('now'),'${DEFICIENCY_API_URL}'),
+  ('ownership','Ownership',NULL,datetime('now'),'${OWNERSHIP_API_URL}')
+  ON CONFLICT(source_key) DO UPDATE SET ingested_at=excluded.ingested_at, source_url=excluded.source_url;`;
+
   const seedSql = [
     "DELETE FROM facility_owners;",
     ...facilitySqls,
     ...snapshotSqls,
     ...ownerSqls,
     ...operatorSqls,
+    releaseSql,
   ].join("\n\n");
   writeFileSync("scripts/seed.sql", seedSql);
   console.log(`Wrote scripts/seed.sql (${mapped.length} facilities + snapshots + ownership)`);

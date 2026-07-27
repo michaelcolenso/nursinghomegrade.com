@@ -93,10 +93,15 @@ export function dataSourcesPage(releases: DataRelease[]): string {
     <h2>Release date, not load date</h2>
     <p>
       The dates above are the dates CMS published each file, not the dates we loaded them. Those are
-      different, sometimes by months, and showing the load date would overstate how current the
-      information is. A survey conducted in April does not become current because we refreshed our
-      database in July. Where a facility page shows a freshness date, it shows the CMS release date
-      of the oldest file behind that page.
+      different, sometimes by months, and treating the load date as freshness overstates how current
+      the information is. A survey conducted in April does not become current because we refreshed
+      our database in July.
+    </p>
+    <p>
+      <strong>Known gap:</strong> freshness dates elsewhere on the site do not yet resolve from this
+      table. Facility pages currently show the date we loaded the record, and the homepage shows the
+      current month. Both overstate freshness, and we are fixing it. Until then, the dates on this
+      page are the ones to trust.
     </p>
 
     <h2>What we do not yet use</h2>
