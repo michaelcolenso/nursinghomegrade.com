@@ -552,8 +552,40 @@ export function facilityPage(
       "addressRegion": f.state,
       "postalCode": f.zip,
       "addressCountry": "US"
+    },
+    // CMS Certification Number — the stable federal identifier for this
+    // facility, and how a consumer can cross-reference us against CMS directly.
+    "identifier": {
+      "@type": "PropertyValue",
+      "propertyID": "CMS Certification Number (CCN)",
+      "value": f.cms_id
+    },
+    // Our score is an editorial assessment we compute, not an aggregation of
+    // user ratings, so it is published as a Review authored by us rather than
+    // as aggregateRating. aggregateRating asserts a collection of user reviews
+    // that does not exist here, and Google's review-snippet guidance requires
+    // such ratings to be user-sourced. See the PR for the full reasoning.
+    "review": {
+      "@type": "Review",
+      "author": { "@type": "Organization", "name": "NursingHomeGrade" },
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": f.grade_score,
+        "bestRating": 100,
+        "worstRating": 0,
+        "alternateName": `Grade ${f.grade_letter}`
+      },
+      "url": `https://nursinghomegrade.com/methodology`
     }
   };
+
+  if (f.latitude !== null && f.longitude !== null) {
+    nursingHomeSchema.geo = {
+      "@type": "GeoCoordinates",
+      "latitude": f.latitude,
+      "longitude": f.longitude
+    };
+  }
 
   if (f.latitude !== null && f.longitude !== null) {
     nursingHomeSchema.geo = {

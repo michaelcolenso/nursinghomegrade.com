@@ -59,6 +59,15 @@ export function aboutPage(): string {
         "name": "NursingHomeGrade",
         "url": "https://nursinghomegrade.com/",
         "description": "Independent ratings for U.S. nursing homes based on federal CMS data.",
+        // Real profiles, matching the links in the site footer.
+        "sameAs": [
+          "https://twitter.com/nursinghomegrade",
+          "https://linkedin.com/company/nursinghomegrade",
+        ],
+        "email": "info@nursinghomegrade.com",
+        // foundingDate is intentionally absent: the spec asks for it, but we do
+        // not know it, and a guessed date published as structured data is a
+        // fabricated fact about a real organization.
       },
     },
   ];
