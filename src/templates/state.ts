@@ -66,7 +66,7 @@ export function statePage(data: StatePageData): string {
       </nav>
       <h1 style="margin-bottom: 1rem;">Nursing homes in ${escHtml(stateName)}</h1>
       <p class="lede">
-        Analysis of <strong>${(totalFacilityCount ?? facilityCount).toLocaleString()} facilities</strong> analyzed. ${pctFailing}% fall below the repealed 0.55 hr RN benchmark, compared to a national average of ${nationalPctFailing}%.
+        Analysis of <strong>${(totalFacilityCount ?? facilityCount).toLocaleString()} facilities</strong> analyzed. Among those reporting RN staffing, ${pctFailing}% fall below the repealed 0.55 hr RN benchmark, compared to a national average of ${nationalPctFailing}%.
       </p>
       ${repealDisclosureHtml()}
     </div>
@@ -111,7 +111,7 @@ export function statePage(data: StatePageData): string {
 
   return layout(
     `Nursing Homes in ${stateName} — Grades & Ratings`,
-    `${facilityCount} nursing homes in ${stateName}. ${pctFailing}% fall below the repealed 0.55 hr federal RN benchmark. Independent grades based on CMS data.`,
+    `${facilityCount} nursing homes in ${stateName}. Among those reporting RN staffing, ${pctFailing}% fall below the repealed 0.55 hr federal RN benchmark. Independent grades based on CMS data.`,
     body,
     { canonicalPath: `/state/${stateSlug}`, jsonLd, extraHead: `<style>@media(max-width:768px){.state-layout{grid-template-columns:1fr!important;gap:2rem!important}.state-layout .card[style*="sticky"]{position:static!important;order:2}}</style>` }
   );

@@ -41,7 +41,7 @@ export async function handleStaffingFailures(request: Request, env: Env, stateSl
       });
 
     // Threshold is the repealed 2024 CMS benchmark (see src/staffing-standard.ts).
-    // Source column: CMS Provider Information `adjusted_rn_staffing_hours_per_resident_per_day`.
+    // Source column: CMS Provider Information `reported_rn_staffing_hours_per_resident_per_day`.
     let query: string;
     let bindings: string[];
 

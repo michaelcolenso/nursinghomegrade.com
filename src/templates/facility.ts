@@ -3,6 +3,7 @@ import { citySlug, getStateInfo } from "../states";
 import { layout, escHtml } from "./layout";
 import { renderTrustModule } from "./trust";
 import { RN_BENCHMARK, BENCHMARK_ROW_NOTE, benchmarkLabel, repealDisclosureHtml } from "../staffing-standard";
+import { scoreToSummary } from "../scoring";
 
 // Number of same-city facilities shown as rich cards. The related-links block
 // skips these so the same facility isn't linked twice on one page.
@@ -108,22 +109,68 @@ function renderOperatorLink(operator: Operator | null): string {
   `;
 }
 
+/**
+ * The single source of truth for deficiency counts on a facility page.
+ *
+ * The Quality Breakdown table previously rendered `facilities.total_deficiencies`,
+ * which ingest populates from the CMS Provider Information column
+ * `rating_cycle_1_total_number_of_health_deficiencies` — the most recent survey
+ * cycle only — under a label promising three years. The body of the same page
+ * counted rows in `facility_deficiencies`, which covers all three cycles. The two
+ * disagreed on 14,492 of 14,609 facilities, always undercounting, by 4x to 6x.
+ *
+ * Both the table and the body now derive from this function, over the same rows.
+ */
+export interface DeficiencyCounts {
+  total: number;
+  outstanding: number;
+  harm: number;
+}
+
+export function summarizeDeficiencies(deficiencies: Deficiency[]): DeficiencyCounts {
+  return {
+    total: deficiencies.length,
+    outstanding: deficiencies.filter(isUncorrectedDeficiency).length,
+    // Scope/severity G through L: actual harm or immediate jeopardy.
+    harm: deficiencies.filter((d) => !!d.scope_severity_code && d.scope_severity_code >= "G" && d.scope_severity_code <= "L").length,
+  };
+}
+
+function renderDeficiencyCluster(counts: DeficiencyCounts, hasDetail: boolean): string {
+  // With no detail rows we cannot honestly state a three-cycle total, so we say
+  // nothing rather than rendering a count we know is scoped to one cycle.
+  if (!hasDetail) {
+    return `<span style="font-weight:700;font-size:1.5rem;">Not reported</span>`;
+  }
+  const row = (label: string, value: number, color: string) => `
+    <div style="display:flex;justify-content:flex-end;align-items:baseline;gap:var(--space-2xs);">
+      <span style="font-size:0.85rem;font-weight:400;color:var(--muted);">${label}</span>
+      <span style="font-weight:700;font-size:1.5rem;color:${color};min-width:2.5ch;text-align:right;">${value}</span>
+    </div>`;
+  return `
+    ${row("Total", counts.total, "var(--ink)")}
+    ${row("Outstanding", counts.outstanding, counts.outstanding > 0 ? "var(--grade-F)" : "var(--ink)")}
+    ${row("Actual harm or worse (G–L)", counts.harm, counts.harm > 0 ? "var(--grade-D)" : "var(--ink)")}
+  `;
+}
+
 function renderDeficiencySummary(deficiencies: Deficiency[]): string {
   if (deficiencies.length === 0) return "";
+  const counts = summarizeDeficiencies(deficiencies);
   const harmCount = deficiencies.filter(d => d.scope_severity_code && d.scope_severity_code >= "G" && d.scope_severity_code < "J").length;
   const jeopardyCount = deficiencies.filter(d => d.scope_severity_code && d.scope_severity_code >= "J").length;
-  const correctedCount = deficiencies.filter(d => !isUncorrectedDeficiency(d)).length;
-  const uncorrectedCount = deficiencies.filter(d => isUncorrectedDeficiency(d)).length;
+  const uncorrectedCount = counts.outstanding;
+  const correctedCount = counts.total - uncorrectedCount;
   const alerts: string[] = [];
   if (jeopardyCount > 0) alerts.push(`<span style="color:var(--grade-F);font-weight:800;">${jeopardyCount} immediate jeopardy</span>`);
   if (harmCount > 0) alerts.push(`<span style="color:var(--grade-D);font-weight:800;">${harmCount} actual harm</span>`);
   const uncorrectedAlert = uncorrectedCount > 0
     ? ` <span style="color:var(--grade-F);font-weight:800;">— ${uncorrectedCount} still outstanding</span>`
     : "";
-  const deficiencyWord = deficiencies.length === 1 ? "deficiency" : "deficiencies";
+  const deficiencyWord = counts.total === 1 ? "deficiency" : "deficiencies";
   const summaryText = alerts.length > 0
-    ? `${alerts.join(", ")} issue${(harmCount + jeopardyCount) !== 1 ? "s" : ""} found among ${deficiencies.length} total ${deficiencyWord}. ${correctedCount} corrected.${uncorrectedAlert}`
-    : `${deficiencies.length} ${deficiencyWord} found. ${correctedCount} corrected. None involved actual harm.${uncorrectedAlert}`;
+    ? `${alerts.join(", ")} issue${(harmCount + jeopardyCount) !== 1 ? "s" : ""} found among ${counts.total} total ${deficiencyWord}. ${correctedCount} corrected.${uncorrectedAlert}`
+    : `${counts.total} ${deficiencyWord} found. ${correctedCount} corrected. None involved actual harm.${uncorrectedAlert}`;
   return `<div style="background:var(--bg);border:2px solid var(--ink);padding:var(--space-l);margin-bottom:var(--space-xl);">
     <p style="margin:0;font-family:'Playfair Display',Georgia,serif;font-size:clamp(1.1rem,2vw,1.35rem);line-height:1.4;">${summaryText}</p>
   </div>`;
@@ -307,8 +354,11 @@ export function facilityPage(
   const statePath = `/state/${stateSlug}`;
   const cityPath = `${statePath}/${citySlug(f.city)}`;
   const rnHours = f.rn_hours_per_resident_day;
+  // One computation, used by both the Quality Breakdown table and the prose
+  // summary below, so the two can no longer disagree.
+  const deficiencyCounts = summarizeDeficiencies(deficiencies);
   // Source: CMS Provider Information file, column
-  // `adjusted_rn_staffing_hours_per_resident_per_day`, compared against the
+  // `reported_rn_staffing_hours_per_resident_per_day`, compared against the
   // repealed 2024 benchmark — see src/staffing-standard.ts.
   const meetsMinimum = rnHours !== null && rnHours >= RN_BENCHMARK;
   const rnDisplay =
@@ -380,7 +430,7 @@ export function facilityPage(
     ${renderAssessment(assessment)}
 
     <p class="lede" style="max-width:800px;margin-bottom:var(--space-xl);">
-      ${escHtml(f.grade_summary)}
+      ${escHtml(scoreToSummary(f.grade_score, f.grade_letter, f.rn_hours_per_resident_day))}
     </p>
 
     <h2 id="quality">Quality Breakdown</h2>
@@ -400,10 +450,12 @@ export function facilityPage(
         </tr>
         <tr class="quality-row" style="border-bottom:1px solid var(--rule);">
           <td class="quality-label-cell" style="padding:var(--space-m) 0;">
-            <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">Health Deficiencies</div>
-            <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Violations found during federal inspections over the last 3 years.</div>
+            <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">Health Deficiencies (last 3 survey cycles)</div>
+            <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Violations found during federal inspections, with how many remain open and how many involved actual harm.</div>
           </td>
-          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Source Sans 3',system-ui,sans-serif;font-size:1.5rem;text-align:right;">${f.total_deficiencies ?? "Not reported"}</td>
+          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-family:'Source Sans 3',system-ui,sans-serif;text-align:right;">
+            ${renderDeficiencyCluster(deficiencyCounts, deficiencies.length > 0)}
+          </td>
         </tr>
         <tr class="quality-row" style="border-bottom:1px solid var(--rule);">
           <td class="quality-label-cell" style="padding:var(--space-m) 0;">

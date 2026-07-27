@@ -129,6 +129,7 @@ describe("generateOperatorInsightsText", () => {
   it("returns contextual lines based on insights", () => {
     const insights = {
       pctFailingStaffing: 42,
+      reportingFacilityCount: 10,
       gradeVsNational: -12,
       staffingVsNational: -0.15,
       deficiencyVsNational: 3.5,
@@ -143,6 +144,7 @@ describe("generateOperatorInsightsText", () => {
   it("returns neutral line when at average", () => {
     const insights = {
       pctFailingStaffing: 10,
+      reportingFacilityCount: 10,
       gradeVsNational: 0,
       staffingVsNational: 0,
       deficiencyVsNational: 0,
@@ -165,7 +167,8 @@ describe("generateOperatorSummary", () => {
       avg_deficiency_score: null,
       avg_penalty_score: null,
     };
-    const text = generateOperatorSummary(op, { pctFailingStaffing: 30, gradeVsNational: -8, staffingVsNational: 0, deficiencyVsNational: 0, penaltyRatio: null });
+    const text = generateOperatorSummary(op, { pctFailingStaffing: 30,
+      reportingFacilityCount: 10, gradeVsNational: -8, staffingVsNational: 0, deficiencyVsNational: 0, penaltyRatio: null });
     expect(text).toContain("Genesis Healthcare");
     expect(text).toContain("45 facilities");
     expect(text).toContain("below-average");
@@ -202,5 +205,57 @@ describe("generateFacilitySummary", () => {
   it("handles null trajectory", () => {
     const text = generateFacilitySummary(baseFacility, null);
     expect(text).toContain("unknown trend");
+  });
+});
+
+describe("assessment never renders filler", () => {
+  // A generic sentence repeated across ~15,000 facility pages tells the reader
+  // nothing and signals to Google that the pages are interchangeable.
+  const nationalAvg = { avgGrade: 60, avgRnHours: 0.6, avgDeficiencies: 8, totalFacilities: 100 };
+
+  it("returns an empty string rather than a filler sentence", () => {
+    const bland = { ...baseFacility, rn_hours_per_resident_day: 0.6 };
+    const text = generateFacilityAssessment(bland, null, null, nationalAvg);
+    expect(text).toBe("");
+    expect(text).not.toContain("available for this facility");
+  });
+
+  it("leads with unresolved violations when there are any", () => {
+    const text = generateFacilityAssessment(baseFacility, null, null, nationalAvg, {
+      total: 19,
+      outstanding: 3,
+      harm: 1,
+    });
+    expect(text).toContain("3 federal violations");
+    expect(text).toContain("unresolved");
+    expect(text.indexOf("unresolved")).toBeLessThan(text.length);
+  });
+
+  it("reports harm citations and pluralizes correctly", () => {
+    const one = generateFacilityAssessment(baseFacility, null, null, nationalAvg, {
+      total: 5,
+      outstanding: 1,
+      harm: 1,
+    });
+    expect(one).toContain("1 citation at the actual-harm level");
+    expect(one).toContain("1 federal violation at this facility remains unresolved");
+
+    const many = generateFacilityAssessment(baseFacility, null, null, nationalAvg, {
+      total: 9,
+      outstanding: 2,
+      harm: 4,
+    });
+    expect(many).toContain("4 citations at the actual-harm level");
+    expect(many).toContain("2 federal violations at this facility remain unresolved");
+  });
+
+  it("says nothing about deficiencies when the facility has none", () => {
+    const text = generateFacilityAssessment(baseFacility, null, null, nationalAvg, {
+      total: 0,
+      outstanding: 0,
+      harm: 0,
+    });
+    expect(text).not.toContain("unresolved");
+    expect(text).not.toContain("actual-harm");
   });
 });

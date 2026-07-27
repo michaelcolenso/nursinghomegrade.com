@@ -16,6 +16,8 @@ import { subscribePage, notFoundPage, errorPage } from "./templates/subscribe";
 import { htmlToMarkdown } from "./markdown";
 import { OG_SVG } from "./og-svg";
 import { OG_PNG_BASE64 } from "./og-png.generated";
+import { methodologyPage } from "./templates/methodology";
+import { contactPage } from "./templates/contact";
 
 // ── Agent Discovery Link Headers (RFC 8288) ──────────────────────────────
 const AGENT_LINKS = [
@@ -188,6 +190,8 @@ export default {
     if (path === "/compare") return handleCompare(request, env).then(r => wrapResponse(r, request));
     if (path === "/search") return handleSearch(request, env).then(r => wrapResponse(r, request));
     if (path === "/explore") return handleExplore(request, env).then(r => wrapResponse(r, request));
+    if (path === "/methodology") return wrapResponse(new Response(methodologyPage(), { headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" } }), request);
+    if (path === "/contact") return wrapResponse(new Response(contactPage(), { headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" } }), request);
     if (path === "/how-we-grade") return handleHowWeGrade(request, env).then(r => wrapResponse(r, request));
     if (path === "/api/compare") return handleCompareApi(request, env).then(r => wrapResponse(r, request));
     if (path === "/api/map/facilities") return handleMapApi(request, env).then(r => wrapResponse(r, request));

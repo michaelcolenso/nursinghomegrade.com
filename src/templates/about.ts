@@ -41,7 +41,7 @@ const FAQ_JSON_LD = {
       "name": "Is there a federal minimum staffing standard for nursing homes?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Not a numeric one. The 2024 CMS rule setting 0.55 registered nurse (RN) hours per resident per day was vacated in court, blocked by Congress, and repealed by CMS effective February 2, 2026. Current federal law requires only an RN on duty 8 consecutive hours a day, 7 days a week, plus a full-time director of nursing. NursingHomeGrade still grades facilities against the repealed 0.55 hour benchmark and flags any facility below it."
+        "text": "Not a numeric one. The 2024 CMS rule setting 0.55 registered nurse (RN) hours per resident per day was vacated in court, blocked by Congress, and repealed by CMS effective February 2, 2026. The remaining fixed RN schedule is an RN on duty 8 consecutive hours a day, 7 days a week, plus a full-time director of nursing. Other duties survive the repeal, including the general sufficient-staffing requirement at 42 CFR 483.35, facility assessment requirements, daily staffing posting, and payroll-based staffing reporting. NursingHomeGrade still grades facilities against the repealed 0.55 hour benchmark and flags any facility below it."
       }
     }
   ]

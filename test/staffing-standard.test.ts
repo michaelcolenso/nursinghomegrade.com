@@ -121,3 +121,24 @@ describe("benchmark boundary", () => {
     expect(scoreToSummary(30, "F", 0.2)).toContain("Below the repealed");
   });
 });
+
+describe("grade summaries are derived, not read from the stored column", () => {
+  // `facilities.grade_summary` was written by an earlier formula and still holds
+  // repealed-rule wording for ~14,000 production rows. Rendering must not trust
+  // it, or Phase 1's copy fix would be invisible on live pages.
+  const stale = {
+    ...facility,
+    grade_summary: "Exceeds federal staffing minimum — top tier inspection record.",
+  };
+
+  it("ignores a stale stored summary on the facility page", () => {
+    const html = facilityPage(stale);
+    expect(html).not.toContain("Exceeds federal staffing minimum");
+    expect(html).not.toContain("federal staffing minimum");
+  });
+
+  it("renders the derived summary instead", () => {
+    const html = facilityPage(stale);
+    expect(html).toContain("Below the repealed");
+  });
+});

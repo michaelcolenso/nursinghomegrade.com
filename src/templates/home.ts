@@ -1,13 +1,15 @@
 import type { Facility } from "../types";
 import { layout, escHtml } from "./layout";
 import { RN_BENCHMARK, benchmarkLabel, repealDisclosureHtml } from "../staffing-standard";
+import { scoreToSummary } from "../scoring";
 
 export function homePage(pctFailing: number): string {
   const body = `
     <h1 class="display">Find honest nursing home grades</h1>
     <p class="lede">
-      <strong>${pctFailing}% of U.S. nursing homes</strong> staff below the RN level the 2024 federal
-      rule would have required. Independent grades based on CMS data — no facility payments, no conflicts.
+      <strong>${pctFailing}% of U.S. nursing homes that report RN staffing</strong> staff below the
+      level the 2024 federal rule would have required. Independent grades based on CMS data — no
+      facility payments, no conflicts.
     </p>
     ${repealDisclosureHtml()}
     <p style="color:var(--muted);font-size:0.9rem;margin-bottom:var(--space-m);">
@@ -50,7 +52,7 @@ export function homePage(pctFailing: number): string {
 
   return layout(
     "NursingHomeGrade — Independent Nursing Home Ratings",
-    `${pctFailing}% of U.S. nursing homes staff below the RN level the 2024 federal rule would have required. Find unbiased nursing home grades based on CMS inspection, staffing, and quality data — no facility commissions, no conflicts of interest.`,
+    `${pctFailing}% of U.S. nursing homes that report RN staffing fall below the level the 2024 federal rule would have required. Find unbiased nursing home grades based on CMS inspection, staffing, and quality data — no facility commissions, no conflicts of interest.`,
     body,
     { jsonLd, canonicalPath: "/" }
   );
@@ -180,7 +182,7 @@ export function searchResultsPage(
                 ${f.distance !== undefined ? `<span class="result-stat"><span class="result-stat-label">Distance</span><span class="result-stat-value" style="color:var(--accent)">${f.distance.toFixed(1)} mi</span></span>` : ""}
               </div>
               
-              <p class="result-summary">${escHtml(f.grade_summary)}</p>
+              <p class="result-summary">${escHtml(scoreToSummary(f.grade_score, f.grade_letter, f.rn_hours_per_resident_day))}</p>
             </div>
           </div>
         </div>

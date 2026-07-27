@@ -12,6 +12,7 @@ import {
 } from "../db";
 import { computeTrajectory } from "../trajectory";
 import { generateFacilityAssessment, generateFacilitySummary } from "../narrative";
+import { summarizeDeficiencies } from "../templates/facility";
 import { facilityPage } from "../templates/facility";
 import { notFoundPage, errorPage } from "../templates/subscribe";
 import { toOperatorSlug } from "../ownership";
@@ -66,7 +67,14 @@ export async function handleFacility(request: Request, env: Env, slugId: string)
       operator = null;
     }
 
-    const assessment = generateFacilityAssessment(facility, trajectory, operator, nationalAvg);
+    // Same counts the page renders, so the assessment cannot contradict the table.
+    const assessment = generateFacilityAssessment(
+      facility,
+      trajectory,
+      operator,
+      nationalAvg,
+      summarizeDeficiencies(deficiencies),
+    );
     const summary = generateFacilitySummary(facility, trajectory);
 
     const html = facilityPage(

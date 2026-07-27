@@ -23,7 +23,7 @@ export const REPEAL_REPORT_PATH = "/reports/staffing-standard-repeal";
 
 /**
  * Label for a facility's RN hours relative to the repealed benchmark.
- * Source: CMS Provider Information file, column `adjusted_rn_staffing_hours_per_resident_per_day`.
+ * Source: CMS Provider Information file, column `reported_rn_staffing_hours_per_resident_per_day`.
  */
 export function benchmarkLabel(meetsBenchmark: boolean): string {
   // "At or above", not "Above": the comparison is `>=`, so a facility reporting

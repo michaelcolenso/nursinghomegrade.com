@@ -10,10 +10,20 @@ export interface NationalAverages {
 
 export interface OperatorInsights {
   pctFailingStaffing: number;
+  /** Facilities that actually report RN hours — the denominator for the above. */
+  reportingFacilityCount: number;
   gradeVsNational: number;
   staffingVsNational: number;
   deficiencyVsNational: number;
   penaltyRatio: number | null;
+}
+
+/** Counts from the facility's deficiency detail rows — the same source the
+ *  Quality Breakdown table and the prose summary use. */
+export interface AssessmentDeficiencyCounts {
+  total: number;
+  outstanding: number;
+  harm: number;
 }
 
 export function generateFacilityAssessment(
@@ -21,8 +31,26 @@ export function generateFacilityAssessment(
   trajectory: Trajectory | null,
   operator: Operator | null,
   nationalAvg: NationalAverages,
+  deficiencyCounts?: AssessmentDeficiencyCounts,
 ): string {
   const sentences: string[] = [];
+
+  // Lead with the facts a family would weigh most heavily. An open violation or
+  // a harm citation outranks any trend or operator comparison.
+  if (deficiencyCounts) {
+    if (deficiencyCounts.outstanding > 0) {
+      const word = deficiencyCounts.outstanding === 1 ? "violation" : "violations";
+      sentences.push(
+        `${deficiencyCounts.outstanding} federal ${word} at this facility ${deficiencyCounts.outstanding === 1 ? "remains" : "remain"} unresolved.`,
+      );
+    }
+    if (deficiencyCounts.harm > 0) {
+      const word = deficiencyCounts.harm === 1 ? "citation" : "citations";
+      sentences.push(
+        `Inspectors recorded ${deficiencyCounts.harm} ${word} at the actual-harm level or worse in the last three survey cycles.`,
+      );
+    }
+  }
 
   if (trajectory) {
     if (trajectory.status === "improving") {
@@ -74,8 +102,12 @@ export function generateFacilityAssessment(
     sentences.push(`This facility staffs below ${RN_BENCHMARK} RN hours per resident day — the level the 2024 federal rule, repealed in ${REPEAL_EFFECTIVE_DATE.replace(/ \d+,/, "")}, would have required.`);
   }
 
+  // No generic fallback. If nothing distinguishing is true of this facility, we
+  // render nothing rather than a sentence that says nothing — a filler string
+  // repeated across ~15,000 pages is both useless to the reader and a direct
+  // contributor to Google treating the pages as interchangeable.
   if (sentences.length === 0) {
-    return "Grade and staffing data are available for this facility. Review the breakdown below for details.";
+    return "";
   }
 
   return sentences.join(" ");
@@ -86,12 +118,16 @@ export function computeOperatorInsights(
   facilities: Facility[],
   nationalAvg: NationalAverages,
 ): OperatorInsights {
-  const failingCount = facilities.filter(
+  // Denominator is reporting facilities only, matching getBenchmarkShortfall.
+  // Counting non-reporting facilities as passing would understate the shortfall.
+  const reporting = facilities.filter((f) => f.rn_hours_per_resident_day !== null);
+  const failingCount = reporting.filter(
     (f) => f.rn_hours_per_resident_day !== null && f.rn_hours_per_resident_day < RN_BENCHMARK
   ).length;
-  const pctFailingStaffing = facilities.length > 0
-    ? Math.round((failingCount / facilities.length) * 100)
+  const pctFailingStaffing = reporting.length > 0
+    ? Math.round((failingCount / reporting.length) * 100)
     : 0;
+  const reportingFacilityCount = reporting.length;
 
   const avgGrade = operator.avg_grade ?? 0;
   const avgRn = facilities.length > 0
@@ -103,6 +139,7 @@ export function computeOperatorInsights(
 
   return {
     pctFailingStaffing,
+    reportingFacilityCount,
     gradeVsNational: Math.round(avgGrade - nationalAvg.avgGrade),
     staffingVsNational: Math.round((avgRn - nationalAvg.avgRnHours) * 100) / 100,
     deficiencyVsNational: Math.round((avgDef - nationalAvg.avgDeficiencies) * 100) / 100,
@@ -119,10 +156,16 @@ export function generateOperatorInsightsText(insights: OperatorInsights, operato
     lines.push(`This operator performs ${insights.gradeVsNational} points above the national average for overall grade.`);
   }
 
-  if (insights.pctFailingStaffing > 30) {
-    lines.push(`${insights.pctFailingStaffing}% of facilities owned by this operator fall below the repealed ${RN_BENCHMARK} hr RN benchmark.`);
-  } else if (insights.pctFailingStaffing === 0) {
-    lines.push(`All facilities owned by this operator staff above the repealed ${RN_BENCHMARK} hr RN benchmark.`);
+  // Say nothing when no facility reports RN hours: a 0% shortfall computed over
+  // an empty reporting population is not evidence of good staffing.
+  if (insights.reportingFacilityCount > 0) {
+    if (insights.pctFailingStaffing > 30) {
+      lines.push(`${insights.pctFailingStaffing}% of this operator's facilities that report RN hours fall below the repealed ${RN_BENCHMARK} hr RN benchmark.`);
+    } else if (insights.pctFailingStaffing === 0) {
+      // "At or above", not "above": the comparison is `>=`, so a facility at
+      // exactly the benchmark belongs in this group.
+      lines.push(`All of this operator's facilities that report RN hours staff at or above the repealed ${RN_BENCHMARK} hr RN benchmark.`);
+    }
   }
 
   if (insights.staffingVsNational < -0.1) {

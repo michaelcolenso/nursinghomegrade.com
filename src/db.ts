@@ -93,7 +93,7 @@ export async function getStatesWithCounts(env: Env): Promise<Array<{ state: stri
  * denominator so this matches getBenchmarkShortfall — counting them as passing
  * would understate the shortfall and disagree with the repeal report.
  * Source: CMS Provider Information file, column
- * `adjusted_rn_staffing_hours_per_resident_per_day`. The 0.55 threshold is the
+ * `reported_rn_staffing_hours_per_resident_per_day`. The 0.55 threshold is the
  * repealed 2024 CMS standard — see src/staffing-standard.ts.
  */
 export async function getStatePctFailing(env: Env, state: string): Promise<number> {
@@ -126,7 +126,7 @@ export interface BenchmarkShortfall {
 /**
  * Live count of facilities below the repealed 0.55 RN benchmark, nationally and
  * per state. Source: CMS Provider Information file, column
- * `adjusted_rn_staffing_hours_per_resident_per_day` (stored as
+ * `reported_rn_staffing_hours_per_resident_per_day` (stored as
  * `facilities.rn_hours_per_resident_day`). Facilities that do not report the
  * measure are excluded from both numerator and denominator.
  */
