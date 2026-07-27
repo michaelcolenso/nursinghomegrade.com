@@ -284,7 +284,7 @@ function renderNearbyFacilities(current: FacilityPageData, nearby: Facility[]): 
           <h2 id="nearby-heading">Nearby facilities in ${escHtml(current.city)}</h2>
           <p>Compare local nursing homes using the same CMS-backed grading method.</p>
         </div>
-        <a class="btn-secondary" href="/compare?ids=${encodeURIComponent(compareIds)}">Compare nearby →</a>
+        <a class="btn-secondary" rel="nofollow" href="/compare?ids=${encodeURIComponent(compareIds)}">Compare nearby →</a>
       </div>
       <div class="nearby-grid">
         ${cards}

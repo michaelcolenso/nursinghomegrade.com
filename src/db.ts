@@ -168,6 +168,33 @@ export async function getDataReleases(env: Env): Promise<DataRelease[]> {
 }
 
 /**
+ * Median RN hours per resident day among facilities in a state that report it.
+ * Median rather than mean: the distribution has a long upper tail, so a mean
+ * would overstate the typical facility. Non-reporting facilities are excluded,
+ * matching every other staffing figure on the site.
+ * Source: CMS Provider Information, `reported_rn_staffing_hours_per_resident_per_day`.
+ */
+export async function getStateRnMedian(env: Env, state: string): Promise<number | null> {
+  try {
+    const row = await env.DB.prepare(
+      `SELECT AVG(rn_hours_per_resident_day) AS median FROM (
+         SELECT rn_hours_per_resident_day
+           FROM facilities
+          WHERE state = ? AND rn_hours_per_resident_day IS NOT NULL
+          ORDER BY rn_hours_per_resident_day
+          LIMIT 2 - (SELECT COUNT(*) FROM facilities WHERE state = ? AND rn_hours_per_resident_day IS NOT NULL) % 2
+         OFFSET (SELECT (COUNT(*) - 1) / 2 FROM facilities WHERE state = ? AND rn_hours_per_resident_day IS NOT NULL)
+       )`,
+    )
+      .bind(state, state, state)
+      .first<{ median: number | null }>();
+    return row?.median ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Returns null when the query fails, [] when the facility genuinely has no
  * citations. Collapsing both to [] would make a clean facility indistinguishable
  * from missing data — and "Not reported" on a facility with a spotless record is

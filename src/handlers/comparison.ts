@@ -4,7 +4,10 @@ import { comparePage } from "../templates/compare";
 import { scoreToSummary } from "../scoring";
 
 export async function handleCompare(request: Request, env: Env): Promise<Response> {
-  const html = comparePage();
+  // /compare?ids=a,b,c is combinatorial: one crawlable URL per selection of
+  // facilities. Bare /compare stays indexable.
+  const hasIds = new URL(request.url).searchParams.has("ids");
+  const html = comparePage(hasIds);
   return new Response(html, {
     headers: {
       "Content-Type": "text/html;charset=UTF-8",

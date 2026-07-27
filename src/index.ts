@@ -255,6 +255,8 @@ export default {
       const robots = [
         "User-agent: *",
         "Allow: /",
+        // Combinatorial comparison URLs — see handleCompare.
+        "Disallow: /compare?",
         "Sitemap: https://nursinghomegrade.com/sitemap.xml",
         "",
         "# Content Signals — AI content usage preferences",
