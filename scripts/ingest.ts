@@ -380,8 +380,18 @@ async function main() {
   const loadLocal = defFiles.map((f) => `echo "Loading ${f}..." && npx wrangler d1 execute nursinghomegrade --local --file=${f}`).join("\n");
   const loadRemote = defFiles.map((f) => `echo "Loading ${f}..." && npx wrangler d1 execute nursinghomegrade --remote --file=${f}`).join("\n");
 
-  writeFileSync("scripts/load-local.sh", `#!/bin/bash\nset -e\necho "Loading facilities..."\nnpx wrangler d1 execute nursinghomegrade --local --file=scripts/seed.sql\n${loadLocal}\necho "Done!"\n`);
-  writeFileSync("scripts/load-remote.sh", `#!/bin/bash\nset -e\necho "Loading facilities..."\nnpx wrangler d1 execute nursinghomegrade --remote --file=scripts/seed.sql\n${loadRemote}\necho "Done!"\n`);
+  // Deficiencies load BEFORE seed.sql. Grades now carry harm and uncorrected
+  // penalties derived from these rows, and the first deficiency file starts with
+  // DELETE FROM facility_deficiencies. Publishing grades first would leave a
+  // window — the whole load, or indefinitely if a command fails — where a
+  // facility's score reflects citations its own page cannot display. Loading
+  // detail first means the worst case is grades that lag their citations, which
+  // understates rather than fabricates.
+  const loadHeader = `#!/bin/bash\nset -e\necho "Loading deficiencies first — grades depend on them..."\n`;
+  const loadFooter = (flag: string) =>
+    `echo "Loading facilities and grades..."\nnpx wrangler d1 execute nursinghomegrade ${flag} --file=scripts/seed.sql\necho "Done!"\n`;
+  writeFileSync("scripts/load-local.sh", `${loadHeader}${loadLocal}\n${loadFooter("--local")}`);
+  writeFileSync("scripts/load-remote.sh", `${loadHeader}${loadRemote}\n${loadFooter("--remote")}`);
 
   console.log(`\nGenerated ${defFiles.length} deficiency files`);
   console.log("Run locally:  bash scripts/load-local.sh");

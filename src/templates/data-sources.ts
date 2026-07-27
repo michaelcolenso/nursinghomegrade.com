@@ -99,9 +99,9 @@ export function dataSourcesPage(releases: DataRelease[]): string {
     </p>
     <p>
       <strong>Known gap:</strong> freshness dates elsewhere on the site do not yet resolve from this
-      table. Facility pages currently show the date we loaded the record, and the homepage shows the
-      current month. Both overstate freshness, and we are fixing it. Until then, the dates on this
-      page are the ones to trust.
+      table. Facility pages show the date we loaded the record, which is later than the date CMS
+      published the underlying survey data and is labelled as a load date for that reason. The dates
+      on this page are the ones to rely on.
     </p>
 
     <h2>What we do not yet use</h2>

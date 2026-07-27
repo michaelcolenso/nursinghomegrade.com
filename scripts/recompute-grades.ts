@@ -184,22 +184,28 @@ async function main() {
   // superseded numbers.
   // Trajectory is computed from facility_snapshots. Left on old-formula scores,
   // a facility could keep announcing "the overall grade improved" immediately
-  // after this migration lowered it. Update the most recent snapshot only —
-  // older snapshots stay as they were, and the pre-change grade is preserved in
-  // grade_history.
+  // after this migration lowered it.
+  //
+  // Derived from the current facilities table rather than this run's `changes`
+  // list: if an earlier attempt updated facilities and then died before this
+  // step, those rows no longer appear as changes and their snapshots would never
+  // be aligned. Comparing against facilities makes the step idempotent and
+  // recoverable on rerun.
   console.log("\nAligning latest facility snapshot with the new grade...");
-  for (let i = 0; i < changes.length; i += BATCH_SIZE) {
-    const sql = changes
-      .slice(i, i + BATCH_SIZE)
-      .map(
-        (c) =>
-          `UPDATE facility_snapshots SET grade_score=${c.score}, grade_letter='${esc(c.letter)}'
-             WHERE cms_id='${esc(c.cms_id)}'
-               AND snapshot_date=(SELECT MAX(snapshot_date) FROM facility_snapshots WHERE cms_id='${esc(c.cms_id)}');`,
-      )
-      .join("\n");
-    query(sql);
-  }
+  query(
+    `UPDATE facility_snapshots
+        SET grade_score = (SELECT f.grade_score FROM facilities f WHERE f.cms_id = facility_snapshots.cms_id),
+            grade_letter = (SELECT f.grade_letter FROM facilities f WHERE f.cms_id = facility_snapshots.cms_id)
+      WHERE snapshot_date = (
+              SELECT MAX(s2.snapshot_date) FROM facility_snapshots s2 WHERE s2.cms_id = facility_snapshots.cms_id
+            )
+        AND EXISTS (
+              SELECT 1 FROM facilities f
+               WHERE f.cms_id = facility_snapshots.cms_id
+                 AND (f.grade_score <> facility_snapshots.grade_score
+                      OR f.grade_letter <> facility_snapshots.grade_letter)
+            );`,
+  );
 
   console.log("\nRefreshing operator aggregates...");
   query(
