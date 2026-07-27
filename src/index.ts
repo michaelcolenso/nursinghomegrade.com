@@ -63,6 +63,22 @@ async function wrapResponse(
     return new Response(md, { status: original.status, headers });
   }
 
+  // Every 5xx, whether from a handler's own catch or the top-level boundary,
+  // must tell Googlebot the failure is transient. A 5xx without Retry-After is
+  // read as the page being broken and gets demoted; with it, the crawler backs
+  // off and returns. Also never cache a failure.
+  if (original.status >= 500) {
+    const headers = new Headers(original.headers);
+    if (!headers.has("Retry-After")) headers.set("Retry-After", "120");
+    headers.set("Cache-Control", "no-store");
+    headers.set("Link", AGENT_LINKS);
+    return new Response(original.body, {
+      status: original.status,
+      statusText: original.statusText,
+      headers,
+    });
+  }
+
   // Add Link headers to HTML responses
   const contentType = original.headers.get("Content-Type") ?? "";
   if (contentType.includes("text/html")) {
@@ -172,8 +188,74 @@ async function handleSitemap(env: Env, cacheKey: string): Promise<Response> {
 }
 
 // ── Main Worker ─────────────────────────────────────────────────────────
-export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+
+// ── Error boundary ──────────────────────────────────────────────────────
+//
+// Without this, any unhandled throw — a D1 timeout, a subrequest limit hit
+// under a Googlebot burst, an unexpected null on a facility with sparse CMS
+// data — propagates to the Workers runtime and becomes a bare 500. Googlebot
+// treats a 500 as the page being broken and demotes it; it treats a 503 with
+// Retry-After as temporary and comes back. Search Console showed 2,196 URLs in
+// the server-error bucket, a quarter of the not-indexed deficit, suppressing
+// crawl budget for everything else.
+//
+// Individual handlers already catch their own failures and return 503. This is
+// the net beneath them, for anything thrown outside a handler's own try block.
+
+/** Coarse route pattern for log grouping — never the raw path, which is unbounded. */
+export function routePattern(path: string): string {
+  if (path === "/") return "/";
+  if (/^\/facility\//.test(path)) return "/facility/:id";
+  if (/^\/state\/[^/]+\/report$/.test(path)) return "/state/:state/report";
+  if (/^\/state\/[^/]+\/[^/]+$/.test(path)) return "/state/:state/:city";
+  if (/^\/state\//.test(path)) return "/state/:state";
+  if (/^\/operator\//.test(path)) return "/operator/:slug";
+  if (/^\/reports\//.test(path)) return path;
+  if (/^\/(best|worst)\//.test(path)) return path.startsWith("/best") ? "/best/:state" : "/worst/:state";
+  return path;
+}
+
+/** CMS provider ID from a facility path, for correlating failures to a facility. */
+export function providerIdFromPath(path: string): string | null {
+  const m = path.match(/^\/facility\/([0-9A-Za-z]+)-/);
+  return m?.[1] ?? null;
+}
+
+function handleUnexpectedError(err: unknown, request: Request): Response {
+  const path = new URL(request.url).pathname;
+  // Structured so failures can be grouped by route and traced to a facility.
+  console.error(
+    JSON.stringify({
+      level: "error",
+      msg: "unhandled_request_error",
+      route: routePattern(path),
+      path,
+      provider_id: providerIdFromPath(path),
+      user_agent: request.headers.get("User-Agent"),
+      error: err instanceof Error ? err.name : typeof err,
+      message: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+    }),
+  );
+
+  const html = errorPage(
+    "Temporarily unavailable",
+    "We could not load this page right now. Please try again in a few minutes.",
+  );
+  return new Response(html, {
+    status: 503,
+    headers: {
+      "Content-Type": "text/html;charset=UTF-8",
+      // Tells Googlebot this is transient and worth retrying, rather than a
+      // broken page to drop from the index.
+      "Retry-After": "120",
+      "Cache-Control": "no-store",
+      "Link": AGENT_LINKS,
+    },
+  });
+}
+
+async function route(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const path = url.pathname;
 
@@ -352,5 +434,14 @@ export default {
         "Link": AGENT_LINKS,
       },
     });
+}
+
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    try {
+      return await route(request, env);
+    } catch (err) {
+      return handleUnexpectedError(err, request);
+    }
   },
 } satisfies ExportedHandler<Env>;
