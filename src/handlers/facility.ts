@@ -4,8 +4,8 @@ import {
   getFacilityBySlugId,
   getFacilityInspectionDetails,
   getFacilityDeficiencies,
-  getNearbyFacilities,
-  getTopRatedByState,
+  getPeerFacilities,
+  getBetterGradedNearby,
   getFacilitySnapshots,
   getNationalAverages,
   getStateRnMedian,
@@ -44,11 +44,13 @@ export async function handleFacility(request: Request, env: Env, slugId: string)
         },
       });
 
-    const [inspectionDetails, deficiencies, nearby, stateTopRated, snapshots, nationalAvg, stateRnMedian] = await Promise.all([
+    const [inspectionDetails, deficiencies, nearby, betterNearby, snapshots, nationalAvg, stateRnMedian] = await Promise.all([
       getFacilityInspectionDetails(env, facility.cms_id),
       getFacilityDeficiencies(env, facility.cms_id),
-      getNearbyFacilities(env, facility.cms_id, facility.city, facility.state, 8),
-      getTopRatedByState(env, facility.state, facility.cms_id, 5),
+      // Peers for THIS facility, widening past the city when the city is small,
+      // rather than the same statewide top-5 on every page in the state.
+      getPeerFacilities(env, facility, 8),
+      getBetterGradedNearby(env, facility, 2),
       getFacilitySnapshots(env, facility.cms_id),
       getNationalAverages(env),
       getStateRnMedian(env, facility.state),
@@ -91,7 +93,7 @@ export async function handleFacility(request: Request, env: Env, slugId: string)
       { ...facility, ...inspectionDetails },
       deficiencies,
       nearby,
-      stateTopRated,
+      betterNearby,
       trajectory,
       assessment,
       summary,
