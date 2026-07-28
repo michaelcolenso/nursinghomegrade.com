@@ -205,8 +205,3 @@ export function generateCitySummary(cityName: string, state: string, facilities:
   const pctTop = total > 0 ? Math.round((topGrades / total) * 100) : 0;
   return `${cityName}, ${state} has ${total} nursing facilities, with ${pctTop}% earning a grade of A or B.`;
 }
-
-export function generateFacilitySummary(facility: Facility, trajectory: Trajectory | null): string {
-  const trend = trajectory?.status ?? "unknown trend";
-  return `${facility.name} in ${facility.city}, ${facility.state} earns a grade of ${facility.grade_letter} (${facility.grade_score}/100). Overall trend: ${trend}.`;
-}

@@ -168,6 +168,33 @@ export async function getDataReleases(env: Env): Promise<DataRelease[]> {
 }
 
 /**
+ * Median RN hours per resident day among facilities in a state that report it.
+ * Median rather than mean: the distribution has a long upper tail, so a mean
+ * would overstate the typical facility. Non-reporting facilities are excluded,
+ * matching every other staffing figure on the site.
+ * Source: CMS Provider Information, `reported_rn_staffing_hours_per_resident_per_day`.
+ */
+export async function getStateRnMedian(env: Env, state: string): Promise<number | null> {
+  try {
+    const row = await env.DB.prepare(
+      `SELECT AVG(rn_hours_per_resident_day) AS median FROM (
+         SELECT rn_hours_per_resident_day
+           FROM facilities
+          WHERE state = ? AND rn_hours_per_resident_day IS NOT NULL
+          ORDER BY rn_hours_per_resident_day
+          LIMIT 2 - (SELECT COUNT(*) FROM facilities WHERE state = ? AND rn_hours_per_resident_day IS NOT NULL) % 2
+         OFFSET (SELECT (COUNT(*) - 1) / 2 FROM facilities WHERE state = ? AND rn_hours_per_resident_day IS NOT NULL)
+       )`,
+    )
+      .bind(state, state, state)
+      .first<{ median: number | null }>();
+    return row?.median ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Returns null when the query fails, [] when the facility genuinely has no
  * citations. Collapsing both to [] would make a clean facility indistinguishable
  * from missing data — and "Not reported" on a facility with a spotless record is
@@ -245,33 +272,164 @@ export async function getStateCityList(
   return [...merged.values()].sort((a, b) => b.count - a.count || a.city.localeCompare(b.city));
 }
 
-export async function getNearbyFacilities(
-  env: Env,
-  cmsId: string,
-  city: string,
-  state: string,
-  limit = 5,
-): Promise<Facility[]> {
-  const results = await env.DB.prepare(
-    "SELECT * FROM facilities WHERE state = ? AND city = ? AND cms_id != ? ORDER BY grade_score DESC LIMIT ?"
-  )
-    .bind(state, city, cmsId, limit)
-    .all<Facility>();
-  return results.results ?? [];
+
+/**
+ * Grade bands ordered best to worst. There is no E band in CMS-derived grades.
+ */
+const GRADE_BANDS = ["A", "B", "C", "D", "F"];
+
+function bandIndex(letter: string): number {
+  const i = GRADE_BANDS.indexOf(letter);
+  return i === -1 ? GRADE_BANDS.length : i;
 }
 
-export async function getTopRatedByState(
+/**
+ * Approximate distance ordering without trigonometry.
+ *
+ * D1 does not reliably expose SQLite's math functions, so instead of haversine
+ * we rank by squared offset with longitude scaled by cos(latitude), computed in
+ * TypeScript and passed as a bind parameter. At the distances that matter for
+ * "other facilities near this one" the ranking is identical to great-circle,
+ * and it needs only arithmetic SQLite always has.
+ */
+function distanceOrdering(lat: number, lng: number): { expr: string; binds: number[] } {
+  const cosLat = Math.cos((lat * Math.PI) / 180);
+  return {
+    expr: "((latitude - ?) * (latitude - ?)) + (((longitude - ?) * ?) * ((longitude - ?) * ?))",
+    binds: [lat, lat, lng, cosLat, lng, cosLat],
+  };
+}
+
+/**
+ * Peer facilities for a facility page.
+ *
+ * Replaces the statewide "top rated" block, which returned the same handful of
+ * facilities for every page in a state — so all 194 Washington facility pages
+ * linked the same four, creating near-duplicate link blocks at scale and
+ * starving the other 190 of internal links.
+ *
+ * Same city first. If the city has fewer than `minimum`, widen to the nearest
+ * facilities in the state by distance, then to the rest of the state. The module
+ * must never render empty: Pacific Care in Hoquiam had no nearby block at all
+ * because its city is small.
+ */
+export async function getPeerFacilities(
   env: Env,
-  state: string,
-  excludeCmsId: string,
+  facility: Pick<Facility, "cms_id" | "city" | "state" | "latitude" | "longitude">,
   limit = 5,
+  minimum = 3,
 ): Promise<Facility[]> {
-  const results = await env.DB.prepare(
-    "SELECT * FROM facilities WHERE state = ? AND cms_id != ? ORDER BY grade_score DESC LIMIT ?"
-  )
-    .bind(state, excludeCmsId, limit)
-    .all<Facility>();
-  return results.results ?? [];
+  const picked: Facility[] = [];
+  const seen = new Set<string>([facility.cms_id]);
+
+  const add = (rows: Facility[]) => {
+    for (const r of rows) {
+      if (picked.length >= limit) return;
+      if (seen.has(r.cms_id)) continue;
+      seen.add(r.cms_id);
+      picked.push(r);
+    }
+  };
+
+  try {
+    // Ordered by proximity where we have coordinates, not by grade. Ordering by
+    // grade would make only the top few facilities in a city anyone's peer,
+    // leaving the rest with no inbound links — the same concentration the
+    // statewide block caused, at city scale. See src/link-graph.ts.
+    let sameCitySql: string;
+    let sameCityBinds: unknown[];
+    if (facility.latitude !== null && facility.longitude !== null) {
+      const { expr, binds } = distanceOrdering(facility.latitude, facility.longitude);
+      sameCitySql = `SELECT * FROM facilities
+                      WHERE state = ? AND city = ? AND cms_id != ?
+                        AND latitude IS NOT NULL AND longitude IS NOT NULL
+                      ORDER BY ${expr} ASC LIMIT ?`;
+      sameCityBinds = [facility.state, facility.city, facility.cms_id, ...binds, limit];
+    } else {
+      sameCitySql =
+        "SELECT * FROM facilities WHERE state = ? AND city = ? AND cms_id != ? ORDER BY grade_score DESC LIMIT ?";
+      sameCityBinds = [facility.state, facility.city, facility.cms_id, limit];
+    }
+    const sameCity = await env.DB.prepare(sameCitySql).bind(...sameCityBinds).all<Facility>();
+    add(sameCity.results ?? []);
+
+    if (picked.length >= minimum) return picked;
+
+    // Widen by distance when the city is too small to fill the module.
+    if (facility.latitude !== null && facility.longitude !== null) {
+      const { expr, binds } = distanceOrdering(facility.latitude, facility.longitude);
+      const nearest = await env.DB.prepare(
+        `SELECT * FROM facilities
+          WHERE state = ? AND cms_id != ? AND latitude IS NOT NULL AND longitude IS NOT NULL
+          ORDER BY ${expr} ASC LIMIT ?`,
+      )
+        .bind(facility.state, facility.cms_id, ...binds, limit * 3)
+        .all<Facility>();
+      add(nearest.results ?? []);
+    }
+
+    if (picked.length >= minimum) return picked;
+
+    // Last resort so the module is never empty: anywhere in the state.
+    const statewide = await env.DB.prepare(
+      "SELECT * FROM facilities WHERE state = ? AND cms_id != ? ORDER BY grade_score DESC LIMIT ?",
+    )
+      .bind(facility.state, facility.cms_id, limit * 3)
+      .all<Facility>();
+    add(statewide.results ?? []);
+
+    return picked;
+  } catch {
+    return picked;
+  }
+}
+
+/**
+ * Facilities in a better grade band near this one — so a family looking at an F
+ * facility sees nearby D and C options. Genuinely useful to the reader, and it
+ * distributes link equity across the long tail rather than concentrating it on
+ * the same statewide winners.
+ *
+ * Returns [] for a facility already in the best band, where there is no better
+ * option to point at.
+ */
+export async function getBetterGradedNearby(
+  env: Env,
+  facility: Pick<Facility, "cms_id" | "city" | "state" | "latitude" | "longitude" | "grade_letter">,
+  limit = 2,
+  excludeIds: Set<string> = new Set(),
+): Promise<Facility[]> {
+  const currentBand = bandIndex(facility.grade_letter);
+  const better = GRADE_BANDS.slice(0, currentBand);
+  if (better.length === 0) return [];
+
+  try {
+    const placeholders = better.map(() => "?").join(",");
+    let sql: string;
+    let binds: unknown[];
+
+    if (facility.latitude !== null && facility.longitude !== null) {
+      const { expr, binds: geoBinds } = distanceOrdering(facility.latitude, facility.longitude);
+      // Closest better band first, then geographically nearest within it.
+      sql = `SELECT * FROM facilities
+              WHERE state = ? AND cms_id != ? AND grade_letter IN (${placeholders})
+                AND latitude IS NOT NULL AND longitude IS NOT NULL
+              ORDER BY CASE grade_letter ${better.map((b, i) => `WHEN '${b}' THEN ${better.length - i}`).join(" ")} ELSE 99 END ASC,
+                       ${expr} ASC
+              LIMIT ?`;
+      binds = [facility.state, facility.cms_id, ...better, ...geoBinds, limit + excludeIds.size + 5];
+    } else {
+      sql = `SELECT * FROM facilities
+              WHERE state = ? AND cms_id != ? AND grade_letter IN (${placeholders})
+              ORDER BY grade_score DESC LIMIT ?`;
+      binds = [facility.state, facility.cms_id, ...better, limit + excludeIds.size + 5];
+    }
+
+    const rows = await env.DB.prepare(sql).bind(...binds).all<Facility>();
+    return (rows.results ?? []).filter((r) => !excludeIds.has(r.cms_id)).slice(0, limit);
+  } catch {
+    return [];
+  }
 }
 
 export interface CitySnapshot {

@@ -4,14 +4,16 @@ import {
   getFacilityBySlugId,
   getFacilityInspectionDetails,
   getFacilityDeficiencies,
-  getNearbyFacilities,
-  getTopRatedByState,
+  getPeerFacilities,
+  getBetterGradedNearby,
   getFacilitySnapshots,
   getNationalAverages,
+  getStateRnMedian,
   getOperatorBySlug,
 } from "../db";
 import { computeTrajectory } from "../trajectory";
-import { generateFacilityAssessment, generateFacilitySummary } from "../narrative";
+import { generateFacilityAssessment } from "../narrative";
+import { generateMetaDescription, deriveDescriptionFacts } from "../meta-description";
 import { summarizeDeficiencies } from "../templates/facility";
 import { facilityPage } from "../templates/facility";
 import { notFoundPage, errorPage } from "../templates/subscribe";
@@ -42,13 +44,16 @@ export async function handleFacility(request: Request, env: Env, slugId: string)
         },
       });
 
-    const [inspectionDetails, deficiencies, nearby, stateTopRated, snapshots, nationalAvg] = await Promise.all([
+    const [inspectionDetails, deficiencies, nearby, betterNearby, snapshots, nationalAvg, stateRnMedian] = await Promise.all([
       getFacilityInspectionDetails(env, facility.cms_id),
       getFacilityDeficiencies(env, facility.cms_id),
-      getNearbyFacilities(env, facility.cms_id, facility.city, facility.state, 8),
-      getTopRatedByState(env, facility.state, facility.cms_id, 5),
+      // Peers for THIS facility, widening past the city when the city is small,
+      // rather than the same statewide top-5 on every page in the state.
+      getPeerFacilities(env, facility, 8),
+      getBetterGradedNearby(env, facility, 2),
       getFacilitySnapshots(env, facility.cms_id),
       getNationalAverages(env),
+      getStateRnMedian(env, facility.state),
     ]);
 
     const trajectory = snapshots.length >= 3 ? computeTrajectory(snapshots) : null;
@@ -77,13 +82,18 @@ export async function handleFacility(request: Request, env: Env, slugId: string)
       // says nothing is better than one implying a clean record we cannot verify.
       deficiencies === null ? undefined : summarizeDeficiencies(deficiencies),
     );
-    const summary = generateFacilitySummary(facility, trajectory);
+    // Meta description built from whichever fact is most decision-relevant for
+    // THIS facility, rather than one template repeated across ~15,000 pages.
+    const summary = generateMetaDescription(
+      facility,
+      deriveDescriptionFacts(deficiencies, stateRnMedian),
+    );
 
     const html = facilityPage(
       { ...facility, ...inspectionDetails },
       deficiencies,
       nearby,
-      stateTopRated,
+      betterNearby,
       trajectory,
       assessment,
       summary,

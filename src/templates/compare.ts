@@ -1,6 +1,12 @@
 import { layout } from "./layout";
 
-export function comparePage(): string {
+/**
+ * @param noindex set when the request carries an `ids` parameter. Those URLs are
+ * combinatorial — one per selection of facilities — so they are crawlable in
+ * unbounded numbers and land in the alternate-with-canonical bucket. The bare
+ * /compare page stays indexable.
+ */
+export function comparePage(noindex = false): string {
   const body = `
     <h1 class="display">Comparison</h1>
     <p class="lede">Review your saved facilities side-by-side.</p>
@@ -126,6 +132,6 @@ export function comparePage(): string {
     "Compare Facilities — NursingHomeGrade",
     "Side-by-side comparison of your saved nursing home facilities.",
     body,
-    { extraScripts: scripts, canonicalPath: "/compare" }
+    { extraScripts: scripts, canonicalPath: "/compare", noindex }
   );
 }

@@ -114,3 +114,23 @@ describe("comparePage", () => {
     expect(html).not.toContain("Fetching facility data would happen here");
   });
 });
+
+describe("compare URL indexation", () => {
+  // /compare?ids= is combinatorial — one crawlable URL per selection of
+  // facilities — and a likely contributor to the alternate-with-canonical bucket.
+  it("marks the parameterized comparison noindex", () => {
+    const html = comparePage(true);
+    expect(html).toContain('<meta name="robots" content="noindex, follow">');
+  });
+
+  it("leaves the bare comparison page indexable", () => {
+    const html = comparePage();
+    expect(html).not.toContain("noindex");
+  });
+
+  it("keeps the canonical pointing at the bare page either way", () => {
+    for (const html of [comparePage(), comparePage(true)]) {
+      expect(html).toContain('<link rel="canonical" href="https://nursinghomegrade.com/compare">');
+    }
+  });
+});

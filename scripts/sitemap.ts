@@ -59,13 +59,13 @@ async function main() {
 
   // Pull cms_id, slug, and updated_at from D1
   const result = execSync(
-    `npx wrangler d1 execute nursinghomegrade ${d1Flag} --command "SELECT cms_id, slug, updated_at FROM facilities ORDER BY cms_id;" --json`,
+    `npx wrangler d1 execute nursinghomegrade ${d1Flag} --command "SELECT cms_id, slug, state, city, updated_at FROM facilities ORDER BY state, cms_id;" --json`,
     { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
   );
 
   // wrangler d1 execute --json returns an array of result sets
   const parsed = JSON.parse(result) as Array<{
-    results: Array<{ cms_id: string; slug: string; updated_at: string }>;
+    results: Array<{ cms_id: string; slug: string; state: string; city: string; updated_at: string }>;
   }>;
   const rows = parsed[0]?.results ?? [];
 
@@ -86,33 +86,97 @@ async function main() {
 
   const now = new Date().toISOString().split("T")[0];
 
+  // ── lastmod, honestly ────────────────────────────────────────────────
+  //
+  // A sitemap lastmod is a claim about when the PAGE last changed. Stamping
+  // every URL with the build time is the falsification the spec warns about:
+  // Google learns the field is noise and stops using it. Facility pages carry
+  // their own updated_at; city and state pages derive theirs from the most
+  // recently changed facility they list, because that is genuinely when their
+  // content last moved.
+  const dayOf = (iso: string | null | undefined): string | undefined =>
+    iso ? iso.split("T")[0] : undefined;
+
+  const latestByState = new Map<string, string>();
+  const latestByCity = new Map<string, string>();
+  let latestOverall = "";
+  for (const r of rows) {
+    const d = dayOf(r.updated_at);
+    if (!d) continue;
+    if (d > (latestByState.get(r.state) ?? "")) latestByState.set(r.state, d);
+    const cityKey = `${r.state}|${r.city.toLowerCase()}`;
+    if (d > (latestByCity.get(cityKey) ?? "")) latestByCity.set(cityKey, d);
+    if (d > latestOverall) latestOverall = d;
+  }
+  const siteLastmod = latestOverall || now;
+
+  // ── URL validity ─────────────────────────────────────────────────────
+  //
+  // A sitemap must contain only 200-status canonical URLs. Search Console
+  // reported pages-with-redirect and soft 404s in ours. The facility route is
+  // /facility/([A-Za-z0-9-]+), so a row whose id or slug falls outside that
+  // cannot resolve and must not be listed.
+  const FACILITY_SEGMENT = /^[A-Za-z0-9-]+$/;
+  const skipped: string[] = [];
+  const validRows = rows.filter((r) => {
+    if (!r.cms_id || !r.slug) {
+      skipped.push(`${r.cms_id || "(no id)"}: missing id or slug`);
+      return false;
+    }
+    if (!FACILITY_SEGMENT.test(`${r.cms_id}-${r.slug}`)) {
+      skipped.push(`${r.cms_id}-${r.slug}: not a routable path segment`);
+      return false;
+    }
+    return true;
+  });
+  if (skipped.length > 0) {
+    console.warn(`Excluded ${skipped.length} facility URLs that would not resolve:`);
+    for (const m of skipped.slice(0, 20)) console.warn(`  ${m}`);
+  }
+
+  // State slug -> most recent facility change in that state.
+  const stateLastmodBySlug = new Map<string, string>();
+  for (const [abbr, d] of latestByState) {
+    const info = STATE_NAMES[abbr.toUpperCase()];
+    if (info?.slug) stateLastmodBySlug.set(info.slug, d);
+  }
+
   const coreEntries: SitemapEntry[] = [
-    { loc: `${BASE}/`, lastmod: now, changefreq: "weekly", priority: "1.0" },
+    { loc: `${BASE}/`, lastmod: siteLastmod, changefreq: "weekly", priority: "1.0" },
     {
       loc: `${BASE}/about`,
-      lastmod: now,
+      lastmod: siteLastmod,
       changefreq: "monthly",
       priority: "0.5",
     },
     {
       loc: `${BASE}/reports/staffing-standard-repeal`,
-      lastmod: now,
+      lastmod: siteLastmod,
       changefreq: "monthly",
       priority: "0.7",
     },
     {
       loc: `${BASE}/states`,
-      lastmod: now,
+      lastmod: siteLastmod,
       changefreq: "weekly",
       priority: "0.9",
     },
     ...stateSlugs.map((s) => ({
       loc: `${BASE}/state/${escapeXml(s)}`,
-      lastmod: now,
+      lastmod: stateLastmodBySlug.get(s) ?? siteLastmod,
       changefreq: "weekly",
       priority: "0.8" as string,
     })),
   ];
+
+  // City URL -> most recent change among the facilities it lists.
+  const cityLastmodByUrl = new Map<string, string>();
+  for (const [key, d] of latestByCity) {
+    const [abbr, cityLower] = key.split("|");
+    const info = STATE_NAMES[(abbr ?? "").toUpperCase()];
+    if (!info) continue;
+    cityLastmodByUrl.set(`${BASE}/state/${info.slug}/${citySlug(cityLower ?? "")}`, d);
+  }
 
   const cityEntries: SitemapEntry[] = [...new Set(cityRows
     .map((r) => {
@@ -122,37 +186,72 @@ async function main() {
     })
     .filter((u): u is string => u !== null))].map((u) => ({
       loc: escapeXml(u),
-      lastmod: now,
+      lastmod: cityLastmodByUrl.get(u) ?? siteLastmod,
       changefreq: "weekly",
       priority: "0.7" as string,
     }));
 
-  const facilityEntries: SitemapEntry[] = rows.map((r) => ({
-    loc: `${BASE}/facility/${escapeXml(r.cms_id)}-${escapeXml(r.slug)}`,
-    lastmod: r.updated_at ? r.updated_at.split("T")[0] : now,
-    changefreq: "monthly",
-    priority: "0.6" as string,
-  }));
+  // ── Facility shards, one per state ───────────────────────────────────
+  //
+  // The corpus fits inside a single file today, but a per-state split makes an
+  // indexation problem attributable to a state instead of to one opaque
+  // 14,700-URL document, and keeps every shard far below the 50,000-URL and
+  // 50MB limits as the corpus grows.
+  const SHARD_URL_LIMIT = 45000;
+  const byState = new Map<string, SitemapEntry[]>();
+  for (const r of validRows) {
+    const info = STATE_NAMES[r.state.toUpperCase()];
+    const slug = info?.slug ?? r.state.toLowerCase();
+    const list = byState.get(slug) ?? [];
+    list.push({
+      loc: `${BASE}/facility/${escapeXml(r.cms_id)}-${escapeXml(r.slug)}`,
+      lastmod: dayOf(r.updated_at) ?? siteLastmod,
+      changefreq: "monthly",
+      priority: "0.6",
+    });
+    byState.set(slug, list);
+  }
+
+  mkdirSync("public", { recursive: true });
+
+  const facilityShardFiles: Array<{ key: string; path: string; loc: string }> = [];
+  let facilityUrlTotal = 0;
+  for (const [slug, entries] of [...byState.entries()].sort()) {
+    // Split further if a single state ever exceeds the per-file limit.
+    for (let i = 0; i * SHARD_URL_LIMIT < entries.length; i += 1) {
+      const chunk = entries.slice(i * SHARD_URL_LIMIT, (i + 1) * SHARD_URL_LIMIT);
+      const suffix = i === 0 ? slug : `${slug}-${i + 1}`;
+      const key = `sitemap-facilities-${suffix}`;
+      const path = `public/${key}.xml`;
+      writeFileSync(path, toXml(chunk));
+      facilityShardFiles.push({ key, path, loc: `${BASE}/${key}.xml` });
+      facilityUrlTotal += chunk.length;
+    }
+  }
 
   const sitemapIndex = toSitemapIndex([
     `${BASE}/sitemap-core.xml`,
     `${BASE}/sitemap-cities.xml`,
-    `${BASE}/sitemap-facilities.xml`,
+    ...facilityShardFiles.map((f) => f.loc),
   ]);
 
-  mkdirSync("public", { recursive: true });
   writeFileSync("public/sitemap.xml", sitemapIndex);
   writeFileSync("public/sitemap-core.xml", toXml(coreEntries));
   writeFileSync("public/sitemap-cities.xml", toXml(cityEntries));
-  writeFileSync("public/sitemap-facilities.xml", toXml(facilityEntries));
   console.log(`Wrote public/sitemap-core.xml with ${coreEntries.length} URLs`);
   console.log(`Wrote public/sitemap-cities.xml with ${cityEntries.length} URLs`);
-  console.log(`Wrote public/sitemap-facilities.xml with ${facilityEntries.length} URLs`);
+  console.log(
+    `Wrote ${facilityShardFiles.length} facility shards with ${facilityUrlTotal} URLs total`,
+  );
 
   // Upload to KV
   try {
     const generatedAt = new Date().toISOString();
-    for (const upload of SITEMAP_UPLOADS) {
+    const uploads = [
+      ...SITEMAP_UPLOADS.filter((u) => u.key !== "sitemap-facilities"),
+      ...facilityShardFiles.map((f) => ({ key: f.key, path: f.path })),
+    ];
+    for (const upload of uploads) {
       if (!existsSync(upload.path)) {
         console.warn(`Skipping ${upload.path}; file does not exist`);
         continue;

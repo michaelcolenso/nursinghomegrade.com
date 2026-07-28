@@ -13,6 +13,13 @@ export interface CityPageData {
   gradeDistribution: Record<string, number>;
   facilities: Facility[];
   siblingCities: Array<{ city: string; count: number }>;
+  /**
+   * Facilities just outside this city, nearest first. Small cities are often
+   * nobody's nearest neighbour from a dense metro, so without a link from a
+   * neighbouring city page they end up with only their own city listing pointing
+   * at them. See src/link-graph.ts.
+   */
+  nearbyOutsideCity?: Facility[];
 }
 
 function renderCityGradeDistribution(dist: Record<string, number>, total: number): string {
@@ -42,12 +49,35 @@ function renderCityRelatedLinks(
   stateName: string,
   currentCitySlug: string,
   siblingCities: Array<{ city: string; count: number }>,
+  nearbyOutsideCity: Facility[] = [],
 ): string {
   const otherCities = siblingCities
     .filter(c => toCitySlug(c.city) !== currentCitySlug)
     .slice(0, 8);
 
-  if (otherCities.length === 0) return "";
+  // Direct links to individual facilities in neighbouring towns. A sole-facility
+  // town is often nobody's nearest neighbour from a dense metro, so without this
+  // it has only its own city listing pointing at it and falls below the
+  // three-inbound-link threshold.
+  const nearbyLinks = nearbyOutsideCity
+    .slice(0, 6)
+    .map(
+      (f) =>
+        `<li><a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}" style="color:var(--ink);text-decoration:none;font-weight:600;font-size:0.95rem;">${escHtml(f.name)} — ${escHtml(f.city)} (Grade ${escHtml(f.grade_letter)})</a></li>`,
+    )
+    .join("");
+
+  const nearbyBlock = nearbyLinks
+    ? `
+        <div>
+          <h3 style="font-size:0.8rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-s);">Nearby Facilities</h3>
+          <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:var(--space-2xs);">
+            ${nearbyLinks}
+          </ul>
+        </div>`
+    : "";
+
+  if (otherCities.length === 0 && !nearbyLinks) return "";
 
   const cityLinks = otherCities.map(c =>
     `<li><a href="/state/${escHtml(stateSlug)}/${escHtml(toCitySlug(c.city))}" style="color:var(--ink);text-decoration:none;font-weight:600;font-size:0.95rem;">Nursing homes in ${escHtml(c.city)} (${c.count})</a></li>`
@@ -63,6 +93,7 @@ function renderCityRelatedLinks(
             ${cityLinks}
           </ul>
         </div>
+        ${nearbyBlock}
         <div>
           <h3 style="font-size:0.8rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-s);">Browse by State</h3>
           <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:var(--space-2xs);">
@@ -87,6 +118,7 @@ export function cityPage(data: CityPageData): string {
     gradeDistribution,
     facilities,
     siblingCities,
+    nearbyOutsideCity = [],
   } = data;
 
   const baseUrl = "https://nursinghomegrade.com";
@@ -190,7 +222,7 @@ export function cityPage(data: CityPageData): string {
       </form>
     </div>
 
-    ${renderCityRelatedLinks(stateSlug, stateName, citySlug, siblingCities)}
+    ${renderCityRelatedLinks(stateSlug, stateName, citySlug, siblingCities, nearbyOutsideCity)}
   `;
 
   const extraScripts = `

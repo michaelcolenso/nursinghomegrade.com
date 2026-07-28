@@ -284,7 +284,7 @@ function renderNearbyFacilities(current: FacilityPageData, nearby: Facility[]): 
           <h2 id="nearby-heading">Nearby facilities in ${escHtml(current.city)}</h2>
           <p>Compare local nursing homes using the same CMS-backed grading method.</p>
         </div>
-        <a class="btn-secondary" href="/compare?ids=${encodeURIComponent(compareIds)}">Compare nearby →</a>
+        <a class="btn-secondary" rel="nofollow" href="/compare?ids=${encodeURIComponent(compareIds)}">Compare nearby →</a>
       </div>
       <div class="nearby-grid">
         ${cards}
@@ -295,8 +295,8 @@ function renderNearbyFacilities(current: FacilityPageData, nearby: Facility[]): 
 
 function renderRelatedLinks(
   current: FacilityPageData,
-  cityFacilities: Facility[],
-  stateTopRated: Facility[],
+  peers: Facility[],
+  betterNearby: Facility[],
   cardCount = 0,
 ): string {
   const stateInfo = getStateInfo(current.state);
@@ -304,42 +304,62 @@ function renderRelatedLinks(
   const stateName = stateInfo?.name ?? current.state;
   const cSlug = citySlug(current.city);
 
-  // Skip the same-city facilities already rendered as cards by renderNearbyFacilities
-  // so we don't link the same URLs twice on one page (keeps link count under ~20).
-  const extraCityFacilities = cityFacilities.slice(cardCount);
+  // Skip peers already rendered as cards above so the same URL is not linked
+  // twice on one page.
+  const extraPeers = peers.slice(cardCount);
 
-  const cityIds = new Set(cityFacilities.map(f => f.cms_id));
-  cityIds.add(current.cms_id);
-  const stateFiltered = stateTopRated.filter(f => !cityIds.has(f.cms_id)).slice(0, 4);
+  // The two peer queries run independently in the handler, so a facility can
+  // legitimately appear in both. Dedupe here, where we know exactly what has
+  // already been rendered, rather than relying on the caller to pre-exclude.
+  const alreadyLinked = new Set<string>([current.cms_id, ...peers.map((f) => f.cms_id)]);
+  const betterFiltered = betterNearby.filter((f) => !alreadyLinked.has(f.cms_id));
 
-  const cityLinks = extraCityFacilities.map(f =>
-    `<li><a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}" style="color:var(--ink);text-decoration:none;font-weight:600;font-size:0.95rem;">${escHtml(f.name)} (Grade ${escHtml(f.grade_letter)})</a></li>`
-  ).join("");
+  const link = (f: Facility, withCity: boolean) =>
+    `<li><a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}" style="color:var(--ink);text-decoration:none;font-weight:600;font-size:0.95rem;">${escHtml(f.name)}${withCity ? ` — ${escHtml(f.city)}` : ""} (Grade ${escHtml(f.grade_letter)})</a></li>`;
 
-  // Cross-city links: include the city in the anchor text so it stays descriptive.
-  const stateLinks = stateFiltered.map(f =>
-    `<li><a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}" style="color:var(--ink);text-decoration:none;font-weight:600;font-size:0.95rem;">${escHtml(f.name)} — ${escHtml(f.city)} (Grade ${escHtml(f.grade_letter)})</a></li>`
-  ).join("");
+  const peerLinks = extraPeers.map((f) => link(f, f.city !== current.city)).join("");
+
+  // Better-graded alternatives nearby. Genuinely useful to a family reading a
+  // poorly graded facility's page, and it spreads internal links across the long
+  // tail instead of pointing every page at the same statewide winners.
+  const betterBlock =
+    betterFiltered.length > 0
+      ? `
+        <div>
+          <h3 style="font-size:1.1rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-s);">Better graded nearby</h3>
+          <ul style="list-style:none;padding:0;margin:0;display:grid;gap:var(--space-xs);">
+            ${betterFiltered.map((f) => link(f, true)).join("")}
+          </ul>
+        </div>`
+      : "";
+
+  const peerBlock =
+    peerLinks || extraPeers.length > 0
+      ? `
+        <div>
+          <h3 style="font-size:1.1rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-s);">Near ${escHtml(current.city)}</h3>
+          <ul style="list-style:none;padding:0;margin:0;display:grid;gap:var(--space-xs);">
+            ${peerLinks}
+            <li><a href="/state/${stateSlug}/${cSlug}" style="color:var(--accent);font-weight:700;">View all ${escHtml(current.city)} facilities →</a></li>
+          </ul>
+        </div>`
+      : `
+        <div>
+          <h3 style="font-size:1.1rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-s);">Near ${escHtml(current.city)}</h3>
+          <ul style="list-style:none;padding:0;margin:0;display:grid;gap:var(--space-xs);">
+            <li><a href="/state/${stateSlug}/${cSlug}" style="color:var(--accent);font-weight:700;">View all ${escHtml(current.city)} facilities →</a></li>
+            <li><a href="/state/${stateSlug}" style="color:var(--accent);font-weight:700;">View all ${escHtml(stateName)} facilities →</a></li>
+          </ul>
+        </div>`;
 
   return `
     <div style="margin-top:var(--space-2xl);padding-top:var(--space-xl);border-top:2px solid var(--ink);">
       <h2>More Facilities</h2>
       <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:var(--space-l);margin-top:var(--space-m);">
-        <div>
-          <h3 style="font-size:1.1rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-s);">More in ${escHtml(current.city)}</h3>
-          <ul style="list-style:none;padding:0;margin:0;display:grid;gap:var(--space-xs);">
-            ${cityLinks}
-            <li><a href="/state/${stateSlug}/${cSlug}" style="color:var(--accent);font-weight:700;">View all ${escHtml(current.city)} facilities →</a></li>
-          </ul>
-        </div>
-        <div>
-          <h3 style="font-size:1.1rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-s);">Top Rated in ${escHtml(stateName)}</h3>
-          <ul style="list-style:none;padding:0;margin:0;display:grid;gap:var(--space-xs);">
-            ${stateLinks}
-            <li><a href="/state/${stateSlug}" style="color:var(--accent);font-weight:700;">View all ${escHtml(stateName)} facilities →</a></li>
-          </ul>
-        </div>
+        ${peerBlock}
+        ${betterBlock}
       </div>
+      <p style="margin-top:var(--space-m);"><a href="/state/${stateSlug}" style="color:var(--accent);font-weight:700;">All ${escHtml(stateName)} facilities →</a></p>
     </div>
   `;
 }
@@ -348,7 +368,7 @@ export function facilityPage(
   f: FacilityPageData,
   deficiencies: Deficiency[] | null = [],
   nearby: Facility[] = [],
-  stateTopRated: Facility[] = [],
+  betterNearby: Facility[] = [],
   trajectory: Trajectory | null = null,
   assessment: string = "",
   summary: string = "",
@@ -511,7 +531,7 @@ export function facilityPage(
       </form>
     </div>
 
-    ${renderRelatedLinks(f, nearby, stateTopRated, NEARBY_CARD_COUNT)}
+    ${renderRelatedLinks(f, nearby, betterNearby, NEARBY_CARD_COUNT)}
   `;
   const canonicalPath = `/facility/${f.cms_id}-${f.slug}`;
   const extraHead = f.latitude && f.longitude ? `
@@ -552,8 +572,40 @@ export function facilityPage(
       "addressRegion": f.state,
       "postalCode": f.zip,
       "addressCountry": "US"
+    },
+    // CMS Certification Number — the stable federal identifier for this
+    // facility, and how a consumer can cross-reference us against CMS directly.
+    "identifier": {
+      "@type": "PropertyValue",
+      "propertyID": "CMS Certification Number (CCN)",
+      "value": f.cms_id
+    },
+    // Our score is an editorial assessment we compute, not an aggregation of
+    // user ratings, so it is published as a Review authored by us rather than
+    // as aggregateRating. aggregateRating asserts a collection of user reviews
+    // that does not exist here, and Google's review-snippet guidance requires
+    // such ratings to be user-sourced. See the PR for the full reasoning.
+    "review": {
+      "@type": "Review",
+      "author": { "@type": "Organization", "name": "NursingHomeGrade" },
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": f.grade_score,
+        "bestRating": 100,
+        "worstRating": 0,
+        "alternateName": `Grade ${f.grade_letter}`
+      },
+      "url": `https://nursinghomegrade.com/methodology`
     }
   };
+
+  if (f.latitude !== null && f.longitude !== null) {
+    nursingHomeSchema.geo = {
+      "@type": "GeoCoordinates",
+      "latitude": f.latitude,
+      "longitude": f.longitude
+    };
+  }
 
   if (f.latitude !== null && f.longitude !== null) {
     nursingHomeSchema.geo = {

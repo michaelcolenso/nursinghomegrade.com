@@ -6,7 +6,6 @@ import {
   generateOperatorSummary,
   generateStateSummary,
   generateCitySummary,
-  generateFacilitySummary,
 } from "../src/narrative";
 import type { Facility, Operator, Trajectory } from "../src/types";
 
@@ -190,21 +189,6 @@ describe("generateCitySummary", () => {
     expect(text).toContain("Birmingham, AL");
     expect(text).toContain("1 nursing facilit");
     expect(text).toContain("0%");
-  });
-});
-
-describe("generateFacilitySummary", () => {
-  it("includes facility name and trend", () => {
-    const traj: Trajectory = { cms_id: "015001", status: "improving", staffing_change_pct: 10, deficiency_change_pct: -5, grade_change: 5, rn_hours_trend: "up" };
-    const text = generateFacilitySummary(baseFacility, traj);
-    expect(text).toContain("Sunrise Care Center");
-    expect(text).toContain("grade of C");
-    expect(text).toContain("improving");
-  });
-
-  it("handles null trajectory", () => {
-    const text = generateFacilitySummary(baseFacility, null);
-    expect(text).toContain("unknown trend");
   });
 });
 

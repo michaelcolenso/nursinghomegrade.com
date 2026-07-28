@@ -6,7 +6,7 @@ import { RN_BENCHMARK, REPEAL_EFFECTIVE_DATE, REPEAL_REPORT_PATH } from "../staf
 // Editorial page explaining the regulatory status of the 2024 CMS minimum
 // staffing standard. The only numbers here that are not regulatory citations
 // come from `getBenchmarkShortfall` (CMS Provider Information file, column
-// `adjusted_rn_staffing_hours_per_resident_per_day`) and are computed per
+// `reported_rn_staffing_hours_per_resident_per_day`) and are computed per
 // request. Nothing on this page is hardcoded from a data snapshot.
 
 function renderStateTable(shortfall: BenchmarkShortfall): string {
@@ -205,10 +205,40 @@ export function staffingStandardRepealPage(shortfall: BenchmarkShortfall): strin
     </div>
   `;
 
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      headline: "The federal nursing home staffing standard was repealed",
+      description:
+        "What the 2024 CMS minimum staffing rule required, how it was vacated and repealed, what federal law requires now, and why NursingHomeGrade still grades against the repealed benchmark.",
+      // The date this page shipped. Not invented: it is the commit date of the
+      // Phase 1 change that introduced it.
+      datePublished: "2026-07-27",
+      dateModified: "2026-07-27",
+      author: { "@type": "Organization", name: "NursingHomeGrade", url: "https://nursinghomegrade.com/" },
+      publisher: { "@type": "Organization", name: "NursingHomeGrade", url: "https://nursinghomegrade.com/" },
+      mainEntityOfPage: { "@type": "WebPage", "@id": `https://nursinghomegrade.com${REPEAL_REPORT_PATH}` },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: "https://nursinghomegrade.com/" },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "The Repealed Staffing Standard",
+          item: `https://nursinghomegrade.com${REPEAL_REPORT_PATH}`,
+        },
+      ],
+    },
+  ];
+
   return layout(
     `The Repealed Federal Nursing Home Staffing Standard — NursingHomeGrade`,
     `The 0.55 RN hour federal staffing minimum was vacated by two courts, blocked by Congress through 2034, and repealed by CMS effective ${REPEAL_EFFECTIVE_DATE}. What applies now, and why NursingHomeGrade still grades against it.`,
     body,
-    { canonicalPath: REPEAL_REPORT_PATH },
+    { canonicalPath: REPEAL_REPORT_PATH, jsonLd },
   );
 }

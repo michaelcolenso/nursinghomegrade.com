@@ -5,6 +5,7 @@ import {
   getCitySnapshot,
   getNationalPctFailing,
   getStateCityList,
+  getPeerFacilities,
 } from "../db";
 import { cityPage } from "../templates/city";
 import { notFoundPage, errorPage } from "../templates/subscribe";
@@ -39,6 +40,13 @@ export async function handleCity(request: Request, env: Env, stateSlug: string, 
       getStateCityList(env, stateAbbr),
     ]);
 
+    // Facilities just outside this city, anchored on a facility in it. Gives
+    // small towns inbound links from neighbouring city pages.
+    const anchor = snapshot?.facilities?.[0];
+    const nearbyOutsideCity = anchor
+      ? (await getPeerFacilities(env, anchor, 12)).filter((f) => f.city !== anchor.city).slice(0, 6)
+      : [];
+
     if (!snapshot) {
       const html = notFoundPage(new URL(request.url).pathname);
       return new Response(html, { status: 404, headers: { "Content-Type": "text/html;charset=UTF-8" } });
@@ -54,6 +62,7 @@ export async function handleCity(request: Request, env: Env, stateSlug: string, 
       nationalPctFailing,
       gradeDistribution: snapshot.gradeDistribution,
       facilities: snapshot.facilities,
+      nearbyOutsideCity,
       siblingCities: allCities,
     });
 
