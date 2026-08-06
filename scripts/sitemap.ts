@@ -36,19 +36,29 @@ const SITEMAP_UPLOADS = [
 /**
  * Parses wrangler's `--json` output.
  *
- * wrangler writes advisory notices to stdout ahead of the JSON — "Proxy
- * environment variables detected", update banners, and so on — so parsing the
- * raw stream fails with "Unexpected token" on any machine that triggers one.
- * Start from the first structural character instead.
+ * wrangler writes advisory text to stdout ahead of the JSON — "Proxy
+ * environment variables detected" behind a proxy, `▲ [WARNING] ...` update
+ * banners elsewhere — so parsing the raw stream fails with "Unexpected token".
+ *
+ * Seeking to the first `[` or `{` is not enough: `[WARNING]` contains one. So
+ * try each structural character in turn and keep the first that yields valid
+ * JSON, which is the payload itself rather than any bracket inside the prose.
  */
 function parseWranglerJson<T>(raw: string, what: string): T {
-  const start = raw.search(/[[{]/);
-  if (start === -1) throw new Error(`No JSON found in wrangler output for ${what}:\n${raw}`);
-  try {
-    return JSON.parse(raw.slice(start)) as T;
-  } catch (err) {
-    throw new Error(`Could not parse wrangler output for ${what}: ${(err as Error).message}\n${raw.slice(0, 500)}`);
+  let lastError: string | null = null;
+  for (let i = 0; i < raw.length; i += 1) {
+    const ch = raw[i];
+    if (ch !== "[" && ch !== "{") continue;
+    try {
+      return JSON.parse(raw.slice(i)) as T;
+    } catch (err) {
+      lastError = (err as Error).message;
+    }
   }
+  throw new Error(
+    `Could not parse wrangler output for ${what}` +
+      `${lastError ? ` (last error: ${lastError})` : ""}:\n${raw.slice(0, 500)}`,
+  );
 }
 
 async function main() {
