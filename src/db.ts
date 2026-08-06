@@ -1,4 +1,4 @@
-import type { Facility, FacilityInspectionDetails, Deficiency, Env, Operator, FacilitySnapshot } from "./types";
+import type { Facility, FacilityInspectionDetails, Deficiency, Env, Operator, FacilitySnapshot, FacilityPenalty } from "./types";
 import { cityDisplayName, citySlug } from "./states";
 import type { DataRelease } from "./templates/data-sources";
 
@@ -602,4 +602,27 @@ export async function getFacilitiesWithUncorrectedDeficiencies(env: Env, limit =
     LIMIT ?`
   ).bind(limit).all<UncorrectedRow>();
   return results.results ?? [];
+}
+
+/**
+ * Enforcement actions for one facility from the CMS Penalties file.
+ *
+ * Returns null when the lookup fails (including when the table does not exist
+ * yet), [] when CMS lists no penalty for the facility. The template treats the
+ * two differently: [] is a statement we can make, null is a gap we disclose.
+ */
+export async function getFacilityPenalties(env: Env, cmsId: string): Promise<FacilityPenalty[] | null> {
+  try {
+    const results = await env.DB.prepare(
+      `SELECT id, cms_id, penalty_date, penalty_type, fine_amount,
+              payment_denial_start_date, payment_denial_length_days, processing_date
+         FROM facility_penalties WHERE cms_id = ?
+        ORDER BY penalty_date DESC, id DESC`,
+    )
+      .bind(cmsId)
+      .all<FacilityPenalty>();
+    return results.results ?? [];
+  } catch {
+    return null;
+  }
 }

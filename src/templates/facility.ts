@@ -1,9 +1,21 @@
-import type { FacilityPageData, Deficiency, Facility, Trajectory, Operator } from "../types";
+import type { FacilityPageData, Deficiency, Facility, Trajectory, Operator, FacilityPenalty } from "../types";
 import { citySlug, getStateInfo } from "../states";
 import { layout, escHtml } from "./layout";
 import { renderTrustModule } from "./trust";
 import { RN_BENCHMARK, BENCHMARK_ROW_NOTE, benchmarkLabel, repealDisclosureHtml } from "../staffing-standard";
 import { scoreToSummary } from "../scoring";
+import {
+  buildContactFacts,
+  buildFacilityTitle,
+  buildVerdict,
+  formatDollars,
+  formatIsoDate,
+  formatPhone,
+  isGovernmentOwned,
+  summarizePenalties,
+  telHref,
+  type PenaltySummary,
+} from "../facility-profile";
 
 // Number of same-city facilities shown as rich cards. The related-links block
 // skips these so the same facility isn't linked twice on one page.
@@ -364,6 +376,323 @@ function renderRelatedLinks(
   `;
 }
 
+// ── Identity, verdict, contact, enforcement, sources ─────────────────────────
+//
+// Each renderer below returns "" when the facts behind it are unavailable. A
+// heading is never printed over an empty section, and no renderer emits a
+// placeholder, a dash, or "N/A" in place of data we do not hold.
+
+function factRow(label: string, value: string): string {
+  return `
+    <div>
+      <dt style="font-weight:700;text-transform:uppercase;font-size:0.75rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">${escHtml(label)}</dt>
+      <dd style="margin:0;font-size:1rem;font-weight:600;">${value}</dd>
+    </div>`;
+}
+
+function renderIdentityFacts(f: FacilityPageData): string {
+  const contact = buildContactFacts(f);
+  const rows: string[] = [];
+
+  rows.push(factRow("Provider number (CCN)", escHtml(f.cms_id)));
+  if (f.provider_type) rows.push(factRow("Certification", escHtml(f.provider_type)));
+  if (contact.ownership) rows.push(factRow("Ownership", escHtml(contact.ownership)));
+  if (f.certified_beds !== null && f.certified_beds !== undefined) {
+    rows.push(factRow("Certified beds", `${f.certified_beds}`));
+  }
+  if (contact.phone && contact.telHref) {
+    rows.push(factRow("Phone", `<a href="${escHtml(contact.telHref)}">${escHtml(contact.phone)}</a>`));
+  }
+  if (contact.verifiedOn) {
+    rows.push(factRow("CMS data as of", escHtml(contact.verifiedOn)));
+  }
+
+  return `
+    <dl class="facility-facts" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--space-m);margin:0 0 var(--space-l);padding:var(--space-m);border:1px solid var(--rule);background:var(--bg);">
+      ${rows.join("")}
+    </dl>`;
+}
+
+function renderVerdict(verdict: string): string {
+  if (!verdict) return "";
+  return `
+    <section aria-labelledby="verdict-heading" style="margin-bottom:var(--space-xl);">
+      <h2 id="verdict-heading" style="font-size:1.1rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-xs);">What the records show</h2>
+      <p class="lede" style="max-width:800px;margin:0;">${escHtml(verdict)}</p>
+    </section>`;
+}
+
+/**
+ * The heading families searching "[facility] reviews" land on. It says plainly
+ * what this page is and — just as importantly — what it is not: we publish
+ * analysis of government records, not resident or family testimonials, and we
+ * do not collect, host, or aggregate consumer reviews.
+ */
+function renderReviewsContext(f: FacilityPageData): string {
+  return `
+    <h2 id="reviews">Reviews, Ratings and Official Records</h2>
+    <p class="lede" style="font-size:1.125rem;max-width:800px;margin-bottom:var(--space-l);">
+      This page reviews ${escHtml(f.name)} using federal government records — CMS star ratings, health-inspection
+      findings, staffing data and enforcement actions. NursingHomeGrade does not collect, host or publish resident
+      or family testimonials, and no star rating below is a consumer review score.
+    </p>`;
+}
+
+function renderStaffingComparison(
+  f: FacilityPageData,
+  stateRnMedian: number | null,
+  nationalAvgRn: number | null,
+): string {
+  const rn = f.rn_hours_per_resident_day;
+  const rows: string[] = [];
+
+  if (rn !== null) {
+    rows.push(`<tr><th scope="row" style="text-align:left;padding:var(--space-xs) 0;">This facility</th><td style="text-align:right;font-weight:700;">${rn.toFixed(2)} hrs</td></tr>`);
+    if (stateRnMedian !== null && stateRnMedian > 0) {
+      rows.push(`<tr><th scope="row" style="text-align:left;padding:var(--space-xs) 0;font-weight:400;color:var(--muted);">${escHtml(f.state)} median</th><td style="text-align:right;">${stateRnMedian.toFixed(2)} hrs</td></tr>`);
+    }
+    if (nationalAvgRn !== null && nationalAvgRn > 0) {
+      rows.push(`<tr><th scope="row" style="text-align:left;padding:var(--space-xs) 0;font-weight:400;color:var(--muted);">National average</th><td style="text-align:right;">${nationalAvgRn.toFixed(2)} hrs</td></tr>`);
+    }
+  }
+
+  const turnover: string[] = [];
+  if (f.rn_turnover_pct !== null && f.rn_turnover_pct !== undefined) {
+    turnover.push(`Registered nurse turnover: <strong>${f.rn_turnover_pct.toFixed(1)}%</strong>`);
+  }
+  if (f.total_nursing_turnover_pct !== null && f.total_nursing_turnover_pct !== undefined) {
+    turnover.push(`Total nursing staff turnover: <strong>${f.total_nursing_turnover_pct.toFixed(1)}%</strong>`);
+  }
+
+  if (rows.length === 0 && turnover.length === 0) return "";
+
+  const period = formatIsoDate(f.cms_processing_date);
+  const periodNote = period
+    ? `<p style="font-size:0.85rem;color:var(--muted);margin-top:var(--space-xs);">Staffing figures are the values CMS published in its file processed ${escHtml(period)}, drawn from payroll-based journal reporting.</p>`
+    : `<p style="font-size:0.85rem;color:var(--muted);margin-top:var(--space-xs);">Staffing figures come from CMS payroll-based journal reporting — <a href="/data-sources">see release dates</a>.</p>`;
+
+  return `
+    <h2 id="staffing">Staffing Compared With State and National Levels</h2>
+    ${rows.length > 0 ? `
+    <div class="table-container">
+      <table style="width:100%;border-collapse:collapse;">
+        <caption class="visually-hidden">Registered nurse hours per resident per day compared with state and national levels</caption>
+        <tbody>${rows.join("")}</tbody>
+      </table>
+    </div>` : ""}
+    ${turnover.length > 0 ? `<p style="margin-top:var(--space-s);">${turnover.join(" · ")}</p>` : ""}
+    ${periodNote}`;
+}
+
+function renderPenalties(f: FacilityPageData, summary: PenaltySummary): string {
+  const heading = `<h2 id="enforcement">Fines and Enforcement Actions</h2>`;
+
+  if (summary.unknown) {
+    return `${heading}
+      <p style="color:var(--muted);margin-bottom:var(--space-xl);">
+        We do not hold federal enforcement records for this facility. That is a gap in our data, not a statement that
+        no fine or payment denial exists.
+      </p>`;
+  }
+
+  if (summary.actions.length === 0) {
+    // Aggregates are present and zero — an affirmative fact, scoped to the
+    // window the CMS file covers rather than to all of history.
+    if (summary.affirmativelyNone) {
+      const asOf = formatIsoDate(f.cms_processing_date);
+      return `${heading}
+        <p style="margin-bottom:var(--space-xl);">
+          CMS lists no fines and no payment denials for ${escHtml(f.name)} in the enforcement records covering the
+          last three years${asOf ? `, as published in the file processed ${escHtml(asOf)}` : ""}.
+        </p>`;
+    }
+    // Counts without per-action detail: report the counts, say what is missing.
+    const parts: string[] = [];
+    if (summary.fineCount > 0) {
+      const total = formatDollars(summary.fineTotal);
+      parts.push(`${summary.fineCount} ${summary.fineCount === 1 ? "fine" : "fines"}${total ? ` totalling ${total}` : ""}`);
+    }
+    if (summary.paymentDenialCount > 0) {
+      parts.push(`${summary.paymentDenialCount} ${summary.paymentDenialCount === 1 ? "payment denial" : "payment denials"}`);
+    }
+    if (parts.length === 0) return "";
+    return `${heading}
+      <p style="margin-bottom:var(--space-xl);">
+        CMS reports ${escHtml(parts.join(" and "))} for this facility. Dates for the individual actions are not
+        present in the records we hold.
+      </p>`;
+  }
+
+  const rows = summary.actions
+    .map((p) => {
+      const date = formatIsoDate(p.penalty_date) ?? "Date not published";
+      const type = p.penalty_type ?? "Enforcement action";
+      const amount =
+        (p.penalty_type ?? "").toLowerCase() === "fine"
+          ? (formatDollars(p.fine_amount) ?? "Amount not published")
+          : p.payment_denial_length_days !== null
+            ? `${p.payment_denial_length_days} days`
+            : "Length not published";
+      return `<tr>
+        <td style="padding:var(--space-xs) 0;border-bottom:1px solid var(--rule);">${escHtml(date)}</td>
+        <td style="padding:var(--space-xs) 0;border-bottom:1px solid var(--rule);">${escHtml(type)}</td>
+        <td style="padding:var(--space-xs) 0;border-bottom:1px solid var(--rule);text-align:right;font-weight:700;">${escHtml(amount)}</td>
+      </tr>`;
+    })
+    .join("");
+
+  const total = formatDollars(summary.fineTotal);
+  const totalLine =
+    summary.fineCount > 0 && total
+      ? `<p style="margin-top:var(--space-s);">${summary.fineCount} ${summary.fineCount === 1 ? "fine" : "fines"} totalling <strong>${escHtml(total)}</strong>.</p>`
+      : "";
+
+  return `${heading}
+    <p style="margin-bottom:var(--space-m);">
+      Penalties CMS has imposed on this facility. A fine is a civil money penalty; a payment denial suspends Medicare
+      or Medicaid payment for new admissions.
+    </p>
+    <div class="table-container">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th scope="col" style="text-align:left;padding-bottom:var(--space-2xs);border-bottom:2px solid var(--ink);">Date</th>
+            <th scope="col" style="text-align:left;padding-bottom:var(--space-2xs);border-bottom:2px solid var(--ink);">Action</th>
+            <th scope="col" style="text-align:right;padding-bottom:var(--space-2xs);border-bottom:2px solid var(--ink);">Amount or length</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    ${totalLine}
+    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:var(--space-xl);">Source: CMS Penalties file (dataset g6vv-u9sr).</p>`;
+}
+
+/**
+ * States exactly which official records this page covers.
+ *
+ * For government-owned facilities the query behind the page is often for an
+ * audit report — a document produced by a county or state auditor, not by CMS.
+ * We hold federal survey records and nothing else, so the section says so
+ * explicitly rather than implying an audit was reviewed.
+ */
+function renderInspectionRecords(f: FacilityPageData, deficiencies: Deficiency[] | null): string {
+  const government = isGovernmentOwned(f);
+  const heading = government ? "Audit and Inspection Reports" : "Inspection Records Covered";
+  const latest = formatIsoDate(f.latest_standard_survey_date);
+
+  const cycles = deficiencies === null ? [] : [...new Set(deficiencies.map((d) => d.inspection_cycle ?? 0))].sort();
+  const surveyDates = deficiencies === null
+    ? []
+    : [...new Set(deficiencies.map((d) => d.survey_date).filter((d): d is string => !!d))].sort().reverse();
+
+  const coverage: string[] = [];
+  if (latest) coverage.push(`Most recent standard health survey: <strong>${escHtml(latest)}</strong>.`);
+  if (cycles.length > 0) {
+    coverage.push(`Citations shown below span ${cycles.length} recorded inspection ${cycles.length === 1 ? "cycle" : "cycles"}.`);
+  }
+  if (surveyDates.length > 0) {
+    const oldest = formatIsoDate(surveyDates[surveyDates.length - 1]);
+    const newest = formatIsoDate(surveyDates[0]);
+    if (oldest && newest && oldest !== newest) {
+      coverage.push(`Survey dates on file range from ${escHtml(oldest)} to ${escHtml(newest)}.`);
+    }
+  }
+
+  if (coverage.length === 0 && !government) return "";
+
+  const auditNote = government
+    ? `<p style="margin-bottom:var(--space-m);">
+         ${escHtml(f.name)} is a ${escHtml(f.ownership_type ?? "government-owned")} facility. The records on this page are the
+         federal health-inspection and enforcement records CMS publishes. We do not hold, and have not reviewed, any
+         separate financial or performance audit issued by a county, state or independent auditor — if one exists for this
+         facility, it is not part of the data described below.
+       </p>`
+    : "";
+
+  return `
+    <h2 id="records">${escHtml(heading)}</h2>
+    ${auditNote}
+    ${coverage.length > 0 ? `<ul style="margin-bottom:var(--space-m);padding-left:1.2em;">${coverage.map((c) => `<li>${c}</li>`).join("")}</ul>` : ""}
+    <p style="margin-bottom:var(--space-xl);">
+      Source records:
+      <a href="https://www.medicare.gov/care-compare/details/nursing-home/${escHtml(f.cms_id)}" rel="nofollow noopener" target="_blank">CMS Care Compare profile for provider ${escHtml(f.cms_id)} ↗</a>
+      · <a href="/data-sources">the federal files we load and when</a>.
+    </p>`;
+}
+
+function renderOwnershipAndContact(f: FacilityPageData, operator: Operator | null): string {
+  const c = buildContactFacts(f);
+  const rows: string[] = [];
+
+  rows.push(factRow("Facility name", escHtml(f.name)));
+  if (c.legalName && c.legalName.toUpperCase() !== f.name.toUpperCase()) {
+    rows.push(factRow("Legal business name", escHtml(c.legalName)));
+  }
+  rows.push(factRow("Address", escHtml(c.addressLine)));
+  if (c.phone && c.telHref) {
+    rows.push(factRow("Phone", `<a href="${escHtml(c.telHref)}">${escHtml(c.phone)}</a>`));
+  }
+  rows.push(factRow("Provider number (CCN)", escHtml(c.providerNumber)));
+  if (c.ownership) rows.push(factRow("Ownership type", escHtml(c.ownership)));
+  if (operator) {
+    rows.push(
+      factRow(
+        "Operator",
+        `<a href="/operator/${escHtml(operator.slug)}">${escHtml(operator.normalized_name)}</a> · ${operator.facility_count} facilities`,
+      ),
+    );
+  }
+  if (f.certification_date) {
+    const certified = formatIsoDate(f.certification_date);
+    if (certified) rows.push(factRow("Medicare/Medicaid certified since", escHtml(certified)));
+  }
+  rows.push(
+    factRow(
+      "Official record",
+      `<a href="${escHtml(c.cmsProfileUrl)}" rel="nofollow noopener" target="_blank">CMS Care Compare profile ↗</a>`,
+    ),
+  );
+  if (c.verifiedOn) rows.push(factRow("Details verified against CMS data dated", escHtml(c.verifiedOn)));
+
+  return `
+    <h2 id="contact">Ownership and Contact Information</h2>
+    <dl style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--space-m);margin:0 0 var(--space-s);padding:var(--space-m);border:2px solid var(--ink);">
+      ${rows.join("")}
+    </dl>
+    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:var(--space-xl);">
+      The federal nursing-home files publish no email address for certified facilities, so none is listed here. We do not
+      guess or construct contact addresses. Contact details above are reproduced from CMS Provider Information; call the
+      facility to confirm before relying on them.
+    </p>`;
+}
+
+function renderSources(f: FacilityPageData, hasPenaltyDetail: boolean): string {
+  const vintage = formatIsoDate(f.cms_processing_date);
+  const asOf = vintage ? ` (file processed ${escHtml(vintage)})` : "";
+  const items = [
+    `<li><strong>CMS Provider Information</strong>${asOf} — ratings, staffing, ownership, certification and contact details. <a href="https://data.cms.gov/provider-data/dataset/4pq5-n9py" rel="nofollow noopener" target="_blank">Dataset 4pq5-n9py ↗</a></li>`,
+    `<li><strong>CMS Health Deficiencies</strong> — inspection citations, scope and severity, correction status. <a href="https://data.cms.gov/provider-data/dataset/r5ix-sfxw" rel="nofollow noopener" target="_blank">Dataset r5ix-sfxw ↗</a></li>`,
+  ];
+  if (hasPenaltyDetail) {
+    items.push(
+      `<li><strong>CMS Penalties</strong> — fines and payment denials with the dates CMS recorded them. <a href="https://data.cms.gov/provider-data/dataset/g6vv-u9sr" rel="nofollow noopener" target="_blank">Dataset g6vv-u9sr ↗</a></li>`,
+    );
+  }
+  items.push(
+    `<li><strong>CMS Ownership</strong> — owning and managing organisations. <a href="https://data.cms.gov/provider-data/dataset/y2hd-n93e" rel="nofollow noopener" target="_blank">Dataset y2hd-n93e ↗</a></li>`,
+  );
+
+  return `
+    <h2 id="sources">Sources and Methodology</h2>
+    <ul style="padding-left:1.2em;margin-bottom:var(--space-s);">${items.join("")}</ul>
+    <p style="margin-bottom:var(--space-xl);">
+      The NursingHomeGrade score is our own calculation from these federal files — it is not a CMS rating and not a
+      consumer review score. <a href="/how-we-grade">See exactly how the score is calculated</a> ·
+      <a href="/methodology">full methodology</a> · <a href="/data-sources">source files and load dates</a>.
+    </p>`;
+}
+
 export function facilityPage(
   f: FacilityPageData,
   deficiencies: Deficiency[] | null = [],
@@ -373,6 +702,12 @@ export function facilityPage(
   assessment: string = "",
   summary: string = "",
   operator: Operator | null = null,
+  extras: {
+    /** null = lookup failed, [] = CMS lists no penalty for this facility. */
+    penalties?: FacilityPenalty[] | null;
+    stateRnMedian?: number | null;
+    nationalAvgRn?: number | null;
+  } = {},
 ): string {
   const stateInfo = getStateInfo(f.state);
   const stateSlug = stateInfo?.slug ?? f.state.toLowerCase();
@@ -395,14 +730,16 @@ export function facilityPage(
       ? `${rnHours.toFixed(2)} — ${benchmarkLabel(meetsMinimum)}`
       : "Not reported";
 
-  const qualityStars =
-    f.quality_rating !== null
-      ? `<span role="img" aria-label="${f.quality_rating} out of 5 stars">${"★".repeat(f.quality_rating)}${"☆".repeat(5 - f.quality_rating)}</span> (${f.quality_rating}/5)`
-      : "Not rated";
-  const staffingStars =
-    f.staffing_rating !== null
-      ? `<span role="img" aria-label="${f.staffing_rating} out of 5 stars">${"★".repeat(f.staffing_rating)}${"☆".repeat(5 - f.staffing_rating)}</span> (${f.staffing_rating}/5)`
-      : "Not rated";
+  const stars = (rating: number | null): string =>
+    rating === null
+      ? "Not rated"
+      : `<span role="img" aria-label="${rating} out of 5 stars">${"★".repeat(rating)}${"☆".repeat(Math.max(0, 5 - rating))}</span> (${rating}/5)`;
+  const qualityStars = stars(f.quality_rating);
+  const staffingStars = stars(f.staffing_rating);
+  // Overall and health-inspection ratings render only when CMS publishes them,
+  // so the row never shows "Not rated" four times over.
+  const overallStars = f.overall_rating !== null ? stars(f.overall_rating) : "";
+  const inspectionStars = f.inspection_rating !== null ? stars(f.inspection_rating) : "";
 
   const isPoorGrade = f.grade_letter === "D" || f.grade_letter === "F";
   const primaryCta = isPoorGrade
@@ -411,6 +748,12 @@ export function facilityPage(
   const secondaryCta = isPoorGrade
     ? `<a href="https://www.senioradvisor.com/nursing-homes" rel="nofollow noopener" target="_blank" class="btn-secondary">Compare nearby ↗</a>`
     : `<a href="https://www.caring.com/local/nursing-homes" rel="nofollow noopener" target="_blank" class="btn-secondary">Get free help ↗</a>`;
+
+  const penaltySummary = summarizePenalties(f, extras.penalties ?? null);
+  const verdict = buildVerdict(f, {
+    deficiencies: deficiencyDataAvailable ? deficiencyCounts : null,
+    penalties: penaltySummary,
+  });
 
   const deficiencySection = `
     <h2 id="inspections">Inspection Deficiencies</h2>
@@ -439,6 +782,7 @@ export function facilityPage(
           ${escHtml(f.address)}, ${escHtml(f.city)}, ${escHtml(f.state)} ${escHtml(f.zip)}
         </p>
         ${renderOperatorLink(operator)}
+        ${renderIdentityFacts(f)}
         <div style="display:flex;gap:var(--space-s);flex-wrap:wrap;margin-bottom:var(--space-m);">
           <button onclick="window.print()" class="btn-secondary" title="Print this report">Print Report</button>
           <button onclick="toggleSave('${escHtml(f.cms_id)}', '${escHtml(f.name.replace(/'/g, "\\'"))}', '${f.grade_letter}', ${f.grade_score})" id="save-${escHtml(f.cms_id)}" class="compare-toggle" aria-pressed="false" title="Add to compare">
@@ -456,13 +800,16 @@ export function facilityPage(
     </div>
 
     ${renderTrajectory(trajectory)}
+    ${renderVerdict(verdict)}
     ${renderAssessment(assessment)}
+
+    ${renderReviewsContext(f)}
 
     <p class="lede" style="max-width:800px;margin-bottom:var(--space-xl);">
       ${escHtml(scoreToSummary(f.grade_score, f.grade_letter, f.rn_hours_per_resident_day))}
     </p>
 
-    <h2 id="quality">Quality Breakdown</h2>
+    <h3 id="quality">Ratings and Grade Breakdown</h3>
     <div class="table-container quality-breakdown">
       <table class="quality-table">
         <tr class="quality-row" style="border-bottom:1px solid var(--rule);">
@@ -489,9 +836,11 @@ export function facilityPage(
         <tr class="quality-row" style="border-bottom:1px solid var(--rule);">
           <td class="quality-label-cell" style="padding:var(--space-m) 0;">
             <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">CMS Ratings</div>
-            <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Overall and Staffing quality ratings from CMS (1-5 stars).</div>
+            <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Federal five-star ratings published by CMS. These are regulatory ratings, not consumer review scores.</div>
           </td>
           <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Source Sans 3',system-ui,sans-serif;font-size:1.25rem;text-align:right;">
+            ${overallStars ? `<div style="margin-bottom:var(--space-3xs);">Overall: ${overallStars}</div>` : ""}
+            ${inspectionStars ? `<div style="margin-bottom:var(--space-3xs);">Health inspection: ${inspectionStars}</div>` : ""}
             <div style="margin-bottom:var(--space-3xs);">Quality: ${qualityStars}</div>
             <div>Staffing: ${staffingStars}</div>
           </td>
@@ -506,9 +855,27 @@ export function facilityPage(
     </div>
     <p style="font-size:0.85rem;color:var(--muted);margin-bottom:var(--space-xl);">Loaded into NursingHomeGrade on ${new Date(f.updated_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}. This is the load date, not the date CMS published the underlying survey data — <a href="/data-sources">see release dates</a>.</p>
 
+    <p style="max-width:800px;margin-bottom:var(--space-xl);">
+      CMS scores each facility from one to five stars — one is in the bottom fifth of facilities in its state on health
+      inspections, five is in the top tenth. Our own A–F grade is a separate 0–100 score built from staffing hours,
+      inspection citations and enforcement history, weighted as described in our
+      <a href="/how-we-grade">grading methodology</a>.
+    </p>
+
+    ${renderStaffingComparison(f, extras.stateRnMedian ?? null, extras.nationalAvgRn ?? null)}
+
+    ${renderInspectionRecords(f, deficiencies)}
+
     ${deficiencySection}
+
+    ${renderPenalties(f, penaltySummary)}
+
+    ${renderOwnershipAndContact(f, operator)}
+
     ${renderTrustModule()}
     ${renderNearbyFacilities(f, nearby.slice(0, NEARBY_CARD_COUNT))}
+
+    ${renderSources(f, penaltySummary.actions.length > 0)}
 
     <div class="cta-box">
       <h3>Need help choosing a facility?</h3>
@@ -580,24 +947,25 @@ export function facilityPage(
       "propertyID": "CMS Certification Number (CCN)",
       "value": f.cms_id
     },
-    // Our score is an editorial assessment we compute, not an aggregation of
-    // user ratings, so it is published as a Review authored by us rather than
-    // as aggregateRating. aggregateRating asserts a collection of user reviews
-    // that does not exist here, and Google's review-snippet guidance requires
-    // such ratings to be user-sourced. See the PR for the full reasoning.
-    "review": {
-      "@type": "Review",
-      "author": { "@type": "Organization", "name": "NursingHomeGrade" },
-      "reviewRating": {
-        "@type": "Rating",
-        "ratingValue": f.grade_score,
-        "bestRating": 100,
-        "worstRating": 0,
-        "alternateName": `Grade ${f.grade_letter}`
-      },
-      "url": `https://nursinghomegrade.com/methodology`
-    }
+    // No `review` and no `aggregateRating`. Our grade is a computed score over
+    // federal records, not a review of the facility by a person and not an
+    // aggregation of user ratings; publishing it under either type would assert
+    // consumer sentiment this site does not have. The grade is published below
+    // as additionalProperty instead, which describes it for what it is.
   };
+
+  if (f.phone) {
+    const tel = telHref(f.phone);
+    const display = formatPhone(f.phone);
+    if (tel && display) {
+      // Only the number CMS publishes, and only when it parses as a real
+      // 10-digit US number — never a reconstructed or partial one.
+      nursingHomeSchema.telephone = display;
+    }
+  }
+  if (f.legal_business_name && f.legal_business_name.trim() !== "") {
+    nursingHomeSchema.legalName = f.legal_business_name;
+  }
 
   if (f.latitude !== null && f.longitude !== null) {
     nursingHomeSchema.geo = {
@@ -642,6 +1010,26 @@ export function facilityPage(
   if (f.staffing_rating !== null) {
     additionalProperty.push({ "@type": "PropertyValue", "name": "CMS Staffing Rating", "value": f.staffing_rating, "unitText": "out of 5 stars" });
   }
+  if (f.overall_rating !== null) {
+    additionalProperty.push({ "@type": "PropertyValue", "name": "CMS Overall Rating", "value": f.overall_rating, "unitText": "out of 5 stars" });
+  }
+  if (f.inspection_rating !== null) {
+    additionalProperty.push({ "@type": "PropertyValue", "name": "CMS Health Inspection Rating", "value": f.inspection_rating, "unitText": "out of 5 stars" });
+  }
+  if (f.ownership_type) {
+    additionalProperty.push({ "@type": "PropertyValue", "name": "Ownership Type", "value": f.ownership_type });
+  }
+  if (f.certified_beds !== null && f.certified_beds !== undefined) {
+    additionalProperty.push({ "@type": "PropertyValue", "name": "Certified Beds", "value": f.certified_beds });
+  }
+  // Enforcement totals, published only when the underlying counts are present —
+  // an absent count must never surface as a zero implying a clean record.
+  if (f.number_of_fines !== null && f.number_of_fines !== undefined) {
+    additionalProperty.push({ "@type": "PropertyValue", "name": "CMS Fines", "value": f.number_of_fines });
+  }
+  if (f.total_fines_dollars !== null && f.total_fines_dollars !== undefined) {
+    additionalProperty.push({ "@type": "PropertyValue", "name": "Total CMS Fine Amount", "value": f.total_fines_dollars, "unitText": "USD" });
+  }
   nursingHomeSchema.additionalProperty = additionalProperty;
 
   const jsonLd = [
@@ -678,8 +1066,12 @@ export function facilityPage(
     }
   ];
 
-  const title = `${f.name} Nursing Home Report | ${f.city}, ${f.state}`;
-  
+  // Conditional pattern keyed to what this page actually renders — see
+  // buildFacilityTitle. Government-owned facilities get the audit wording
+  // because they carry an audit/inspection-records section; everything else
+  // gets the reviews/ratings/inspections wording.
+  const title = buildFacilityTitle(f);
+
   const metaIntro = summary || (f.grade_score >= 80
     ? `See the full quality report for ${f.name}: ${f.grade_score}/100 grade, staffing levels, deficiency history, and nearby alternatives.`
     : `See the full quality report for ${f.name}: staffing levels, inspection history, deficiency records, and nearby nursing home alternatives.`);

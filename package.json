@@ -9,7 +9,8 @@
     "test": "vitest run",
     "ingest": "npx tsx scripts/ingest.ts",
     "sitemap": "npx tsx scripts/sitemap.ts",
-    "check-orphans": "npx tsx scripts/check-orphans.ts"
+    "check-orphans": "npx tsx scripts/check-orphans.ts",
+    "check-sitemap": "npx tsx scripts/check-sitemap-live.ts"
   },
   "keywords": [],
   "author": "",

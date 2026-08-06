@@ -10,6 +10,7 @@ import {
   getNationalAverages,
   getStateRnMedian,
   getOperatorBySlug,
+  getFacilityPenalties,
 } from "../db";
 import { computeTrajectory } from "../trajectory";
 import { generateFacilityAssessment } from "../narrative";
@@ -44,7 +45,7 @@ export async function handleFacility(request: Request, env: Env, slugId: string)
         },
       });
 
-    const [inspectionDetails, deficiencies, nearby, betterNearby, snapshots, nationalAvg, stateRnMedian] = await Promise.all([
+    const [inspectionDetails, deficiencies, nearby, betterNearby, snapshots, nationalAvg, stateRnMedian, penalties] = await Promise.all([
       getFacilityInspectionDetails(env, facility.cms_id),
       getFacilityDeficiencies(env, facility.cms_id),
       // Peers for THIS facility, widening past the city when the city is small,
@@ -54,6 +55,7 @@ export async function handleFacility(request: Request, env: Env, slugId: string)
       getFacilitySnapshots(env, facility.cms_id),
       getNationalAverages(env),
       getStateRnMedian(env, facility.state),
+      getFacilityPenalties(env, facility.cms_id),
     ]);
 
     const trajectory = snapshots.length >= 3 ? computeTrajectory(snapshots) : null;
@@ -98,6 +100,13 @@ export async function handleFacility(request: Request, env: Env, slugId: string)
       assessment,
       summary,
       operator,
+      {
+        // null here means the penalties lookup failed. The template renders
+        // that as an explicit gap, never as "no penalties".
+        penalties,
+        stateRnMedian,
+        nationalAvgRn: nationalAvg.avgRnHours || null,
+      },
     );
     await pageCache.put(cacheKey, html, { expirationTtl: 86400 });
     return new Response(html, {

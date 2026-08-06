@@ -1,51 +1,36 @@
 // Run after data load: npx tsx scripts/sitemap.ts [--local|--remote]
-// Generates public/sitemap.xml and uploads available sitemap files to KV.
+// Generates public/sitemap*.xml, validates them against the sitemaps protocol,
+// and uploads them to KV. A validation error aborts the run before anything is
+// published — a sitemap that would earn a warning in Search Console should
+// never reach Search Console.
 
 import { getAllStateSlugs } from "../src/states";
 import { citySlug } from "../src/states";
+import {
+  SITEMAP_BASE,
+  escapeXml,
+  newestLastmod,
+  toSitemapIndex,
+  toXml,
+  validateIndex,
+  validateUrlset,
+  type SitemapEntry,
+  type SitemapIndexEntry,
+  type ValidationIssue,
+} from "../src/sitemap-xml";
 
-function escapeXml(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-interface SitemapEntry {
-  loc: string;
-  lastmod?: string;
-  changefreq?: string;
-  priority?: string;
-}
+// KV keys this generator no longer writes. `sitemap-facilities` was the single
+// pre-shard facility file; after the per-state split it is orphaned — still
+// served at /sitemap-facilities.xml, still listed in whatever index a crawler
+// cached, and frozen at the data it held on the day it stopped being written.
+// It is deleted on every run so a stale copy cannot outlive the index entry.
+const RETIRED_KV_KEYS = ["sitemap-facilities"];
 
 const SITEMAP_UPLOADS = [
   { key: "sitemap", path: "public/sitemap.xml" },
   { key: "sitemap-core", path: "public/sitemap-core.xml" },
   { key: "sitemap-cities", path: "public/sitemap-cities.xml" },
-  { key: "sitemap-facilities", path: "public/sitemap-facilities.xml" },
 ];
-
-function toXml(entries: SitemapEntry[]): string {
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${entries
-  .map((e) => {
-    const lastmod = e.lastmod ? `\n    <lastmod>${e.lastmod}</lastmod>` : "";
-    const changefreq = e.changefreq
-      ? `\n    <changefreq>${e.changefreq}</changefreq>`
-      : "";
-    const priority = e.priority
-      ? `\n    <priority>${e.priority}</priority>`
-      : "";
-    return `  <url>\n    <loc>${e.loc}</loc>${lastmod}${changefreq}${priority}\n  </url>`;
-  })
-  .join("\n")}
-</urlset>`;
-}
-
-function toSitemapIndex(sitemaps: string[]): string {
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${sitemaps.map((loc) => `  <sitemap>\n    <loc>${loc}</loc>\n  </sitemap>`).join("\n")}
-</sitemapindex>`;
-}
 
 async function main() {
   const { execSync } = await import("child_process");
@@ -81,7 +66,7 @@ async function main() {
 
   const { STATE_NAMES } = await import("../src/states");
 
-  const BASE = "https://nursinghomegrade.com";
+  const BASE = SITEMAP_BASE;
   const stateSlugs = getAllStateSlugs();
 
   const now = new Date().toISOString().split("T")[0];
@@ -214,7 +199,13 @@ async function main() {
 
   mkdirSync("public", { recursive: true });
 
-  const facilityShardFiles: Array<{ key: string; path: string; loc: string }> = [];
+  const facilityShardFiles: Array<{
+    key: string;
+    path: string;
+    loc: string;
+    entries: SitemapEntry[];
+    lastmod: string | undefined;
+  }> = [];
   let facilityUrlTotal = 0;
   for (const [slug, entries] of [...byState.entries()].sort()) {
     // Split further if a single state ever exceeds the per-file limit.
@@ -223,21 +214,46 @@ async function main() {
       const suffix = i === 0 ? slug : `${slug}-${i + 1}`;
       const key = `sitemap-facilities-${suffix}`;
       const path = `public/${key}.xml`;
-      writeFileSync(path, toXml(chunk));
-      facilityShardFiles.push({ key, path, loc: `${BASE}/${key}.xml` });
+      facilityShardFiles.push({
+        key,
+        path,
+        loc: `${BASE}/${key}.xml`,
+        entries: chunk,
+        lastmod: newestLastmod(chunk),
+      });
       facilityUrlTotal += chunk.length;
     }
   }
 
-  const sitemapIndex = toSitemapIndex([
-    `${BASE}/sitemap-core.xml`,
-    `${BASE}/sitemap-cities.xml`,
-    ...facilityShardFiles.map((f) => f.loc),
-  ]);
+  const indexChildren: SitemapIndexEntry[] = [
+    { loc: `${BASE}/sitemap-core.xml`, lastmod: newestLastmod(coreEntries) },
+    { loc: `${BASE}/sitemap-cities.xml`, lastmod: newestLastmod(cityEntries) },
+    ...facilityShardFiles.map((f) => ({ loc: f.loc, lastmod: f.lastmod })),
+  ];
+  const sitemapIndex = toSitemapIndex(indexChildren);
+
+  // ── Validate before publishing ───────────────────────────────────────
+  const today = new Date().toISOString().split("T")[0]!;
+  const issues: ValidationIssue[] = [
+    ...validateUrlset("sitemap-core.xml", coreEntries, toXml(coreEntries), today),
+    ...validateUrlset("sitemap-cities.xml", cityEntries, toXml(cityEntries), today),
+    ...facilityShardFiles.flatMap((f) =>
+      validateUrlset(`${f.key}.xml`, f.entries, toXml(f.entries), today),
+    ),
+    ...validateIndex(indexChildren, sitemapIndex, today),
+  ];
+  for (const i of issues) console[i.level === "error" ? "error" : "warn"](`[${i.level}] ${i.message}`);
+  const errors = issues.filter((i) => i.level === "error");
+  if (errors.length > 0) {
+    console.error(`\nAborting: ${errors.length} sitemap validation error(s). Nothing was written or uploaded.`);
+    process.exit(1);
+  }
+  console.log(`Validation passed with ${issues.length} warning(s).`);
 
   writeFileSync("public/sitemap.xml", sitemapIndex);
   writeFileSync("public/sitemap-core.xml", toXml(coreEntries));
   writeFileSync("public/sitemap-cities.xml", toXml(cityEntries));
+  for (const shard of facilityShardFiles) writeFileSync(shard.path, toXml(shard.entries));
   console.log(`Wrote public/sitemap-core.xml with ${coreEntries.length} URLs`);
   console.log(`Wrote public/sitemap-cities.xml with ${cityEntries.length} URLs`);
   console.log(
@@ -248,7 +264,7 @@ async function main() {
   try {
     const generatedAt = new Date().toISOString();
     const uploads = [
-      ...SITEMAP_UPLOADS.filter((u) => u.key !== "sitemap-facilities"),
+      ...SITEMAP_UPLOADS,
       ...facilityShardFiles.map((f) => ({ key: f.key, path: f.path })),
     ];
     for (const upload of uploads) {
@@ -261,6 +277,23 @@ async function main() {
         { encoding: "utf8", stdio: "inherit" },
       );
       console.log(`Uploaded ${upload.path} to KV key ${upload.key}`);
+    }
+
+    // Retire keys the index no longer references, so /sitemap-facilities.xml
+    // stops serving a file that is both orphaned and stale.
+    const liveKeys = new Set(uploads.map((u) => u.key));
+    for (const key of RETIRED_KV_KEYS) {
+      if (liveKeys.has(key)) continue;
+      try {
+        execSync(
+          `npx wrangler kv key delete ${key} --namespace-id=fa0faa67ae0c434093a3aeaa14a5992e ${d1Flag}`,
+          { encoding: "utf8", stdio: "inherit" },
+        );
+        console.log(`Deleted retired KV key ${key}`);
+      } catch {
+        // Already absent on a second run — not a failure.
+        console.log(`Retired KV key ${key} not present; nothing to delete`);
+      }
     }
   } catch (err) {
     console.error("Failed to upload sitemaps to KV:", err);
