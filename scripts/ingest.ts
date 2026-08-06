@@ -486,7 +486,12 @@ async function main() {
   // facility's score reflects citations its own page cannot display. Loading
   // detail first means the worst case is grades that lag their citations, which
   // understates rather than fabricates.
-  const loadHeader = `#!/bin/bash\nset -e\necho "Loading deficiencies first — grades depend on them..."\n`;
+  // scripts/seed.sql is gitignored, so a fresh checkout has the 400+ deficiency
+  // batches but not the facility seed. Without this guard the loader would
+  // delete and reload every citation and only then fail on the missing file,
+  // leaving D1 with new citations scored by stale grades and no profile or
+  // penalty data. Fail before the first destructive statement instead.
+  const loadHeader = `#!/bin/bash\nset -e\nif [ ! -s scripts/seed.sql ]; then\n  echo "scripts/seed.sql is missing or empty — run 'npm run ingest' first." >&2\n  echo "Refusing to reload deficiencies without the matching facility seed." >&2\n  exit 1\nfi\necho "Loading deficiencies first — grades depend on them..."\n`;
   const loadFooter = (flag: string) =>
     `echo "Loading facilities and grades..."\nnpx wrangler d1 execute nursinghomegrade ${flag} --file=scripts/seed.sql\necho "Done!"\n`;
   writeFileSync("scripts/load-local.sh", `${loadHeader}${loadLocal}\n${loadFooter("--local")}`);

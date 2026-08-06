@@ -1,7 +1,11 @@
 #!/bin/bash
 set -e
-echo "Loading facilities..."
-npx wrangler d1 execute nursinghomegrade --remote --file=scripts/seed.sql
+if [ ! -s scripts/seed.sql ]; then
+  echo "scripts/seed.sql is missing or empty — run 'npm run ingest' first." >&2
+  echo "Refusing to reload deficiencies without the matching facility seed." >&2
+  exit 1
+fi
+echo "Loading deficiencies first — grades depend on them..."
 echo "Loading scripts/seed_deficiencies_001.sql..." && npx wrangler d1 execute nursinghomegrade --remote --file=scripts/seed_deficiencies_001.sql
 echo "Loading scripts/seed_deficiencies_002.sql..." && npx wrangler d1 execute nursinghomegrade --remote --file=scripts/seed_deficiencies_002.sql
 echo "Loading scripts/seed_deficiencies_003.sql..." && npx wrangler d1 execute nursinghomegrade --remote --file=scripts/seed_deficiencies_003.sql
@@ -421,4 +425,6 @@ echo "Loading scripts/seed_deficiencies_416.sql..." && npx wrangler d1 execute n
 echo "Loading scripts/seed_deficiencies_417.sql..." && npx wrangler d1 execute nursinghomegrade --remote --file=scripts/seed_deficiencies_417.sql
 echo "Loading scripts/seed_deficiencies_418.sql..." && npx wrangler d1 execute nursinghomegrade --remote --file=scripts/seed_deficiencies_418.sql
 echo "Loading scripts/seed_deficiencies_419.sql..." && npx wrangler d1 execute nursinghomegrade --remote --file=scripts/seed_deficiencies_419.sql
+echo "Loading facilities and grades..."
+npx wrangler d1 execute nursinghomegrade --remote --file=scripts/seed.sql
 echo "Done!"
