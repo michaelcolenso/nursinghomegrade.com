@@ -32,6 +32,35 @@ const SITEMAP_UPLOADS = [
   { key: "sitemap-cities", path: "public/sitemap-cities.xml" },
 ];
 
+
+/**
+ * Parses wrangler's `--json` output.
+ *
+ * wrangler writes advisory text to stdout ahead of the JSON — "Proxy
+ * environment variables detected" behind a proxy, `▲ [WARNING] ...` update
+ * banners elsewhere — so parsing the raw stream fails with "Unexpected token".
+ *
+ * Seeking to the first `[` or `{` is not enough: `[WARNING]` contains one. So
+ * try each structural character in turn and keep the first that yields valid
+ * JSON, which is the payload itself rather than any bracket inside the prose.
+ */
+function parseWranglerJson<T>(raw: string, what: string): T {
+  let lastError: string | null = null;
+  for (let i = 0; i < raw.length; i += 1) {
+    const ch = raw[i];
+    if (ch !== "[" && ch !== "{") continue;
+    try {
+      return JSON.parse(raw.slice(i)) as T;
+    } catch (err) {
+      lastError = (err as Error).message;
+    }
+  }
+  throw new Error(
+    `Could not parse wrangler output for ${what}` +
+      `${lastError ? ` (last error: ${lastError})` : ""}:\n${raw.slice(0, 500)}`,
+  );
+}
+
 async function main() {
   const { execSync } = await import("child_process");
   const { existsSync, writeFileSync, mkdirSync } = await import("fs");
@@ -49,9 +78,9 @@ async function main() {
   );
 
   // wrangler d1 execute --json returns an array of result sets
-  const parsed = JSON.parse(result) as Array<{
+  const parsed = parseWranglerJson<Array<{
     results: Array<{ cms_id: string; slug: string; state: string; city: string; updated_at: string }>;
-  }>;
+  }>>(result, "facility rows");
   const rows = parsed[0]?.results ?? [];
 
   // Pull distinct cities by state
@@ -59,9 +88,9 @@ async function main() {
     `npx wrangler d1 execute nursinghomegrade ${d1Flag} --command "SELECT state, city FROM facilities GROUP BY state, LOWER(city);" --json`,
     { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
   );
-  const cityParsed = JSON.parse(cityResult) as Array<{
+  const cityParsed = parseWranglerJson<Array<{
     results: Array<{ state: string; city: string }>;
-  }>;
+  }>>(cityResult, "city rows");
   const cityRows = cityParsed[0]?.results ?? [];
 
   const { STATE_NAMES } = await import("../src/states");
