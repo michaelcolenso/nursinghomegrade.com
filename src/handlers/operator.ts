@@ -4,8 +4,8 @@ import {
   getOperatorBySlug,
   getOperatorFacilities,
   getOperatorGradeDistribution,
-  getOperatorsRanked,
-  getAllOperators,
+  getOperatorsByTier,
+  getOperatorTierCounts,
   getNationalAverages,
 } from "../db";
 import {
@@ -72,8 +72,14 @@ export async function handleOperatorsHub(request: Request, env: Env): Promise<Re
         headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
       });
 
-    const operators = await getAllOperators(env);
-    const html = operatorsHubPage(operators);
+    const [mega, large, mid, small, tierCounts] = await Promise.all([
+      getOperatorsByTier(env, "Mega", 25),
+      getOperatorsByTier(env, "Large", 25),
+      getOperatorsByTier(env, "Mid", 25),
+      getOperatorsByTier(env, "Small", 25),
+      getOperatorTierCounts(env),
+    ]);
+    const html = operatorsHubPage({ mega, large, mid, small, tierCounts });
     await pageCache.put(cacheKey, html, { expirationTtl: 86400 });
     return new Response(html, {
       headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
@@ -94,8 +100,14 @@ export async function handleOperatorsBest(request: Request, env: Env): Promise<R
         headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
       });
 
-    const operators = await getOperatorsRanked(env, 50, "DESC");
-    const html = operatorsBestPage(operators);
+    const [mega, large, mid, small, tierCounts] = await Promise.all([
+      getOperatorsByTier(env, "Mega", 10, "DESC"),
+      getOperatorsByTier(env, "Large", 10, "DESC"),
+      getOperatorsByTier(env, "Mid", 10, "DESC"),
+      getOperatorsByTier(env, "Small", 10, "DESC"),
+      getOperatorTierCounts(env),
+    ]);
+    const html = operatorsBestPage({ mega, large, mid, small, tierCounts });
     await pageCache.put(cacheKey, html, { expirationTtl: 86400 });
     return new Response(html, {
       headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
@@ -116,8 +128,14 @@ export async function handleOperatorsWorst(request: Request, env: Env): Promise<
         headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
       });
 
-    const operators = await getOperatorsRanked(env, 50, "ASC");
-    const html = operatorsWorstPage(operators);
+    const [mega, large, mid, small, tierCounts] = await Promise.all([
+      getOperatorsByTier(env, "Mega", 10, "ASC"),
+      getOperatorsByTier(env, "Large", 10, "ASC"),
+      getOperatorsByTier(env, "Mid", 10, "ASC"),
+      getOperatorsByTier(env, "Small", 10, "ASC"),
+      getOperatorTierCounts(env),
+    ]);
+    const html = operatorsWorstPage({ mega, large, mid, small, tierCounts });
     await pageCache.put(cacheKey, html, { expirationTtl: 86400 });
     return new Response(html, {
       headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" },
