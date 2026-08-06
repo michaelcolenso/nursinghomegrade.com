@@ -32,6 +32,25 @@ const SITEMAP_UPLOADS = [
   { key: "sitemap-cities", path: "public/sitemap-cities.xml" },
 ];
 
+
+/**
+ * Parses wrangler's `--json` output.
+ *
+ * wrangler writes advisory notices to stdout ahead of the JSON — "Proxy
+ * environment variables detected", update banners, and so on — so parsing the
+ * raw stream fails with "Unexpected token" on any machine that triggers one.
+ * Start from the first structural character instead.
+ */
+function parseWranglerJson<T>(raw: string, what: string): T {
+  const start = raw.search(/[[{]/);
+  if (start === -1) throw new Error(`No JSON found in wrangler output for ${what}:\n${raw}`);
+  try {
+    return JSON.parse(raw.slice(start)) as T;
+  } catch (err) {
+    throw new Error(`Could not parse wrangler output for ${what}: ${(err as Error).message}\n${raw.slice(0, 500)}`);
+  }
+}
+
 async function main() {
   const { execSync } = await import("child_process");
   const { existsSync, writeFileSync, mkdirSync } = await import("fs");
@@ -49,9 +68,9 @@ async function main() {
   );
 
   // wrangler d1 execute --json returns an array of result sets
-  const parsed = JSON.parse(result) as Array<{
+  const parsed = parseWranglerJson<Array<{
     results: Array<{ cms_id: string; slug: string; state: string; city: string; updated_at: string }>;
-  }>;
+  }>>(result, "facility rows");
   const rows = parsed[0]?.results ?? [];
 
   // Pull distinct cities by state
@@ -59,9 +78,9 @@ async function main() {
     `npx wrangler d1 execute nursinghomegrade ${d1Flag} --command "SELECT state, city FROM facilities GROUP BY state, LOWER(city);" --json`,
     { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
   );
-  const cityParsed = JSON.parse(cityResult) as Array<{
+  const cityParsed = parseWranglerJson<Array<{
     results: Array<{ state: string; city: string }>;
-  }>;
+  }>>(cityResult, "city rows");
   const cityRows = cityParsed[0]?.results ?? [];
 
   const { STATE_NAMES } = await import("../src/states");
