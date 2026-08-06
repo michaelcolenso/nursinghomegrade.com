@@ -1,5 +1,10 @@
 #!/bin/bash
 set -e
+if [ ! -s scripts/seed.sql ]; then
+  echo "scripts/seed.sql is missing or empty — run 'npm run ingest' first." >&2
+  echo "Refusing to reload deficiencies without the matching facility seed." >&2
+  exit 1
+fi
 echo "Loading deficiencies first — grades depend on them..."
 echo "Loading scripts/seed_deficiencies_001.sql..." && npx wrangler d1 execute nursinghomegrade --remote --file=scripts/seed_deficiencies_001.sql
 echo "Loading scripts/seed_deficiencies_002.sql..." && npx wrangler d1 execute nursinghomegrade --remote --file=scripts/seed_deficiencies_002.sql
