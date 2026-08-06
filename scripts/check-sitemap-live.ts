@@ -68,7 +68,12 @@ async function main() {
       }
       const html = await res.text();
       const canonical = html.match(/<link rel="canonical" href="([^"]+)"/)?.[1];
-      if (canonical && canonical !== url) {
+      if (canonical === undefined) {
+        // Absent is a failure, not a pass: the checker's contract is that every
+        // listed URL carries a self-referencing canonical, and a dropped or
+        // reformatted tag is exactly what this run exists to catch.
+        problems.push(`${url} has no canonical tag this checker can read`);
+      } else if (canonical !== url) {
         problems.push(`${url} canonicalises to ${canonical}`);
       }
     }

@@ -231,14 +231,24 @@ async function main() {
 
   // Fetch all penalties (fines and payment denials)
   console.log("Fetching penalties...");
-  const allPenalties: CMSPenalty[] = [];
-  let penOffset = 0;
-  while (true) {
-    const page = await fetchPenaltyPage(penOffset);
-    if (page.length === 0) break;
-    allPenalties.push(...page);
-    penOffset += PAGE_SIZE;
-    if (page.length < PAGE_SIZE) break;
+  // The seed this feeds begins with DELETE FROM facility_penalties. If the
+  // endpoint transiently answers 200 with an empty result set, accepting it as
+  // "no penalties exist" would generate a seed that wipes every enforcement
+  // action and replaces it with nothing. Treat an empty first page as a failed
+  // fetch and abort, the same way the provider fetch does.
+  const firstPenaltyPage = await fetchPenaltyPage(0);
+  if (firstPenaltyPage.length === 0) throw new Error("CMS Penalties API returned no results");
+
+  const allPenalties: CMSPenalty[] = [...firstPenaltyPage];
+  let penOffset = PAGE_SIZE;
+  if (firstPenaltyPage.length === PAGE_SIZE) {
+    while (true) {
+      const page = await fetchPenaltyPage(penOffset);
+      if (page.length === 0) break;
+      allPenalties.push(...page);
+      penOffset += PAGE_SIZE;
+      if (page.length < PAGE_SIZE) break;
+    }
   }
   console.log(`Total penalty records: ${allPenalties.length}`);
 
