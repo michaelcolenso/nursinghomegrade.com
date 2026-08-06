@@ -125,3 +125,54 @@ describe("ingest applies the penalty terms", () => {
     expect(mapCMSFacility(SAMPLE_CMS, resolved).grade_score).toBe(mapCMSFacility(SAMPLE_CMS).grade_score);
   });
 });
+
+describe("mapCMSFacility profile fields", () => {
+  const WITH_PROFILE: CMSFacility = {
+    ...SAMPLE_CMS,
+    telephone_number: "2563324110",
+    ownership_type: "For profit - Corporation",
+    legal_business_name: "BURNS NURSING HOME, INC.",
+    provider_type: "Medicare and Medicaid",
+    countyparish: "Franklin",
+    number_of_certified_beds: "57",
+    average_number_of_residents_per_day: "51.6",
+    date_first_approved_to_provide_medicare_and_medicaid_services: "1969-09-01",
+    special_focus_status: "",
+    abuse_icon: "N",
+    number_of_fines: "0",
+    total_amount_of_fines_in_dollars: "0.00",
+    number_of_payment_denials: "0",
+    total_number_of_penalties: "0",
+    rating_cycle_1_standard_survey_health_date: "2023-03-02",
+    registered_nurse_turnover: "28.6",
+    total_nursing_staff_turnover: "44.8",
+    processing_date: "2026-07-01",
+  };
+
+  it("carries the profile columns through verbatim", () => {
+    const f = mapCMSFacility(WITH_PROFILE);
+    expect(f.phone).toBe("2563324110");
+    expect(f.ownership_type).toBe("For profit - Corporation");
+    expect(f.certified_beds).toBe(57);
+    expect(f.rn_turnover_pct).toBe(28.6);
+    expect(f.cms_processing_date).toBe("2026-07-01");
+    expect(f.latest_standard_survey_date).toBe("2023-03-02");
+  });
+
+  it("maps a zero penalty count to zero, and an empty string to null", () => {
+    const f = mapCMSFacility(WITH_PROFILE);
+    // Zero is a fact CMS published; empty is an absence. They must not collapse.
+    expect(f.number_of_fines).toBe(0);
+    expect(f.total_penalties).toBe(0);
+    expect(f.special_focus_status).toBeNull();
+  });
+
+  it("maps absent profile columns to null, never to zero or empty string", () => {
+    const f = mapCMSFacility(SAMPLE_CMS);
+    expect(f.phone).toBeNull();
+    expect(f.ownership_type).toBeNull();
+    expect(f.certified_beds).toBeNull();
+    expect(f.number_of_fines).toBeNull();
+    expect(f.cms_processing_date).toBeNull();
+  });
+});

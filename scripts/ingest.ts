@@ -5,12 +5,29 @@ import { normalizeOwnerName, toOperatorSlug } from "../src/ownership";
 const PROVIDER_API_URL = "https://data.cms.gov/provider-data/api/1/datastore/query/4pq5-n9py/0";
 const DEFICIENCY_API_URL = "https://data.cms.gov/provider-data/api/1/datastore/query/r5ix-sfxw/0";
 const OWNERSHIP_API_URL = "https://data.cms.gov/provider-data/api/1/datastore/query/y2hd-n93e/0";
+const PENALTIES_API_URL = "https://data.cms.gov/provider-data/api/1/datastore/query/g6vv-u9sr/0";
 const PAGE_SIZE = 500;
 
 function parseNum(val: string): number | null {
   if (val === "" || val === null || val === undefined) return null;
   const n = parseFloat(val);
   return isNaN(n) ? null : n;
+}
+
+/** Empty string means "CMS publishes nothing here", which is null, not "". */
+function textOrNull(val: string | undefined): string | null {
+  if (val === undefined || val === null) return null;
+  const trimmed = val.trim();
+  return trimmed === "" ? null : trimmed;
+}
+
+/**
+ * SQL literal for a nullable text column. A missing value becomes the SQL
+ * keyword NULL, never the two-character string '' — the difference is what
+ * lets the page distinguish "CMS publishes nothing" from "blank value".
+ */
+function sqlText(val: string | null | undefined): string {
+  return val === null || val === undefined ? "NULL" : `'${esc(val)}'`;
 }
 
 function parseIntOrNull(val: string): number | null {
@@ -67,6 +84,27 @@ export function mapCMSFacility(
     grade_summary,
     slug: toSlug(raw.provider_name ?? raw.cms_certification_number_ccn ?? "unknown"),
     updated_at: new Date().toISOString(),
+    // Profile fields, copied verbatim from CMS. `textOrNull` maps an empty
+    // string to null so a facility with no published value renders nothing
+    // rather than an empty label.
+    phone: textOrNull(raw.telephone_number),
+    ownership_type: textOrNull(raw.ownership_type),
+    legal_business_name: textOrNull(raw.legal_business_name),
+    provider_type: textOrNull(raw.provider_type),
+    county: textOrNull(raw.countyparish),
+    certified_beds: parseIntOrNull(raw.number_of_certified_beds ?? ""),
+    avg_residents_per_day: parseNum(raw.average_number_of_residents_per_day ?? ""),
+    certification_date: textOrNull(raw.date_first_approved_to_provide_medicare_and_medicaid_services),
+    special_focus_status: textOrNull(raw.special_focus_status),
+    abuse_icon: textOrNull(raw.abuse_icon),
+    number_of_fines: parseIntOrNull(raw.number_of_fines ?? ""),
+    total_fines_dollars: parseNum(raw.total_amount_of_fines_in_dollars ?? ""),
+    number_of_payment_denials: parseIntOrNull(raw.number_of_payment_denials ?? ""),
+    total_penalties: parseIntOrNull(raw.total_number_of_penalties ?? ""),
+    latest_standard_survey_date: textOrNull(raw.rating_cycle_1_standard_survey_health_date),
+    rn_turnover_pct: parseNum(raw.registered_nurse_turnover ?? ""),
+    total_nursing_turnover_pct: parseNum(raw.total_nursing_staff_turnover ?? ""),
+    cms_processing_date: textOrNull(raw.processing_date),
   };
 }
 
@@ -122,6 +160,24 @@ async function fetchOwnershipPage(offset: number): Promise<CMSOwnership[]> {
   return json.results ?? [];
 }
 
+interface CMSPenalty {
+  cms_certification_number_ccn: string;
+  penalty_date: string;
+  penalty_type: string;
+  fine_amount: string;
+  payment_denial_start_date: string;
+  payment_denial_length_in_days: string;
+  processing_date: string;
+}
+
+async function fetchPenaltyPage(offset: number): Promise<CMSPenalty[]> {
+  const url = `${PENALTIES_API_URL}?limit=${PAGE_SIZE}&offset=${offset}&sort_order=ASC&sort_by=cms_certification_number_ccn`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`CMS Penalties API error: ${res.status} at offset ${offset}`);
+  const json = (await res.json()) as { results: CMSPenalty[] };
+  return json.results ?? [];
+}
+
 async function main() {
   console.log("Starting CMS ingest...");
 
@@ -173,6 +229,29 @@ async function main() {
   }
   console.log(`Total ownership records: ${allOwnership.length}`);
 
+  // Fetch all penalties (fines and payment denials)
+  console.log("Fetching penalties...");
+  // The seed this feeds begins with DELETE FROM facility_penalties. If the
+  // endpoint transiently answers 200 with an empty result set, accepting it as
+  // "no penalties exist" would generate a seed that wipes every enforcement
+  // action and replaces it with nothing. Treat an empty first page as a failed
+  // fetch and abort, the same way the provider fetch does.
+  const firstPenaltyPage = await fetchPenaltyPage(0);
+  if (firstPenaltyPage.length === 0) throw new Error("CMS Penalties API returned no results");
+
+  const allPenalties: CMSPenalty[] = [...firstPenaltyPage];
+  let penOffset = PAGE_SIZE;
+  if (firstPenaltyPage.length === PAGE_SIZE) {
+    while (true) {
+      const page = await fetchPenaltyPage(penOffset);
+      if (page.length === 0) break;
+      allPenalties.push(...page);
+      penOffset += PAGE_SIZE;
+      if (page.length < PAGE_SIZE) break;
+    }
+  }
+  console.log(`Total penalty records: ${allPenalties.length}`);
+
   // Group deficiencies by CMS ID
   const deficienciesByCmsId = new Map<string, CMSDeficiency[]>();
   for (const def of allDeficiencies) {
@@ -207,11 +286,11 @@ async function main() {
     const values = batch
       .map(
         (f) =>
-          `('${esc(f.cms_id)}','${esc(f.name)}','${esc(f.address)}','${esc(f.city)}','${esc(f.state)}','${esc(f.zip)}',${f.latitude ?? "NULL"},${f.longitude ?? "NULL"},${f.overall_rating ?? "NULL"},${f.quality_rating ?? "NULL"},${f.staffing_rating ?? "NULL"},${f.inspection_rating ?? "NULL"},${f.rn_hours_per_resident_day ?? "NULL"},${f.total_deficiencies ?? "NULL"},${f.grade_score},'${esc(f.grade_letter)}','${esc(f.grade_summary)}','${esc(f.slug)}','${esc(f.updated_at)}')`,
+          `('${esc(f.cms_id)}','${esc(f.name)}','${esc(f.address)}','${esc(f.city)}','${esc(f.state)}','${esc(f.zip)}',${f.latitude ?? "NULL"},${f.longitude ?? "NULL"},${f.overall_rating ?? "NULL"},${f.quality_rating ?? "NULL"},${f.staffing_rating ?? "NULL"},${f.inspection_rating ?? "NULL"},${f.rn_hours_per_resident_day ?? "NULL"},${f.total_deficiencies ?? "NULL"},${f.grade_score},'${esc(f.grade_letter)}','${esc(f.grade_summary)}','${esc(f.slug)}','${esc(f.updated_at)}',${sqlText(f.phone)},${sqlText(f.ownership_type)},${sqlText(f.legal_business_name)},${sqlText(f.provider_type)},${sqlText(f.county)},${f.certified_beds ?? "NULL"},${f.avg_residents_per_day ?? "NULL"},${sqlText(f.certification_date)},${sqlText(f.special_focus_status)},${sqlText(f.abuse_icon)},${f.number_of_fines ?? "NULL"},${f.total_fines_dollars ?? "NULL"},${f.number_of_payment_denials ?? "NULL"},${f.total_penalties ?? "NULL"},${sqlText(f.latest_standard_survey_date)},${f.rn_turnover_pct ?? "NULL"},${f.total_nursing_turnover_pct ?? "NULL"},${sqlText(f.cms_processing_date)})`,
       )
       .join(",\n");
     facilitySqls.push(
-      `INSERT OR REPLACE INTO facilities (cms_id,name,address,city,state,zip,latitude,longitude,overall_rating,quality_rating,staffing_rating,inspection_rating,rn_hours_per_resident_day,total_deficiencies,grade_score,grade_letter,grade_summary,slug,updated_at) VALUES\n${values};`,
+      `INSERT OR REPLACE INTO facilities (cms_id,name,address,city,state,zip,latitude,longitude,overall_rating,quality_rating,staffing_rating,inspection_rating,rn_hours_per_resident_day,total_deficiencies,grade_score,grade_letter,grade_summary,slug,updated_at,phone,ownership_type,legal_business_name,provider_type,county,certified_beds,avg_residents_per_day,certification_date,special_focus_status,abuse_icon,number_of_fines,total_fines_dollars,number_of_payment_denials,total_penalties,latest_standard_survey_date,rn_turnover_pct,total_nursing_turnover_pct,cms_processing_date) VALUES\n${values};`,
     );
   }
 
@@ -318,8 +397,27 @@ async function main() {
   const releaseSql = `INSERT INTO data_releases (source_key,label,cms_release_date,ingested_at,source_url) VALUES
   ('provider_info','Provider Information',NULL,datetime('now'),'${PROVIDER_API_URL}'),
   ('health_deficiencies','Health Deficiencies',NULL,datetime('now'),'${DEFICIENCY_API_URL}'),
-  ('ownership','Ownership',NULL,datetime('now'),'${OWNERSHIP_API_URL}')
+  ('ownership','Ownership',NULL,datetime('now'),'${OWNERSHIP_API_URL}'),
+  ('penalties','Penalties',NULL,datetime('now'),'${PENALTIES_API_URL}')
   ON CONFLICT(source_key) DO UPDATE SET ingested_at=excluded.ingested_at, source_url=excluded.source_url;`;
+
+  // Penalty INSERTs. The DELETE runs in the same file so the table never holds
+  // a mix of two CMS releases — a stale fine row would show a family an
+  // enforcement action CMS has since dropped from the file.
+  const penaltySqls: string[] = ["DELETE FROM facility_penalties;"];
+  const PENALTY_BATCH = 100;
+  for (let i = 0; i < allPenalties.length; i += PENALTY_BATCH) {
+    const batch = allPenalties.slice(i, i + PENALTY_BATCH);
+    const values = batch
+      .map(
+        (p) =>
+          `('${esc(p.cms_certification_number_ccn)}',${sqlText(textOrNull(p.penalty_date))},${sqlText(textOrNull(p.penalty_type))},${parseNum(p.fine_amount ?? "") ?? "NULL"},${sqlText(textOrNull(p.payment_denial_start_date))},${parseIntOrNull(p.payment_denial_length_in_days ?? "") ?? "NULL"},${sqlText(textOrNull(p.processing_date))})`,
+      )
+      .join(",\n");
+    penaltySqls.push(
+      `INSERT INTO facility_penalties (cms_id,penalty_date,penalty_type,fine_amount,payment_denial_start_date,payment_denial_length_days,processing_date) VALUES\n${values};`,
+    );
+  }
 
   const seedSql = [
     "DELETE FROM facility_owners;",
@@ -327,6 +425,7 @@ async function main() {
     ...snapshotSqls,
     ...ownerSqls,
     ...operatorSqls,
+    ...penaltySqls,
     releaseSql,
   ].join("\n\n");
   writeFileSync("scripts/seed.sql", seedSql);

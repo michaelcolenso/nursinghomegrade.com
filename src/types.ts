@@ -16,10 +16,82 @@ export interface CMSFacility {
   reported_total_nurse_staffing_hours_per_resident_per_day: string;
   rating_cycle_1_total_number_of_health_deficiencies: string;
   total_weighted_health_survey_score: string;
+  // Profile and enforcement columns. Optional because older captures of this
+  // file predate them; ingest maps a missing column to null, never to a zero.
+  telephone_number?: string;
+  ownership_type?: string;
+  legal_business_name?: string;
+  provider_type?: string;
+  countyparish?: string;
+  number_of_certified_beds?: string;
+  average_number_of_residents_per_day?: string;
+  date_first_approved_to_provide_medicare_and_medicaid_services?: string;
+  special_focus_status?: string;
+  abuse_icon?: string;
+  number_of_fines?: string;
+  total_amount_of_fines_in_dollars?: string;
+  number_of_payment_denials?: string;
+  total_number_of_penalties?: string;
+  rating_cycle_1_standard_survey_health_date?: string;
+  registered_nurse_turnover?: string;
+  total_nursing_staff_turnover?: string;
+  processing_date?: string;
+}
+
+/**
+ * Profile fields carried verbatim from the CMS Provider Information file.
+ *
+ * Every property is optional AND nullable, and the two mean different things:
+ * absent = the column has not been added/populated in this environment yet,
+ * null = CMS publishes no value for this facility. Templates treat both the
+ * same way — render nothing — so a page never implies data it does not hold.
+ *
+ * There is no email field because the federal source files contain none.
+ */
+export interface FacilityProfile {
+  /** Digits as CMS publishes them, e.g. "9198518000". Formatted at render time. */
+  phone?: string | null;
+  /** e.g. "For profit - Corporation", "Government - County", "Non profit - Church related". */
+  ownership_type?: string | null;
+  legal_business_name?: string | null;
+  /** e.g. "Medicare and Medicaid". */
+  provider_type?: string | null;
+  county?: string | null;
+  certified_beds?: number | null;
+  avg_residents_per_day?: number | null;
+  /** Date first approved to provide Medicare and Medicaid services. */
+  certification_date?: string | null;
+  /** "SFF" or "SFF Candidate" when CMS flags the facility; empty otherwise. */
+  special_focus_status?: string | null;
+  /** "Y" when CMS displays the abuse icon for this facility. */
+  abuse_icon?: string | null;
+  number_of_fines?: number | null;
+  total_fines_dollars?: number | null;
+  number_of_payment_denials?: number | null;
+  total_penalties?: number | null;
+  /** Date of the most recent standard health survey (rating cycle 1). */
+  latest_standard_survey_date?: string | null;
+  rn_turnover_pct?: number | null;
+  total_nursing_turnover_pct?: number | null;
+  /** CMS processing date for the source file — the vintage of everything above. */
+  cms_processing_date?: string | null;
+}
+
+/** One enforcement action from the CMS Penalties file. */
+export interface FacilityPenalty {
+  id: number;
+  cms_id: string;
+  penalty_date: string | null;
+  /** "Fine" or "Payment Denial". */
+  penalty_type: string | null;
+  fine_amount: number | null;
+  payment_denial_start_date: string | null;
+  payment_denial_length_days: number | null;
+  processing_date: string | null;
 }
 
 // Stored in D1
-export interface Facility {
+export interface Facility extends FacilityProfile {
   cms_id: string;
   name: string;
   address: string;
