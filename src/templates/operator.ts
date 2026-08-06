@@ -58,6 +58,8 @@ export function operatorPage(props: OperatorPageProps): string {
   const worst = [...facilities].sort((a, b) => a.grade_score - b.grade_score).slice(0, 5);
 
   const avgGrade = operator.avg_grade ?? 0;
+  const score = operator.operator_score ?? avgGrade;
+  const tier = operator.operator_tier ?? "";
   const gradeDiff = Math.round(avgGrade - nationalAvg.avgGrade);
   const gradeComparison = gradeDiff > 0 ? `${gradeDiff} pts above national` : gradeDiff < 0 ? `${Math.abs(gradeDiff)} pts below national` : "At national average";
 
@@ -74,12 +76,12 @@ export function operatorPage(props: OperatorPageProps): string {
       <div>
         <h1>${escHtml(operator.normalized_name)}</h1>
         <p style="color:var(--muted);margin-bottom:var(--space-s);font-size:1.1rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">
-          ${totalFacilities} facilities · ${statesServed} state${statesServed !== 1 ? "s" : ""}
+          ${totalFacilities} facilities · ${statesServed} state${statesServed !== 1 ? "s" : ""} · ${escHtml(tier)} operator
         </p>
       </div>
       <div style="text-align:right;">
-        <div style="font-family:'Playfair Display',Georgia,serif;font-size:clamp(4rem,12vw,8rem);font-weight:800;line-height:0.8;color:var(--ink);">${avgGrade}</div>
-        <div style="font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);">Avg Grade</div>
+        <div style="font-family:'Playfair Display',Georgia,serif;font-size:clamp(4rem,12vw,8rem);font-weight:800;line-height:0.8;color:var(--ink);">${score}</div>
+        <div style="font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);">Operator Score</div>
       </div>
     </div>
 
@@ -99,6 +101,10 @@ export function operatorPage(props: OperatorPageProps): string {
 
     <h2>Performance</h2>
     <div class="snapshot-grid" style="margin-bottom:var(--space-xl);">
+      <div class="snapshot-card">
+        <div class="snapshot-label">Operator Score</div>
+        <div class="snapshot-value">${score}/100</div>
+      </div>
       <div class="snapshot-card">
         <div class="snapshot-label">Average Grade</div>
         <div class="snapshot-value">${avgGrade}/100</div>
@@ -136,17 +142,71 @@ export function operatorPage(props: OperatorPageProps): string {
   );
 }
 
-export function operatorsHubPage(operators: Operator[]): string {
-  const rows = operators.map((op) => {
-    const avg = op.avg_grade ?? 0;
-    return `
+export interface OperatorsHubData {
+  mega: Operator[];
+  large: Operator[];
+  mid: Operator[];
+  small: Operator[];
+  tierCounts: Record<string, number>;
+}
+
+const TIER_META: Array<{ key: "mega" | "large" | "mid" | "small"; label: string; desc: string; countKey: string }> = [
+  { key: "mega", label: "Mega Operators", desc: "100+ facilities", countKey: "Mega" },
+  { key: "large", label: "Large Operators", desc: "20–99 facilities", countKey: "Large" },
+  { key: "mid", label: "Mid-Size Operators", desc: "5–19 facilities", countKey: "Mid" },
+  { key: "small", label: "Small Operators", desc: "2–4 facilities", countKey: "Small" },
+];
+
+function renderOperatorRankTable(operators: Operator[], startRank = 1): string {
+  if (operators.length === 0)
+    return `<p style="color:var(--muted);padding:var(--space-m) 0;">No operators in this tier.</p>`;
+  const rows = operators
+    .map((op, i) => {
+      const avg = op.avg_grade ?? 0;
+      const score = op.operator_score ?? avg;
+      return `
       <tr style="border-bottom:1px solid var(--rule);">
+        <td style="padding:var(--space-s) 0;text-align:center;font-family:'Playfair Display',Georgia,serif;font-weight:800;color:var(--muted);">${startRank + i}</td>
         <td style="padding:var(--space-s) 0;font-weight:700;">
           <a href="/operator/${escHtml(op.slug)}">${escHtml(op.normalized_name)}</a>
         </td>
         <td style="padding:var(--space-s) 0;text-align:center;font-weight:800;">${op.facility_count}</td>
-        <td style="padding:var(--space-s) 0;text-align:center;font-family:'Playfair Display',Georgia,serif;font-weight:700;font-size:1.25rem;">${avg}</td>
+        <td style="padding:var(--space-s) 0;text-align:center;font-family:'Playfair Display',Georgia,serif;font-weight:700;font-size:1.25rem;">${score}</td>
+        <td style="padding:var(--space-s) 0;text-align:center;color:var(--muted);">${avg}/100</td>
       </tr>
+    `;
+    })
+    .join("");
+  return `
+    <div class="table-container">
+      <table style="min-width:640px;">
+        <thead>
+          <tr style="border-bottom:2px solid var(--ink);">
+            <th style="text-align:center;padding:var(--space-s) 0;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">#</th>
+            <th style="text-align:left;padding:var(--space-s) 0;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Operator</th>
+            <th style="text-align:center;padding:var(--space-s) 0;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Facilities</th>
+            <th style="text-align:center;padding:var(--space-s) 0;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Score</th>
+            <th style="text-align:center;padding:var(--space-s) 0;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Avg Grade</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+export function operatorsHubPage(data: OperatorsHubData): string {
+  const sections = TIER_META.map((tier) => {
+    const list = data[tier.key];
+    const total = data.tierCounts[tier.countKey] ?? list.length;
+    return `
+      <section style="margin-bottom:var(--space-2xl);">
+        <h2>${tier.label} <span style="font-size:0.9rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);">${total} total</span></h2>
+        <p class="lede" style="max-width:800px;margin-bottom:var(--space-l);">${tier.desc}. Ranked by composite score.</p>
+        ${renderOperatorRankTable(list)}
+      </section>
     `;
   }).join("");
 
@@ -157,25 +217,30 @@ export function operatorsHubPage(operators: Operator[]): string {
       <span style="color:var(--ink);">Operators</span>
     </nav>
 
-    <h1>Nursing Home Operators</h1>
+    <h1>Nursing Home Operator Rankings</h1>
     <p class="lede" style="max-width:800px;margin-bottom:var(--space-xl);">
-      Explore nursing home operators by facility count and average grade. Operators with 2+ facilities are listed.
+      How do the largest nursing home operators actually perform? We rank operators
+      that genuinely run facilities — not the banks, real estate trusts, and
+      investment funds that merely hold an interest in them — using a transparent
+      composite score. Operators are grouped by size so small providers aren't
+      unfairly compared against national chains.
     </p>
 
-    <div class="table-container">
-      <table style="min-width:600px;">
-        <thead>
-          <tr style="border-bottom:2px solid var(--ink);">
-            <th style="text-align:left;padding:var(--space-s) 0;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Operator</th>
-            <th style="text-align:center;padding:var(--space-s) 0;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Facilities</th>
-            <th style="text-align:center;padding:var(--space-s) 0;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Avg Grade</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows}
-        </tbody>
-      </table>
+    <h2>How the score works</h2>
+    <div style="background:#fff;border:2px solid var(--ink);padding:var(--space-l);margin-bottom:var(--space-xl);">
+      <ul style="list-style:none;padding:0;margin:0;display:grid;gap:var(--space-s);">
+        <li style="font-family:'Playfair Display',Georgia,serif;font-size:clamp(1.05rem,2vw,1.25rem);line-height:1.4;"><strong>70%</strong> — average facility grade (staffing, inspections, quality)</li>
+        <li style="font-family:'Playfair Display',Georgia,serif;font-size:clamp(1.05rem,2vw,1.25rem);line-height:1.4;"><strong>15%</strong> — average RN staffing hours per resident day</li>
+        <li style="font-family:'Playfair Display',Georgia,serif;font-size:clamp(1.05rem,2vw,1.25rem);line-height:1.4;"><strong>15%</strong> — inverse of average deficiencies per facility</li>
+      </ul>
+      <p style="margin:var(--space-m) 0 0;color:var(--muted);font-size:0.9rem;">
+        Scores are 0–100. Data sourced from CMS ownership and provider files.
+        Financial entities (banks, REITs, investment funds, audit firms, trusts)
+        are excluded — <a href="/how-we-grade">see our methodology</a>.
+      </p>
     </div>
+
+    ${sections}
 
     <div style="display:flex;gap:var(--space-m);margin-top:var(--space-xl);flex-wrap:wrap;">
       <a class="btn" href="/operators/best">Best operators →</a>
@@ -184,31 +249,60 @@ export function operatorsHubPage(operators: Operator[]): string {
   `;
 
   return layout(
-    "Nursing Home Operators — NursingHomeGrade",
-    "Browse nursing home operators by facility count and average grade.",
+    "Nursing Home Operator Rankings — NursingHomeGrade",
+    "Rankings of nursing home operators by composite score, grouped by size: mega, large, mid-size, and small operators.",
     body,
     { canonicalPath: "/operators" },
   );
 }
 
-export function operatorsBestPage(operators: Operator[]): string {
-  const cards = operators.map((op, i) => {
-    const avg = op.avg_grade ?? 0;
-    return `
-      <article class="result-item" style="border-left:12px solid var(--grade-A);">
+function renderTierExtremeSection(
+  label: string,
+  desc: string,
+  operators: Operator[],
+  rankPrefix: "best" | "worst",
+): string {
+  if (operators.length === 0) return "";
+  const borderColor = rankPrefix === "best" ? "var(--grade-A)" : "var(--grade-F)";
+  const cards = operators
+    .map((op, i) => {
+      const avg = op.avg_grade ?? 0;
+      const score = op.operator_score ?? avg;
+      return `
+      <article class="result-item" style="border-left:12px solid ${borderColor};">
         <div class="result-main">
           <div class="result-grade">
             <span class="result-rank">#${i + 1}</span>
-            <span class="result-grade-score">${avg}/100</span>
+            <span class="result-grade-score">${score}/100</span>
           </div>
           <div>
             <a href="/operator/${escHtml(op.slug)}" class="result-name">${escHtml(op.normalized_name)}</a>
-            <p class="result-meta">${op.facility_count} facilities</p>
+            <p class="result-meta">${op.facility_count} facilities · ${avg} avg grade</p>
           </div>
         </div>
       </article>
     `;
-  }).join("");
+    })
+    .join("");
+
+  return `
+    <section style="margin-bottom:var(--space-2xl);">
+      <h2>${label}</h2>
+      <p class="lede" style="max-width:800px;margin-bottom:var(--space-l);">${desc}</p>
+      <div class="results-list">
+        ${cards}
+      </div>
+    </section>
+  `;
+}
+
+export function operatorsBestPage(data: OperatorsHubData): string {
+  const sections = [
+    renderTierExtremeSection("Best Mega Operators", "100+ facilities, highest composite score.", data.mega, "best"),
+    renderTierExtremeSection("Best Large Operators", "20–99 facilities, highest composite score.", data.large, "best"),
+    renderTierExtremeSection("Best Mid-Size Operators", "5–19 facilities, highest composite score.", data.mid, "best"),
+    renderTierExtremeSection("Best Small Operators", "2–4 facilities, highest composite score.", data.small, "best"),
+  ].join("");
 
   const body = `
     <nav class="breadcrumb" aria-label="Breadcrumb">
@@ -221,40 +315,29 @@ export function operatorsBestPage(operators: Operator[]): string {
 
     <h1>Best Nursing Home Operators</h1>
     <p class="lede" style="max-width:800px;margin-bottom:var(--space-xl);">
-      Operators with 3+ facilities ranked by highest average grade. Data sourced from CMS.
+      The top operators in each size tier, ranked by composite score — a blend of
+      facility grade, RN staffing, and deficiency record. Data sourced from CMS.
+      Financial entities (banks, REITs, investment funds, audit firms, trusts) are excluded.
     </p>
 
-    <div class="results-list">
-      ${cards}
-    </div>
+    ${sections}
   `;
 
   return layout(
     "Best Nursing Home Operators — NursingHomeGrade",
-    "Top nursing home operators ranked by average facility grade.",
+    "Top nursing home operators by size tier, ranked by composite score.",
     body,
     { canonicalPath: "/operators/best" },
   );
 }
 
-export function operatorsWorstPage(operators: Operator[]): string {
-  const cards = operators.map((op, i) => {
-    const avg = op.avg_grade ?? 0;
-    return `
-      <article class="result-item" style="border-left:12px solid var(--grade-F);">
-        <div class="result-main">
-          <div class="result-grade">
-            <span class="result-rank">#${i + 1}</span>
-            <span class="result-grade-score">${avg}/100</span>
-          </div>
-          <div>
-            <a href="/operator/${escHtml(op.slug)}" class="result-name">${escHtml(op.normalized_name)}</a>
-            <p class="result-meta">${op.facility_count} facilities</p>
-          </div>
-        </div>
-      </article>
-    `;
-  }).join("");
+export function operatorsWorstPage(data: OperatorsHubData): string {
+  const sections = [
+    renderTierExtremeSection("Worst Mega Operators", "100+ facilities, lowest composite score.", data.mega, "worst"),
+    renderTierExtremeSection("Worst Large Operators", "20–99 facilities, lowest composite score.", data.large, "worst"),
+    renderTierExtremeSection("Worst Mid-Size Operators", "5–19 facilities, lowest composite score.", data.mid, "worst"),
+    renderTierExtremeSection("Worst Small Operators", "2–4 facilities, lowest composite score.", data.small, "worst"),
+  ].join("");
 
   const body = `
     <nav class="breadcrumb" aria-label="Breadcrumb">
@@ -267,17 +350,17 @@ export function operatorsWorstPage(operators: Operator[]): string {
 
     <h1>Worst Nursing Home Operators</h1>
     <p class="lede" style="max-width:800px;margin-bottom:var(--space-xl);">
-      Operators with 3+ facilities ranked by lowest average grade. Data sourced from CMS.
+      The bottom operators in each size tier, ranked by composite score — a blend of
+      facility grade, RN staffing, and deficiency record. Data sourced from CMS.
+      Financial entities (banks, REITs, investment funds, audit firms, trusts) are excluded.
     </p>
 
-    <div class="results-list">
-      ${cards}
-    </div>
+    ${sections}
   `;
 
   return layout(
     "Worst Nursing Home Operators — NursingHomeGrade",
-    "Bottom-ranked nursing home operators by average facility grade.",
+    "Bottom-ranked nursing home operators by size tier and composite score.",
     body,
     { canonicalPath: "/operators/worst" },
   );

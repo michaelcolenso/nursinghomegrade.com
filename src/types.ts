@@ -157,6 +157,8 @@ export interface Operator {
   avg_staffing_score: number | null;
   avg_deficiency_score: number | null;
   avg_penalty_score: number | null;
+  operator_score: number | null;
+  operator_tier: string | null;
 }
 
 export interface FacilityOwner {

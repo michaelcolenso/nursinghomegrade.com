@@ -11,6 +11,8 @@ const sampleOperator: Operator = {
   avg_staffing_score: 0.52,
   avg_deficiency_score: 6.2,
   avg_penalty_score: null,
+  operator_score: 60,
+  operator_tier: "Mid",
 };
 
 const sampleFacilities: Facility[] = [
@@ -102,29 +104,65 @@ describe("operatorPage", () => {
 });
 
 describe("operatorsHubPage", () => {
-  it("renders list of operators", () => {
-    const html = operatorsHubPage([sampleOperator]);
-    expect(html).toContain("Nursing Home Operators");
+  it("renders tiered ranking sections", () => {
+    const html = operatorsHubPage({
+      mega: [sampleOperator],
+      large: [],
+      mid: [],
+      small: [],
+      tierCounts: { Mega: 18, Large: 520, Mid: 2163, Small: 4675 },
+    });
+    expect(html).toContain("Nursing Home Operator Rankings");
+    expect(html).toContain("Mega Operators");
+    expect(html).toContain("Large Operators");
+    expect(html).toContain("Mid-Size Operators");
+    expect(html).toContain("Small Operators");
     expect(html).toContain('href="/operator/genesis-healthcare"');
-    expect(html).toContain("GENESIS HEALTHCARE");
     expect(html).toContain('href="/operators/best"');
     expect(html).toContain('href="/operators/worst"');
+    expect(html).toContain("70%");
+  });
+
+  it("renders operator score column", () => {
+    const html = operatorsHubPage({
+      mega: [{ ...sampleOperator, operator_score: 62, operator_tier: "Mega" }],
+      large: [],
+      mid: [],
+      small: [],
+      tierCounts: { Mega: 1, Large: 0, Mid: 0, Small: 0 },
+    });
+    expect(html).toContain("62");
+    expect(html).toContain("Score");
   });
 });
 
 describe("operatorsBestPage", () => {
-  it("renders ranked best operators", () => {
-    const html = operatorsBestPage([sampleOperator]);
+  it("renders ranked best operators per tier", () => {
+    const html = operatorsBestPage({
+      mega: [{ ...sampleOperator, facility_count: 120, operator_tier: "Mega", operator_score: 72 }],
+      large: [],
+      mid: [],
+      small: [],
+      tierCounts: { Mega: 18, Large: 520, Mid: 2163, Small: 4675 },
+    });
     expect(html).toContain("Best Nursing Home Operators");
+    expect(html).toContain("Best Mega Operators");
     expect(html).toContain("#1");
     expect(html).toContain('href="/operator/genesis-healthcare"');
   });
 });
 
 describe("operatorsWorstPage", () => {
-  it("renders ranked worst operators", () => {
-    const html = operatorsWorstPage([sampleOperator]);
+  it("renders ranked worst operators per tier", () => {
+    const html = operatorsWorstPage({
+      mega: [],
+      large: [],
+      mid: [],
+      small: [{ ...sampleOperator, facility_count: 3, operator_tier: "Small", operator_score: 12 }],
+      tierCounts: { Mega: 18, Large: 520, Mid: 2163, Small: 4675 },
+    });
     expect(html).toContain("Worst Nursing Home Operators");
+    expect(html).toContain("Worst Small Operators");
     expect(html).toContain("#1");
   });
 });
