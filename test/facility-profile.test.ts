@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildContactFacts,
+  formatIsoDate,
   buildFacilityTitle,
   buildVerdict,
   formatPhone,
@@ -191,5 +192,20 @@ describe("buildVerdict", () => {
     delete bare.total_penalties;
     delete bare.total_fines_dollars;
     expect(buildVerdict(bare, { deficiencies: null, penalties: summarizePenalties(bare, null) })).toBe("");
+  });
+});
+
+describe("formatIsoDate", () => {
+  it("preserves certification dates from before 1990", () => {
+    // CMS certified facilities from 1966 onward; a 1990 floor silently dropped
+    // the "certified since" fact for thousands of them.
+    expect(formatIsoDate("1969-09-01")).toBe("September 1, 1969");
+    expect(formatIsoDate("1985-08-01")).toBe("August 1, 1985");
+  });
+
+  it("still rejects sentinel and unparseable dates", () => {
+    expect(formatIsoDate("0001-01-01")).toBeNull();
+    expect(formatIsoDate("not a date")).toBeNull();
+    expect(formatIsoDate("")).toBeNull();
   });
 });

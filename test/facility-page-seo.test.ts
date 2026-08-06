@@ -330,6 +330,24 @@ describe("enforcement states", () => {
     expect(html).toContain("Dates for the individual actions are not");
   });
 
+  it("dates a payment denial from its start date when penalty_date is empty", () => {
+    // CMS commonly leaves penalty_date blank on denial rows; the start date is
+    // right there in the same row and must not be reported as unpublished.
+    const denial: FacilityPenalty = {
+      id: 3,
+      cms_id: "395273",
+      penalty_date: null,
+      penalty_type: "Payment Denial",
+      fine_amount: null,
+      payment_denial_start_date: "2024-10-01",
+      payment_denial_length_days: 42,
+      processing_date: "2026-07-01",
+    };
+    const html = render(embassy, { penalties: [denial] });
+    expect(html).toContain("October 1, 2024");
+    expect(html).not.toContain("Date not published");
+  });
+
   it("renders payment denials with their length", () => {
     const denial: FacilityPenalty = {
       id: 2,
@@ -344,6 +362,7 @@ describe("enforcement states", () => {
     const html = render(embassy, { penalties: [denial] });
     expect(html).toContain("Payment Denial");
     expect(html).toContain("42 days");
+    expect(html).toContain("October 1, 2024");
   });
 });
 
@@ -450,6 +469,9 @@ describe("priority routes", () => {
     expect(html).toContain("tel:+19703533370");
     expect(html).toContain("FAIRACRES MANOR, INC");
     expect(html).toContain("Details verified against CMS data dated");
+    // Certified in 1985 — the date must survive formatting, not be dropped.
+    expect(html).toContain("Medicare/Medicaid certified since");
+    expect(html).toContain("August 1, 1985");
     // No email anywhere in the facility's own contact block. (The site footer
     // carries NursingHomeGrade's own address; that is ours, not the facility's.)
     const block = html.slice(contactSection, html.indexOf("How We Stay Independent", contactSection));
@@ -486,6 +508,15 @@ describe("content integrity", () => {
     for (const html of pages) {
       expect(html).not.toContain("as of Invalid Date");
       expect(html).not.toContain("Invalid Date");
+    }
+  });
+
+  it("does not claim fines or payment denials feed the grade", () => {
+    // computeGrade uses staffing, ratings, deficiency count, and the severity
+    // and correction status of citations. No fine or denial term exists.
+    for (const html of pages) {
+      expect(html).not.toMatch(/enforcement history, weighted/);
+      expect(html).toContain("the severity and correction status of those citations");
     }
   });
 

@@ -51,15 +51,29 @@ export function formatDollars(amount: number | null | undefined): string | null 
   return `$${Math.round(amount).toLocaleString("en-US")}`;
 }
 
+/**
+ * Formats any date CMS publishes about a facility.
+ *
+ * The lower bound is 1900, not 1990: certification dates legitimately reach
+ * back to the start of Medicare in 1966, and a tighter bound silently dropped
+ * the "certified since" fact for every facility certified before 1990. The
+ * bound exists only to reject sentinel and corrupt values that would render as
+ * an implausible year.
+ */
 export function formatIsoDate(dateStr: string | null | undefined): string | null {
   if (!dateStr) return null;
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return null;
   const y = d.getUTCFullYear();
-  if (y < 1990 || y > 2100) return null;
+  if (y < 1900 || y > 2100) return null;
   return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
 }
 
+/**
+ * Year of an inspection or survey date. Bounded at 1990 rather than 1900
+ * because the only callers describe recent survey activity — a 1970 survey year
+ * in that sentence would be a data error, not a fact worth publishing.
+ */
 export function yearOf(dateStr: string | null | undefined): number | null {
   if (!dateStr) return null;
   const d = new Date(dateStr);

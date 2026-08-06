@@ -525,7 +525,15 @@ function renderPenalties(f: FacilityPageData, summary: PenaltySummary): string {
 
   const rows = summary.actions
     .map((p) => {
-      const date = formatIsoDate(p.penalty_date) ?? "Date not published";
+      // A payment denial carries its own start date; CMS often leaves
+      // penalty_date empty on those rows. Preferring it for denials keeps a
+      // date the row already holds from being reported as unpublished.
+      const isDenial = (p.penalty_type ?? "").toLowerCase().includes("denial");
+      const date =
+        (isDenial
+          ? (formatIsoDate(p.payment_denial_start_date) ?? formatIsoDate(p.penalty_date))
+          : (formatIsoDate(p.penalty_date) ?? formatIsoDate(p.payment_denial_start_date))) ??
+        "Date not published";
       const type = p.penalty_type ?? "Enforcement action";
       const amount =
         (p.penalty_type ?? "").toLowerCase() === "fine"
@@ -858,7 +866,7 @@ export function facilityPage(
     <p style="max-width:800px;margin-bottom:var(--space-xl);">
       CMS scores each facility from one to five stars — one is in the bottom fifth of facilities in its state on health
       inspections, five is in the top tenth. Our own A–F grade is a separate 0–100 score built from staffing hours,
-      inspection citations and enforcement history, weighted as described in our
+      inspection citations, and the severity and correction status of those citations, weighted as described in our
       <a href="/how-we-grade">grading methodology</a>.
     </p>
 
