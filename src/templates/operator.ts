@@ -10,6 +10,32 @@ interface OperatorPageProps {
   insightLines: string[];
 }
 
+/** Map a 0-100 score to the grade color band used across the site (matches src/scoring.ts thresholds). */
+function scoreBandColor(score: number): string {
+  if (score >= 80) return "var(--grade-A)";
+  if (score >= 65) return "var(--grade-B)";
+  if (score >= 50) return "var(--grade-C)";
+  if (score >= 35) return "var(--grade-D)";
+  return "var(--grade-F)";
+}
+
+/**
+ * Pure-CSS horizontal score bar. SSR-rendered (no JS, stays cacheable).
+ * The numeric value stays visible for precision; the bar conveys magnitude at a glance.
+ */
+function renderScoreBar(score: number, width = 72): string {
+  const pct = Math.max(0, Math.min(100, Math.round(score)));
+  const color = scoreBandColor(score);
+  return `
+    <div role="img" aria-label="Score ${score} out of 100" style="display:flex;flex-direction:column;gap:0.35rem;width:${width}px;margin:0 auto;">
+      <span style="font-family:'Playfair Display',Georgia,serif;font-weight:800;font-size:1.1rem;line-height:1;color:${color};">${score}</span>
+      <span style="display:block;height:6px;background:var(--rule);border:1px solid var(--rule);overflow:hidden;">
+        <span style="display:block;height:100%;width:${pct}%;background:${color};"></span>
+      </span>
+    </div>
+  `;
+}
+
 function renderFacilityCard(f: Facility): string {
   const rnText = f.rn_hours_per_resident_day !== null ? `${f.rn_hours_per_resident_day.toFixed(2)} hrs` : "Not reported";
   const deficiencyText = f.total_deficiencies !== null ? `${f.total_deficiencies}` : "Not reported";
@@ -18,7 +44,7 @@ function renderFacilityCard(f: Facility): string {
       <div class="result-main">
         <div class="result-grade">
           <span class="result-grade-letter grade-${f.grade_letter}">${escHtml(f.grade_letter)}</span>
-          <span class="result-grade-score">${f.grade_score}/100</span>
+          ${renderScoreBar(f.grade_score, 56)}
         </div>
         <div>
           <a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}" class="result-name">${escHtml(f.name)}</a>
@@ -79,9 +105,12 @@ export function operatorPage(props: OperatorPageProps): string {
           ${totalFacilities} facilities · ${statesServed} state${statesServed !== 1 ? "s" : ""} · ${escHtml(tier)} operator
         </p>
       </div>
-      <div style="text-align:right;">
-        <div style="font-family:'Playfair Display',Georgia,serif;font-size:clamp(4rem,12vw,8rem);font-weight:800;line-height:0.8;color:var(--ink);">${score}</div>
+      <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:var(--space-2xs);">
+        <div style="font-family:'Playfair Display',Georgia,serif;font-size:clamp(4rem,12vw,8rem);font-weight:800;line-height:0.8;color:${scoreBandColor(score)};">${score}</div>
         <div style="font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);">Operator Score</div>
+        <span style="display:block;width:160px;height:8px;background:var(--rule);border:1px solid var(--rule);overflow:hidden;">
+          <span style="display:block;height:100%;width:${Math.max(0, Math.min(100, Math.round(score)))}%;background:${scoreBandColor(score)};"></span>
+        </span>
       </div>
     </div>
 
@@ -104,14 +133,23 @@ export function operatorPage(props: OperatorPageProps): string {
       <div class="snapshot-card">
         <div class="snapshot-label">Operator Score</div>
         <div class="snapshot-value">${score}/100</div>
+        <span style="display:block;height:6px;background:var(--rule);border:1px solid var(--rule);overflow:hidden;margin-top:var(--space-2xs);">
+          <span style="display:block;height:100%;width:${Math.max(0, Math.min(100, Math.round(score)))}%;background:${scoreBandColor(score)};"></span>
+        </span>
       </div>
       <div class="snapshot-card">
         <div class="snapshot-label">Average Grade</div>
         <div class="snapshot-value">${avgGrade}/100</div>
+        <span style="display:block;height:6px;background:var(--rule);border:1px solid var(--rule);overflow:hidden;margin-top:var(--space-2xs);">
+          <span style="display:block;height:100%;width:${Math.max(0, Math.min(100, Math.round(avgGrade)))}%;background:${scoreBandColor(avgGrade)};"></span>
+        </span>
       </div>
       <div class="snapshot-card">
         <div class="snapshot-label">National Average</div>
         <div class="snapshot-value">${nationalAvg.avgGrade}/100</div>
+        <span style="display:block;height:6px;background:var(--rule);border:1px solid var(--rule);overflow:hidden;margin-top:var(--space-2xs);">
+          <span style="display:block;height:100%;width:${Math.max(0, Math.min(100, Math.round(nationalAvg.avgGrade)))}%;background:${scoreBandColor(nationalAvg.avgGrade)};"></span>
+        </span>
       </div>
       <div class="snapshot-card">
         <div class="snapshot-label">Facilities</div>
@@ -171,7 +209,7 @@ function renderOperatorRankTable(operators: Operator[], startRank = 1): string {
           <a href="/operator/${escHtml(op.slug)}">${escHtml(op.normalized_name)}</a>
         </td>
         <td style="padding:var(--space-s) 0;text-align:center;font-weight:800;">${op.facility_count}</td>
-        <td style="padding:var(--space-s) 0;text-align:center;font-family:'Playfair Display',Georgia,serif;font-weight:700;font-size:1.25rem;">${score}</td>
+        <td style="padding:var(--space-s) 0;text-align:center;">${renderScoreBar(score, 72)}</td>
         <td style="padding:var(--space-s) 0;text-align:center;color:var(--muted);">${avg}/100</td>
       </tr>
     `;
@@ -273,7 +311,7 @@ function renderTierExtremeSection(
         <div class="result-main">
           <div class="result-grade">
             <span class="result-rank">#${i + 1}</span>
-            <span class="result-grade-score">${score}/100</span>
+            ${renderScoreBar(score, 64)}
           </div>
           <div>
             <a href="/operator/${escHtml(op.slug)}" class="result-name">${escHtml(op.normalized_name)}</a>

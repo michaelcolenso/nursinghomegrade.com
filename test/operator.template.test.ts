@@ -134,6 +134,32 @@ describe("operatorsHubPage", () => {
     expect(html).toContain("62");
     expect(html).toContain("Score");
   });
+
+  it("renders score bars with correct band color and width", () => {
+    const html = operatorsHubPage({
+      mega: [{ ...sampleOperator, operator_score: 62, operator_tier: "Mega" }],
+      large: [],
+      mid: [],
+      small: [],
+      tierCounts: { Mega: 1, Large: 0, Mid: 0, Small: 0 },
+    });
+    expect(html).toContain('aria-label="Score 62 out of 100"');
+    expect(html).toContain("width:62%");
+    expect(html).toContain("var(--grade-C)");
+  });
+
+  it("colors low scores in the F band", () => {
+    const html = operatorsWorstPage({
+      mega: [],
+      large: [],
+      mid: [],
+      small: [{ ...sampleOperator, facility_count: 3, operator_tier: "Small", operator_score: 12 }],
+      tierCounts: { Mega: 18, Large: 520, Mid: 2163, Small: 4675 },
+    });
+    expect(html).toContain('aria-label="Score 12 out of 100"');
+    expect(html).toContain("width:12%");
+    expect(html).toContain("var(--grade-F)");
+  });
 });
 
 describe("operatorsBestPage", () => {
