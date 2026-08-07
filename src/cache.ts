@@ -1,4 +1,4 @@
-const HTML_CACHE_VERSION = "html:v20";
+const HTML_CACHE_VERSION = "html:v21";
 
 export function htmlCacheKey(key: string): string {
   return `${HTML_CACHE_VERSION}:${key}`;
