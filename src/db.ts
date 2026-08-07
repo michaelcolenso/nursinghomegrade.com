@@ -528,14 +528,30 @@ export async function getOperatorGradeDistribution(env: Env, normalizedName: str
 
 export async function getOperatorsRanked(env: Env, limit = 50, order: "ASC" | "DESC" = "DESC"): Promise<Operator[]> {
   const results = await env.DB.prepare(
-    `SELECT * FROM operators WHERE facility_count >= 3 ORDER BY avg_grade ${order} LIMIT ?`
+    `SELECT * FROM operators WHERE facility_count >= 3 AND operator_score IS NOT NULL ORDER BY operator_score ${order}, facility_count ${order} LIMIT ?`
   ).bind(limit).all<Operator>();
   return results.results ?? [];
 }
 
+export async function getOperatorsByTier(env: Env, tier: string, limit = 25, order: "ASC" | "DESC" = "DESC"): Promise<Operator[]> {
+  const results = await env.DB.prepare(
+    `SELECT * FROM operators WHERE operator_tier = ? ORDER BY operator_score ${order}, facility_count ${order} LIMIT ?`
+  ).bind(tier, limit).all<Operator>();
+  return results.results ?? [];
+}
+
+export async function getOperatorTierCounts(env: Env): Promise<Record<string, number>> {
+  const results = await env.DB.prepare(
+    "SELECT operator_tier, COUNT(*) AS count FROM operators GROUP BY operator_tier"
+  ).all<{ operator_tier: string; count: number }>();
+  const counts: Record<string, number> = { Mega: 0, Large: 0, Mid: 0, Small: 0 };
+  for (const row of results.results ?? []) counts[row.operator_tier] = row.count;
+  return counts;
+}
+
 export async function getAllOperators(env: Env): Promise<Operator[]> {
   const results = await env.DB.prepare(
-    "SELECT * FROM operators WHERE facility_count >= 2 ORDER BY facility_count DESC, normalized_name ASC"
+    "SELECT * FROM operators WHERE facility_count >= 2 ORDER BY operator_score DESC, facility_count DESC, normalized_name ASC"
   ).all<Operator>();
   return results.results ?? [];
 }

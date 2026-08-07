@@ -8,6 +8,7 @@
     "deploy": "wrangler deploy",
     "test": "vitest run",
     "ingest": "npx tsx scripts/ingest.ts",
+    "rebuild-operators": "npx tsx scripts/rebuild-operators.ts",
     "sitemap": "npx tsx scripts/sitemap.ts",
     "check-orphans": "npx tsx scripts/check-orphans.ts",
     "check-sitemap": "npx tsx scripts/check-sitemap-live.ts"
@@ -24,5 +25,11 @@
     "typescript": "^6.0.2",
     "vitest": "^4.1.4",
     "wrangler": "^4.81.1"
+  },
+  "allowScripts": {
+    "esbuild@0.27.3": true,
+    "sharp@0.34.5": true,
+    "sharp@0.35.3": true,
+    "workerd@1.20260409.1": true
   }
 }
