@@ -278,68 +278,70 @@ async function main() {
 
   const { writeFileSync } = await import("fs");
 
-  // Precomputed national + per-state stats (see migrations/008_stats_tables.sql).
-  // These used to be recalculated with a full-table-scan aggregate on nearly
-  // every page load (getNationalAverages, getNationalPctFailing,
-  // getStatePctFailing, getStateRnMedian in src/db.ts) for values that are
-  // constant across the whole site/state and only change on re-ingest.
-  // Computed here from `mapped`, the rows ingest just scored, instead of
-  // re-querying D1 after load.
-  const RN_BENCHMARK = 0.55; // repealed 2024 CMS standard — see src/staffing-standard.ts
-
-  function roundTo(n: number, decimals: number): number {
-    const factor = 10 ** decimals;
-    return Math.round(n * factor) / factor;
-  }
-
-  function median(values: number[]): number | null {
-    if (values.length === 0) return null;
-    const sorted = [...values].sort((a, b) => a - b);
-    const mid = Math.floor((sorted.length - 1) / 2);
-    return sorted.length % 2 === 0 ? (sorted[mid]! + sorted[mid + 1]!) / 2 : sorted[mid]!;
-  }
-
-  const nationalRnReported = mapped.filter((f) => f.rn_hours_per_resident_day !== null);
-  const nationalRnValues = nationalRnReported.map((f) => f.rn_hours_per_resident_day as number);
-  const nationalBelowBenchmark = nationalRnValues.filter((v) => v < RN_BENCHMARK).length;
-  const nationalDeficiencyValues = mapped
-    .filter((f) => f.total_deficiencies !== null)
-    .map((f) => f.total_deficiencies as number);
-
-  const avgGrade = mapped.length > 0 ? roundTo(mapped.reduce((s, f) => s + f.grade_score, 0) / mapped.length, 1) : 0;
-  const avgRnHours =
-    nationalRnValues.length > 0 ? roundTo(nationalRnValues.reduce((a, b) => a + b, 0) / nationalRnValues.length, 2) : null;
-  const avgDeficiencies =
-    nationalDeficiencyValues.length > 0
-      ? roundTo(nationalDeficiencyValues.reduce((a, b) => a + b, 0) / nationalDeficiencyValues.length, 1)
-      : null;
-  const nationalPctFailing =
-    nationalRnReported.length > 0 ? roundTo((100 * nationalBelowBenchmark) / nationalRnReported.length, 1) : null;
-
-  const siteStatsSql = `INSERT INTO site_stats (id,avg_grade,avg_rn_hours,avg_deficiencies,total_facilities,pct_failing,computed_at) VALUES
-  (1,${avgGrade},${avgRnHours ?? "NULL"},${avgDeficiencies ?? "NULL"},${mapped.length},${nationalPctFailing ?? "NULL"},datetime('now'))
+  // Precomputed national + per-state stats (see migrations/008_stats_tables.sql),
+  // replacing full-table-scan aggregates that used to run on nearly every page
+  // load (getNationalAverages, getNationalPctFailing, getStatePctFailing,
+  // getStateRnMedian in src/db.ts) for values that only change on re-ingest.
+  //
+  // Deliberately SELECTed from `facilities` itself — placed after facilitySqls
+  // below so it runs once the load has applied this ingest's upserts — rather
+  // than computed in JS from `mapped`. Ingest only ever INSERT OR REPLACEs; it
+  // never deletes a facility CMS has dropped from the feed (e.g. a closure).
+  // Computing from `mapped` alone would silently exclude any such rows that
+  // are still sitting in the table, disagreeing with every other query here
+  // that reads `facilities` directly. Reading the table post-load keeps this
+  // exactly consistent with what the live aggregate used to return.
+  const siteStatsSql = `INSERT INTO site_stats (id,avg_grade,avg_rn_hours,avg_deficiencies,total_facilities,pct_failing,computed_at)
+  SELECT
+    1,
+    ROUND(AVG(grade_score), 1),
+    ROUND(AVG(rn_hours_per_resident_day), 2),
+    ROUND(AVG(total_deficiencies), 1),
+    COUNT(*),
+    (SELECT ROUND(100.0 * SUM(CASE WHEN rn_hours_per_resident_day < 0.55 THEN 1 ELSE 0 END) / COUNT(*), 1)
+       FROM facilities WHERE rn_hours_per_resident_day IS NOT NULL),
+    datetime('now')
+  FROM facilities
+  -- WHERE true disambiguates INSERT...SELECT...FROM followed by an upsert
+  -- clause, which SQLite's parser cannot otherwise distinguish from the
+  -- SELECT continuing — see https://www.sqlite.org/lang_UPSERT.html.
+  WHERE true
   ON CONFLICT(id) DO UPDATE SET avg_grade=excluded.avg_grade, avg_rn_hours=excluded.avg_rn_hours, avg_deficiencies=excluded.avg_deficiencies, total_facilities=excluded.total_facilities, pct_failing=excluded.pct_failing, computed_at=excluded.computed_at;`;
 
-  const facilitiesByState = new Map<string, typeof mapped>();
-  for (const f of mapped) {
-    const list = facilitiesByState.get(f.state) ?? [];
-    list.push(f);
-    facilitiesByState.set(f.state, list);
-  }
-
-  const stateStatsValues: string[] = [];
-  for (const [state, facilitiesInState] of facilitiesByState) {
-    const reported = facilitiesInState.filter((f) => f.rn_hours_per_resident_day !== null);
-    const rnValues = reported.map((f) => f.rn_hours_per_resident_day as number);
-    const below = rnValues.filter((v) => v < RN_BENCHMARK).length;
-    const pctFailing = reported.length > 0 ? roundTo((100 * below) / reported.length, 1) : null;
-    stateStatsValues.push(`('${esc(state)}',${pctFailing ?? "NULL"},${median(rnValues) ?? "NULL"},datetime('now'))`);
-  }
-
-  const stateStatsSql =
-    stateStatsValues.length > 0
-      ? `INSERT INTO state_stats (state,pct_failing,rn_median,computed_at) VALUES\n${stateStatsValues.join(",\n")}\n  ON CONFLICT(state) DO UPDATE SET pct_failing=excluded.pct_failing, rn_median=excluded.rn_median, computed_at=excluded.computed_at;`
-      : "";
+  // Same median definition as the original getStateRnMedian (the middle value,
+  // or the average of the two middle values for an even count) but computed
+  // for every state in one pass via window functions rather than the
+  // per-request LIMIT/OFFSET trick — SQLite does not allow a correlated
+  // subquery inside LIMIT/OFFSET to reach outside its immediate parent query,
+  // which a single GROUP BY statement over all states would require.
+  const stateStatsSql = `WITH reported AS (
+    SELECT state, rn_hours_per_resident_day AS rn
+      FROM facilities
+     WHERE rn_hours_per_resident_day IS NOT NULL
+  ),
+  ranked AS (
+    SELECT state, rn,
+           ROW_NUMBER() OVER (PARTITION BY state ORDER BY rn) AS rk,
+           COUNT(*) OVER (PARTITION BY state) AS cnt
+      FROM reported
+  ),
+  medians AS (
+    SELECT state, AVG(rn) AS rn_median
+      FROM ranked
+     WHERE rk IN ((cnt + 1) / 2, (cnt + 2) / 2)
+     GROUP BY state
+  ),
+  failing AS (
+    SELECT state, ROUND(100.0 * SUM(CASE WHEN rn < 0.55 THEN 1 ELSE 0 END) / COUNT(*), 1) AS pct_failing
+      FROM reported
+     GROUP BY state
+  )
+  INSERT INTO state_stats (state,pct_failing,rn_median,computed_at)
+  SELECT f.state, f.pct_failing, m.rn_median, datetime('now')
+    FROM failing f
+    JOIN medians m ON m.state = f.state
+   WHERE true
+  ON CONFLICT(state) DO UPDATE SET pct_failing=excluded.pct_failing, rn_median=excluded.rn_median, computed_at=excluded.computed_at;`;
 
   // Build facility INSERT statements
   const FACILITY_BATCH = 100;
@@ -490,7 +492,7 @@ async function main() {
     ...operatorSqls,
     ...penaltySqls,
     siteStatsSql,
-    ...(stateStatsSql ? [stateStatsSql] : []),
+    stateStatsSql,
     releaseSql,
   ].join("\n\n");
   writeFileSync("scripts/seed.sql", seedSql);
