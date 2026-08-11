@@ -294,7 +294,7 @@ async function main() {
   const siteStatsSql = `INSERT INTO site_stats (id,avg_grade,avg_rn_hours,avg_deficiencies,total_facilities,pct_failing,computed_at)
   SELECT
     1,
-    ROUND(AVG(grade_score), 1),
+    COALESCE(ROUND(AVG(grade_score), 1), 0),
     ROUND(AVG(rn_hours_per_resident_day), 2),
     ROUND(AVG(total_deficiencies), 1),
     COUNT(*),
@@ -307,6 +307,16 @@ async function main() {
   -- SELECT continuing — see https://www.sqlite.org/lang_UPSERT.html.
   WHERE true
   ON CONFLICT(id) DO UPDATE SET avg_grade=excluded.avg_grade, avg_rn_hours=excluded.avg_rn_hours, avg_deficiencies=excluded.avg_deficiencies, total_facilities=excluded.total_facilities, pct_failing=excluded.pct_failing, computed_at=excluded.computed_at;`;
+
+  // If every remaining facility in a state stops reporting RN hours, that
+  // state has no row in `reported` below, so the upsert wouldn't touch its
+  // state_stats row and it would keep serving a stale figure forever. The
+  // live query it replaces would have naturally returned 0/null instead, so
+  // drop any state_stats row for a state with no reporting facility left —
+  // getStatePctFailing/getStateRnMedian already fall back to 0/null when the
+  // row is simply absent.
+  const stateStatsCleanupSql = `DELETE FROM state_stats
+  WHERE state NOT IN (SELECT DISTINCT state FROM facilities WHERE rn_hours_per_resident_day IS NOT NULL);`;
 
   // Same median definition as the original getStateRnMedian (the middle value,
   // or the average of the two middle values for an even count) but computed
@@ -492,6 +502,7 @@ async function main() {
     ...operatorSqls,
     ...penaltySqls,
     siteStatsSql,
+    stateStatsCleanupSql,
     stateStatsSql,
     releaseSql,
   ].join("\n\n");
