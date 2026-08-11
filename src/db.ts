@@ -97,23 +97,24 @@ export async function getStatesWithCounts(env: Env): Promise<Array<{ state: stri
  * `reported_rn_staffing_hours_per_resident_per_day`. The 0.55 threshold is the
  * repealed 2024 CMS standard — see src/staffing-standard.ts.
  */
+/**
+ * Reads a value scripts/ingest.ts precomputes into state_stats, rather than
+ * scanning facilities per request — this figure is identical for every page
+ * in the state and only changes when CMS data is re-ingested.
+ */
 export async function getStatePctFailing(env: Env, state: string): Promise<number> {
-  const result = await env.DB.prepare(
-    `SELECT ROUND(100.0 * SUM(CASE WHEN rn_hours_per_resident_day < 0.55 THEN 1 ELSE 0 END) / COUNT(*), 1) as pct
-         FROM facilities WHERE state = ? AND rn_hours_per_resident_day IS NOT NULL`,
-  )
+  const result = await env.DB.prepare("SELECT pct_failing FROM state_stats WHERE state = ?")
     .bind(state)
-    .first<{ pct: number }>();
-  return result?.pct ?? 0;
+    .first<{ pct_failing: number | null }>();
+  return result?.pct_failing ?? 0;
 }
 
-/** National counterpart to getStatePctFailing. Same source and threshold. */
+/** National counterpart to getStatePctFailing, precomputed into site_stats. */
 export async function getNationalPctFailing(env: Env): Promise<number> {
-  const result = await env.DB.prepare(
-    `SELECT ROUND(100.0 * SUM(CASE WHEN rn_hours_per_resident_day < 0.55 THEN 1 ELSE 0 END) / COUNT(*), 1) as pct
-         FROM facilities WHERE rn_hours_per_resident_day IS NOT NULL`,
-  ).first<{ pct: number }>();
-  return result?.pct ?? 0;
+  const result = await env.DB.prepare("SELECT pct_failing FROM site_stats WHERE id = 1").first<{
+    pct_failing: number | null;
+  }>();
+  return result?.pct_failing ?? 0;
 }
 
 export interface BenchmarkShortfall {
@@ -173,22 +174,18 @@ export async function getDataReleases(env: Env): Promise<DataRelease[]> {
  * would overstate the typical facility. Non-reporting facilities are excluded,
  * matching every other staffing figure on the site.
  * Source: CMS Provider Information, `reported_rn_staffing_hours_per_resident_per_day`.
+ *
+ * Precomputed into state_stats by scripts/ingest.ts. The old version ran this
+ * median (two correlated COUNT(*) subqueries plus an ORDER BY/LIMIT/OFFSET)
+ * live on every facility page load for a value that is constant across the
+ * whole state and only changes when CMS data is re-ingested.
  */
 export async function getStateRnMedian(env: Env, state: string): Promise<number | null> {
   try {
-    const row = await env.DB.prepare(
-      `SELECT AVG(rn_hours_per_resident_day) AS median FROM (
-         SELECT rn_hours_per_resident_day
-           FROM facilities
-          WHERE state = ? AND rn_hours_per_resident_day IS NOT NULL
-          ORDER BY rn_hours_per_resident_day
-          LIMIT 2 - (SELECT COUNT(*) FROM facilities WHERE state = ? AND rn_hours_per_resident_day IS NOT NULL) % 2
-         OFFSET (SELECT (COUNT(*) - 1) / 2 FROM facilities WHERE state = ? AND rn_hours_per_resident_day IS NOT NULL)
-       )`,
-    )
-      .bind(state, state, state)
-      .first<{ median: number | null }>();
-    return row?.median ?? null;
+    const row = await env.DB.prepare("SELECT rn_median FROM state_stats WHERE state = ?")
+      .bind(state)
+      .first<{ rn_median: number | null }>();
+    return row?.rn_median ?? null;
   } catch {
     return null;
   }
@@ -556,6 +553,13 @@ export async function getAllOperators(env: Env): Promise<Operator[]> {
   return results.results ?? [];
 }
 
+/**
+ * Precomputed into site_stats by scripts/ingest.ts. This used to run
+ * AVG()/COUNT() over the entire facilities table on nearly every page
+ * render (facility, operator, state-report, reports) for a value that is
+ * identical across the whole site and only changes on re-ingest — it was
+ * the single most expensive query on the site (43% of total D1 runtime).
+ */
 export async function getNationalAverages(env: Env): Promise<{
   avgGrade: number;
   avgRnHours: number;
@@ -563,12 +567,7 @@ export async function getNationalAverages(env: Env): Promise<{
   totalFacilities: number;
 }> {
   const result = await env.DB.prepare(
-    `SELECT
-      ROUND(AVG(grade_score), 1) as avg_grade,
-      ROUND(AVG(rn_hours_per_resident_day), 2) as avg_rn_hours,
-      ROUND(AVG(total_deficiencies), 1) as avg_deficiencies,
-      COUNT(*) as total_facilities
-    FROM facilities`
+    "SELECT avg_grade, avg_rn_hours, avg_deficiencies, total_facilities FROM site_stats WHERE id = 1",
   ).first<{ avg_grade: number; avg_rn_hours: number; avg_deficiencies: number; total_facilities: number }>();
   return {
     avgGrade: result?.avg_grade ?? 0,

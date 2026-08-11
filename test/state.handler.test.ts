@@ -44,8 +44,11 @@ function createEnv(): Env {
           if (query.includes("SELECT COUNT(*) as count FROM facilities WHERE state = ?")) {
             return { count: 1 } as T;
           }
-          if (query.includes("SUM(CASE WHEN rn_hours_per_resident_day < 0.55")) {
-            return { pct: 44.4 } as T;
+          if (query.includes("SELECT pct_failing FROM state_stats WHERE state = ?")) {
+            return { pct_failing: 44.4 } as T;
+          }
+          if (query.includes("SELECT pct_failing FROM site_stats WHERE id = 1")) {
+            return { pct_failing: 40.1 } as T;
           }
           return null as T | null;
         },

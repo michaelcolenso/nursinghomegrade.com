@@ -278,6 +278,69 @@ async function main() {
 
   const { writeFileSync } = await import("fs");
 
+  // Precomputed national + per-state stats (see migrations/008_stats_tables.sql).
+  // These used to be recalculated with a full-table-scan aggregate on nearly
+  // every page load (getNationalAverages, getNationalPctFailing,
+  // getStatePctFailing, getStateRnMedian in src/db.ts) for values that are
+  // constant across the whole site/state and only change on re-ingest.
+  // Computed here from `mapped`, the rows ingest just scored, instead of
+  // re-querying D1 after load.
+  const RN_BENCHMARK = 0.55; // repealed 2024 CMS standard — see src/staffing-standard.ts
+
+  function roundTo(n: number, decimals: number): number {
+    const factor = 10 ** decimals;
+    return Math.round(n * factor) / factor;
+  }
+
+  function median(values: number[]): number | null {
+    if (values.length === 0) return null;
+    const sorted = [...values].sort((a, b) => a - b);
+    const mid = Math.floor((sorted.length - 1) / 2);
+    return sorted.length % 2 === 0 ? (sorted[mid]! + sorted[mid + 1]!) / 2 : sorted[mid]!;
+  }
+
+  const nationalRnReported = mapped.filter((f) => f.rn_hours_per_resident_day !== null);
+  const nationalRnValues = nationalRnReported.map((f) => f.rn_hours_per_resident_day as number);
+  const nationalBelowBenchmark = nationalRnValues.filter((v) => v < RN_BENCHMARK).length;
+  const nationalDeficiencyValues = mapped
+    .filter((f) => f.total_deficiencies !== null)
+    .map((f) => f.total_deficiencies as number);
+
+  const avgGrade = mapped.length > 0 ? roundTo(mapped.reduce((s, f) => s + f.grade_score, 0) / mapped.length, 1) : 0;
+  const avgRnHours =
+    nationalRnValues.length > 0 ? roundTo(nationalRnValues.reduce((a, b) => a + b, 0) / nationalRnValues.length, 2) : null;
+  const avgDeficiencies =
+    nationalDeficiencyValues.length > 0
+      ? roundTo(nationalDeficiencyValues.reduce((a, b) => a + b, 0) / nationalDeficiencyValues.length, 1)
+      : null;
+  const nationalPctFailing =
+    nationalRnReported.length > 0 ? roundTo((100 * nationalBelowBenchmark) / nationalRnReported.length, 1) : null;
+
+  const siteStatsSql = `INSERT INTO site_stats (id,avg_grade,avg_rn_hours,avg_deficiencies,total_facilities,pct_failing,computed_at) VALUES
+  (1,${avgGrade},${avgRnHours ?? "NULL"},${avgDeficiencies ?? "NULL"},${mapped.length},${nationalPctFailing ?? "NULL"},datetime('now'))
+  ON CONFLICT(id) DO UPDATE SET avg_grade=excluded.avg_grade, avg_rn_hours=excluded.avg_rn_hours, avg_deficiencies=excluded.avg_deficiencies, total_facilities=excluded.total_facilities, pct_failing=excluded.pct_failing, computed_at=excluded.computed_at;`;
+
+  const facilitiesByState = new Map<string, typeof mapped>();
+  for (const f of mapped) {
+    const list = facilitiesByState.get(f.state) ?? [];
+    list.push(f);
+    facilitiesByState.set(f.state, list);
+  }
+
+  const stateStatsValues: string[] = [];
+  for (const [state, facilitiesInState] of facilitiesByState) {
+    const reported = facilitiesInState.filter((f) => f.rn_hours_per_resident_day !== null);
+    const rnValues = reported.map((f) => f.rn_hours_per_resident_day as number);
+    const below = rnValues.filter((v) => v < RN_BENCHMARK).length;
+    const pctFailing = reported.length > 0 ? roundTo((100 * below) / reported.length, 1) : null;
+    stateStatsValues.push(`('${esc(state)}',${pctFailing ?? "NULL"},${median(rnValues) ?? "NULL"},datetime('now'))`);
+  }
+
+  const stateStatsSql =
+    stateStatsValues.length > 0
+      ? `INSERT INTO state_stats (state,pct_failing,rn_median,computed_at) VALUES\n${stateStatsValues.join(",\n")}\n  ON CONFLICT(state) DO UPDATE SET pct_failing=excluded.pct_failing, rn_median=excluded.rn_median, computed_at=excluded.computed_at;`
+      : "";
+
   // Build facility INSERT statements
   const FACILITY_BATCH = 100;
   const facilitySqls: string[] = [];
@@ -426,6 +489,8 @@ async function main() {
     ...ownerSqls,
     ...operatorSqls,
     ...penaltySqls,
+    siteStatsSql,
+    ...(stateStatsSql ? [stateStatsSql] : []),
     releaseSql,
   ].join("\n\n");
   writeFileSync("scripts/seed.sql", seedSql);

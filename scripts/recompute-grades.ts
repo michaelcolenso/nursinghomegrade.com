@@ -226,6 +226,17 @@ async function main() {
      );`,
   );
 
+  // site_stats.avg_grade is precomputed by scripts/ingest.ts (see
+  // migrations/008_stats_tables.sql) so getNationalAverages doesn't scan
+  // `facilities` on every page load. This script rewrites grade_score
+  // directly against D1 rather than through ingest, so it must refresh the
+  // one stat it can invalidate. rn_hours/deficiencies/pct_failing/rn_median
+  // are untouched by this script and stay as ingest last computed them.
+  console.log("\nRefreshing site_stats.avg_grade...");
+  query(
+    `UPDATE site_stats SET avg_grade = (SELECT ROUND(AVG(grade_score), 1) FROM facilities), computed_at = datetime('now') WHERE id = 1;`,
+  );
+
   console.log("Done.");
 }
 
