@@ -41,4 +41,41 @@ describe("A2A Agent Card", () => {
       expect(typeof skill.description).toBe("string");
     }
   });
+
+  it("advertises a supported interface that doesn't 404", async () => {
+    const cardResponse = await app.fetch(
+      new Request("http://127.0.0.1:8787/.well-known/agent-card.json"),
+      {} as Env,
+    );
+    const card = (await cardResponse.json()) as {
+      supportedInterfaces: Array<{ url: string }>;
+    };
+    const interfaceUrl = new URL(card.supportedInterfaces[0]!.url);
+
+    const response = await app.fetch(new Request(`http://127.0.0.1:8787${interfaceUrl.pathname}`), {} as Env);
+
+    expect(response.status).not.toBe(404);
+  });
+});
+
+describe("A2A interface stub", () => {
+  it("responds with a spec-shaped UNIMPLEMENTED status instead of 404", async () => {
+    const response = await app.fetch(new Request("http://127.0.0.1:8787/a2a"), {} as Env);
+
+    expect(response.status).toBe(501);
+    const body = (await response.json()) as { error: { code: number; status: string; message: string } };
+    expect(body.error.status).toBe("UNIMPLEMENTED");
+    expect(typeof body.error.message).toBe("string");
+  });
+
+  it("responds the same way under the REST sub-paths an A2A client would call", async () => {
+    const response = await app.fetch(
+      new Request("http://127.0.0.1:8787/a2a/message:send", { method: "POST", body: "{}" }),
+      {} as Env,
+    );
+
+    expect(response.status).toBe(501);
+    const body = (await response.json()) as { error: { status: string } };
+    expect(body.error.status).toBe("UNIMPLEMENTED");
+  });
 });
