@@ -255,9 +255,24 @@ function handleUnexpectedError(err: unknown, request: Request): Response {
   });
 }
 
+// nursinghomegrade.com is the only canonical host: every rendered page's
+// <link rel="canonical"> and OG tags are hardcoded to it (see
+// src/templates/layout.ts). But www.nursinghomegrade.com is a proxied CNAME to
+// the same Worker, so without this it serves a full byte-for-byte duplicate at
+// 200 instead of deferring to the canonical tag — doubling crawlable surface
+// and splitting whatever signal the apex host has. Redirect before routing so
+// no handler runs twice for the same request.
+const CANONICAL_HOST = "nursinghomegrade.com";
+const REDIRECTABLE_HOSTS = new Set(["www.nursinghomegrade.com"]);
+
 async function route(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const path = url.pathname;
+
+    if (REDIRECTABLE_HOSTS.has(url.hostname)) {
+      url.hostname = CANONICAL_HOST;
+      return Response.redirect(url.toString(), 301);
+    }
 
     // ── Well-known discovery endpoints ─────────────────────────────────
     const wk = handleWellKnown(path);
@@ -421,11 +436,15 @@ async function route(request: Request, env: Env): Promise<Response> {
     const facilityMatch = path.match(/^\/facility\/([A-Za-z0-9-]+)$/);
     if (facilityMatch?.[1]) return handleFacility(request, env, facilityMatch[1]).then(r => wrapResponse(r, request));
 
-    const cityMatch = path.match(/^\/state\/([a-z-]+)\/([a-z-]+)$/);
-    if (cityMatch?.[1] && cityMatch?.[2]) return handleCity(request, env, cityMatch[1], cityMatch[2]).then(r => wrapResponse(r, request));
-
+    // Must be checked before cityMatch below: /^\/state\/([a-z-]+)\/([a-z-]+)$/
+    // also matches "report" as a city slug, which sent every /state/:state/report
+    // request to handleCity("report") instead of handleStateReport — a soft 404
+    // (handleCity finds no facility in a nonexistent city) on every state report page.
     const stateReportMatch = path.match(/^\/state\/([a-z-]+)\/report$/);
     if (stateReportMatch?.[1]) return handleStateReport(request, env, stateReportMatch[1]).then(r => wrapResponse(r, request));
+
+    const cityMatch = path.match(/^\/state\/([a-z-]+)\/([a-z-]+)$/);
+    if (cityMatch?.[1] && cityMatch?.[2]) return handleCity(request, env, cityMatch[1], cityMatch[2]).then(r => wrapResponse(r, request));
 
     const stateMatch = path.match(/^\/state\/([a-z-]+)$/);
     if (stateMatch?.[1]) return handleState(request, env, stateMatch[1]).then(r => wrapResponse(r, request));

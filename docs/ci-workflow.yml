@@ -4,6 +4,12 @@ on:
   pull_request:
   push:
     branches: [primary]
+  schedule:
+    # Checks the live site, not the PR's code, so it runs on its own clock
+    # rather than per-PR — a regression here (sitemap coverage collapsing, the
+    # www host serving duplicate content, a facility page silently thinning out
+    # to a masked failure) can happen with no corresponding commit.
+    - cron: "17 */6 * * *"
 
 jobs:
   test:
@@ -37,3 +43,20 @@ jobs:
         # --max reflects the measured residue rather than an aspiration, so the
         # check fails on regression instead of being permanently red.
         run: npx tsx scripts/check-orphans.ts --remote --max 40
+
+  # Live-site indexation health: sitemap structure, per-shard URL counts vs. the
+  # recorded baseline (scripts/sitemap-baseline.json), a content/canonical/robots
+  # sample across every sitemap class, and apex/www host consistency. Only runs
+  # on the schedule trigger — on push/PR it would be checking whatever is
+  # already live, not the code under review.
+  site-health:
+    if: ${{ github.event_name == 'schedule' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx tsx scripts/check-sitemap-live.ts
