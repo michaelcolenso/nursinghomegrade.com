@@ -27,6 +27,7 @@ const AGENT_LINKS = [
   '</.well-known/openid-configuration>; rel="http://openid.net/specs/connect/1.0/issuer"',
   '</.well-known/mcp/server-card.json>; rel="mcp-server-card"',
   '</.well-known/agent-skills/index.json>; rel="agent-skills"',
+  '</.well-known/agent-card.json>; rel="agent-card"',
   '</openapi.json>; rel="service-desc"',
   '</about>; rel="service-doc"',
   '</auth.md>; rel="auth-md"',
@@ -142,6 +143,7 @@ simply use the endpoints documented in our API catalog.
 - **OpenAPI Spec**: [/openapi.json](/openapi.json)
 - **Health Check**: [/api/health](/api/health)
 - **MCP Server Card**: [/.well-known/mcp/server-card.json](/.well-known/mcp/server-card.json)
+- **A2A Agent Card**: [/.well-known/agent-card.json](/.well-known/agent-card.json)
 
 ## Resource Metadata
 

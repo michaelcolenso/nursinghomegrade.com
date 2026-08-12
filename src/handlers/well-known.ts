@@ -5,6 +5,7 @@
  * - RFC 9728 (OAuth Protected Resource Metadata)
  * - SEP-1649 (MCP Server Card)
  * - Agent Skills Discovery RFC v0.2.0
+ * - A2A Protocol Specification v1.0.0 (Agent Card)
  */
 
 const BASE_URL = "https://nursinghomegrade.com";
@@ -47,6 +48,13 @@ function apiCatalog(): Response {
         href: `${BASE_URL}/.well-known/mcp/server-card.json`,
         type: "application/json",
         title: "MCP Server Card",
+      },
+      {
+        anchor: `${BASE_URL}/`,
+        rel: "describedby",
+        href: `${BASE_URL}/.well-known/agent-card.json`,
+        type: "application/json",
+        title: "A2A Agent Card",
       },
     ],
   }, null, 2);
@@ -250,6 +258,100 @@ function agentSkillsIndex(): Response {
   });
 }
 
+// ── /.well-known/agent-card.json ────────────────────────────────────────────
+//
+// Per the A2A Protocol Specification v1.0.0 (spec/a2a.proto AgentCard message).
+// This describes the same read-only data surface as the MCP server card and
+// OpenAPI spec above — search/compare/lookup over CMS nursing home data — for
+// A2A-speaking clients discovering it via /.well-known/agent-card.json rather
+// than the MCP or OpenAPI paths. NursingHomeGrade has no authenticated tier,
+// so securitySchemes/securityRequirements are omitted rather than published
+// empty, and capabilities are all false: no streaming, no push notifications,
+// no extended card behind auth.
+function agentCard(): Response {
+  const body = JSON.stringify({
+    name: "NursingHomeGrade Data Agent",
+    description:
+      "Search, compare, and look up U.S. nursing home quality grades, staffing levels, and inspection deficiencies derived from CMS Care Compare data.",
+    supportedInterfaces: [
+      {
+        url: `${BASE_URL}/a2a`,
+        protocolBinding: "HTTP+JSON",
+        protocolVersion: "1.0.0",
+      },
+    ],
+    provider: {
+      url: BASE_URL,
+      organization: "NursingHomeGrade",
+    },
+    version: "1.0.0",
+    documentationUrl: `${BASE_URL}/about`,
+    capabilities: {
+      streaming: false,
+      pushNotifications: false,
+      extendedAgentCard: false,
+    },
+    defaultInputModes: ["application/json"],
+    defaultOutputModes: ["application/json", "text/html"],
+    skills: [
+      {
+        id: "search-nursing-homes",
+        name: "Search Nursing Homes",
+        description: "Search nursing homes by ZIP code and return grades, staffing, and deficiency data.",
+        tags: ["healthcare", "search", "nursing-homes"],
+        examples: ["Find nursing homes near ZIP 90210 sorted by grade"],
+        inputModes: ["application/json"],
+        outputModes: ["application/json", "text/html"],
+      },
+      {
+        id: "get-facility-details",
+        name: "Get Facility Details",
+        description: "Get detailed grade, staffing, and inspection information for a specific nursing home facility.",
+        tags: ["healthcare", "lookup", "nursing-homes"],
+        examples: ["Get details for CMS certification number 015009"],
+        inputModes: ["application/json"],
+        outputModes: ["application/json", "text/html"],
+      },
+      {
+        id: "compare-facilities",
+        name: "Compare Facilities",
+        description: "Compare multiple nursing homes side by side on grade, staffing, and deficiencies.",
+        tags: ["healthcare", "comparison", "nursing-homes"],
+        examples: ["Compare facilities 015009 and 015012"],
+        inputModes: ["application/json"],
+        outputModes: ["application/json", "text/html"],
+      },
+      {
+        id: "find-nearby-facilities",
+        name: "Find Nearby Facilities",
+        description: "Find nursing homes near a geographic coordinate within a given radius.",
+        tags: ["healthcare", "geo", "nursing-homes"],
+        examples: ["Find nursing homes within 25 miles of 34.05,-118.24"],
+        inputModes: ["application/json"],
+        outputModes: ["application/json"],
+      },
+      {
+        id: "state-rankings",
+        name: "State Rankings",
+        description: "Get aggregate nursing home quality rankings and statistics for a U.S. state.",
+        tags: ["healthcare", "statistics", "nursing-homes"],
+        examples: ["Get nursing home quality statistics for California"],
+        inputModes: ["application/json"],
+        outputModes: ["application/json", "text/html"],
+      },
+    ],
+  }, null, 2);
+
+  return new Response(body, {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "public, max-age=86400",
+      "Access-Control-Allow-Origin": "*",
+    },
+  });
+}
+
 // ── /.well-known/openid-configuration ──────────────────────────────────────
 function openIdConfiguration(): Response {
   const body = JSON.stringify({
@@ -370,6 +472,8 @@ export function handleWellKnown(path: string): Response | null {
       return mcpServerCard();
     case "/.well-known/agent-skills/index.json":
       return agentSkillsIndex();
+    case "/.well-known/agent-card.json":
+      return agentCard();
     case "/api/health":
       return apiHealth();
     case "/openapi.json":
