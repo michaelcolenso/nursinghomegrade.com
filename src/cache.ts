@@ -1,4 +1,6 @@
-const HTML_CACHE_VERSION = "html:v22";
+// Bump after the precomputed stats migration so datacenter-local HTML caches
+// cannot serve pages rendered before site_stats/state_stats were populated.
+const HTML_CACHE_VERSION = "html:v23";
 
 export function htmlCacheKey(key: string): string {
   return `${HTML_CACHE_VERSION}:${key}`;
