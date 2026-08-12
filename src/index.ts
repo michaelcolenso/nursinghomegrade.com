@@ -27,6 +27,7 @@ const AGENT_LINKS = [
   '</.well-known/openid-configuration>; rel="http://openid.net/specs/connect/1.0/issuer"',
   '</.well-known/mcp/server-card.json>; rel="mcp-server-card"',
   '</.well-known/agent-skills/index.json>; rel="agent-skills"',
+  '</.well-known/agent-card.json>; rel="agent-card"',
   '</openapi.json>; rel="service-desc"',
   '</about>; rel="service-doc"',
   '</auth.md>; rel="auth-md"',
@@ -142,6 +143,7 @@ simply use the endpoints documented in our API catalog.
 - **OpenAPI Spec**: [/openapi.json](/openapi.json)
 - **Health Check**: [/api/health](/api/health)
 - **MCP Server Card**: [/.well-known/mcp/server-card.json](/.well-known/mcp/server-card.json)
+- **A2A Agent Card**: [/.well-known/agent-card.json](/.well-known/agent-card.json)
 
 ## Resource Metadata
 
@@ -163,6 +165,41 @@ See our [About page](/about) for methodology and data sources.
     headers: {
       "Content-Type": "text/markdown;charset=UTF-8",
       "Cache-Control": "public, max-age=86400",
+    },
+  });
+}
+
+// ── /a2a — stub A2A interface ───────────────────────────────────────────
+//
+// The Agent Card at /.well-known/agent-card.json advertises this URL as its
+// supportedInterfaces[0] (HTTP+JSON binding). A discovering A2A client would
+// otherwise POST to /a2a/message:send (or the other REST paths the A2A
+// Protocol Specification v1.0.0 HTTP+JSON binding defines relative to the
+// interface URL — /message:stream, /tasks, /tasks/{id}, /tasks/{id}:cancel,
+// /tasks/{id}:subscribe) per spec/a2a.proto's google.api.http annotations,
+// and get a bare 404 rather than a protocol-shaped response. This site has
+// no task/message execution to offer — it's a read-only data site, not a
+// conversational agent — so every path under /a2a returns the same
+// UNIMPLEMENTED status (google.rpc.Code 12) instead of silently 404ing,
+// and points the caller at the endpoints that are actually live.
+function handleA2A(): Response {
+  const body = JSON.stringify({
+    error: {
+      code: 12,
+      status: "UNIMPLEMENTED",
+      message:
+        "This A2A interface is published for discovery only; message and task execution are not implemented. " +
+        "For live machine-readable access to NursingHomeGrade data, use the MCP server " +
+        "(/.well-known/mcp/server-card.json) or the REST API (/openapi.json) instead.",
+    },
+  }, null, 2);
+
+  return new Response(body, {
+    status: 501,
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-store",
+      "Access-Control-Allow-Origin": "*",
     },
   });
 }
@@ -280,6 +317,9 @@ async function route(request: Request, env: Env): Promise<Response> {
 
     // ── Auth.md ────────────────────────────────────────────────────────
     if (path === "/auth.md") return await wrapResponse(handleAuthMd(), request);
+
+    // ── A2A interface stub (see handleA2A) ───────────────────────────────
+    if (path === "/a2a" || path.startsWith("/a2a/")) return await wrapResponse(handleA2A(), request);
 
     // ── Primary page routes ────────────────────────────────────────────
     if (path === "/") return handleHome(request, env).then(r => wrapResponse(r, request));
