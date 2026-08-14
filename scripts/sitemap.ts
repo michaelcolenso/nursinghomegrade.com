@@ -164,6 +164,30 @@ async function main() {
       priority: "0.5",
     },
     {
+      loc: `${BASE}/privacy`,
+      lastmod: siteLastmod,
+      changefreq: "yearly",
+      priority: "0.3",
+    },
+    {
+      loc: `${BASE}/terms`,
+      lastmod: siteLastmod,
+      changefreq: "yearly",
+      priority: "0.3",
+    },
+    {
+      loc: `${BASE}/faq`,
+      lastmod: siteLastmod,
+      changefreq: "monthly",
+      priority: "0.5",
+    },
+    {
+      loc: `${BASE}/glossary`,
+      lastmod: siteLastmod,
+      changefreq: "monthly",
+      priority: "0.5",
+    },
+    {
       loc: `${BASE}/reports/staffing-standard-repeal`,
       lastmod: siteLastmod,
       changefreq: "monthly",

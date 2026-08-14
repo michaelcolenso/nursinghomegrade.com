@@ -2,7 +2,7 @@ import type { Env } from "../types";
 import type { Facility } from "../types";
 import { htmlCacheKey, pageCache } from "../cache";
 import { getNationalPctFailing, searchByZipExact, searchNearby, getStatesWithCounts } from "../db";
-import { homePage, searchResultsPage } from "../templates/home";
+import { homePage, searchResultsPage, searchFormPage } from "../templates/home";
 import { errorPage } from "../templates/subscribe";
 
 export async function handleHome(request: Request, env: Env): Promise<Response> {
@@ -82,7 +82,11 @@ async function geocodeZip(env: Env, zip: string): Promise<{ lat: number; lng: nu
 export async function handleSearch(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const zip = (url.searchParams.get("zip") ?? "").replace(/\D/g, "").slice(0, 5);
-  if (zip.length !== 5) return Response.redirect(new URL("/", request.url).toString(), 302);
+  if (zip.length !== 5) {
+    return new Response(searchFormPage(), {
+      headers: { "Content-Type": "text/html;charset=UTF-8" },
+    });
+  }
 
   const sort = url.searchParams.get("sort") ?? "grade";
   const minGrade = url.searchParams.get("min_grade") ?? "";

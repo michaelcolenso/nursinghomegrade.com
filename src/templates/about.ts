@@ -86,6 +86,12 @@ export function aboutPage(): string {
       that's publicly available, organized and scored in a way that's actually useful.
     </p>
 
+    <p style="background:#fff;border-left:4px solid var(--ink);padding:var(--space-m);margin:var(--space-l) 0;">
+      <strong>This is not medical, legal, or placement advice.</strong> NursingHomeGrade publishes
+      independent analysis of public CMS data to help you research nursing homes. It is not a
+      substitute for professional advice, and no grade should be the sole basis for a care decision.
+    </p>
+
     <h2>How we grade facilities</h2>
     <p>The NursingHomeGrade Score (0–100) is a weighted composite of four CMS data points:</p>
     <div class="results-list" style="margin: var(--space-l) 0;">
@@ -130,6 +136,13 @@ export function aboutPage(): string {
       comparison services. We never receive payments from nursing facilities. If that ever changes,
       we'll disclose it prominently.
     </p>
+    <h2>Who runs this</h2>
+    <p>
+      <!-- TODO(Michael): replace with the real named operator before merging — see PR description. -->
+      NursingHomeGrade is written and maintained by [name]. Questions or corrections:
+      <a href="mailto:info@nursinghomegrade.com">info@nursinghomegrade.com</a>.
+    </p>
+
     <p style="margin-top:2rem;"><a href="/">← Back to home</a></p>
   `;
   return layout(

@@ -82,14 +82,14 @@ function createSitemapEnv(): Env {
 }
 
 describe("search routing safety", () => {
-  it("redirects invalid ZIP input without throwing", async () => {
+  it("renders the ZIP entry form instead of redirecting on invalid input", async () => {
     const response = await handleSearch(
       new Request("http://127.0.0.1:8787/search?zip=abcde"),
       {} as Env,
     );
 
-    expect(response.status).toBe(302);
-    expect(response.headers.get("location")).toBe("http://127.0.0.1:8787/");
+    expect(response.status).toBe(200);
+    expect(await response.text()).toContain("Search nursing homes by ZIP code");
   });
 });
 

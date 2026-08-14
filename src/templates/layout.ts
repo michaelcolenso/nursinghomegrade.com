@@ -85,9 +85,9 @@ export function layout(
 
       /* Grade Palette */
       --grade-A: #12805D;
-      --grade-B: #1FA38C;
-      --grade-C: #F5B23D;
-      --grade-D: #E4573D;
+      --grade-B: #177968;
+      --grade-C: #946108;
+      --grade-D: #C6361C;
       --grade-F: #B91C1C;
 
       /* Severity Colors */
@@ -1127,9 +1127,9 @@ export function layout(
         <nav class="footer-col" aria-label="Company">
           <div class="footer-col-head">Company</div>
           <a href="/about" class="footer-link">About Us</a>
-          <a href="/about" class="footer-link">FAQ</a>
+          <a href="/faq" class="footer-link">FAQ</a>
           <a href="/contact" class="footer-link">Contact</a>
-          <a href="/about" class="footer-link">Glossary</a>
+          <a href="/glossary" class="footer-link">Glossary</a>
         </nav>
 
         <div class="footer-col">
@@ -1157,8 +1157,8 @@ export function layout(
       <div class="footer-bottom">
         <span>&copy; ${new Date().getFullYear()} NursingHomeGrade.com. All rights reserved.</span>
         <nav class="footer-bottom-links" aria-label="Legal">
-          <a href="/about" class="footer-bottom-link">Terms of Use</a>
-          <a href="/about" class="footer-bottom-link">Privacy Policy</a>
+          <a href="/terms" class="footer-bottom-link">Terms of Use</a>
+          <a href="/privacy" class="footer-bottom-link">Privacy Policy</a>
           <a href="/data-sources" class="footer-bottom-link">Data Sources</a>
         </nav>
       </div>
