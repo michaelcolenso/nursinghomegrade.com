@@ -776,7 +776,7 @@ export function facilityPage(
     <nav class="breadcrumb" aria-label="Breadcrumb">
       <a href="/">Home</a>
       <span class="breadcrumb-sep">›</span>
-      <a href="${statePath}">${escHtml(f.state)}</a>
+      <a href="${statePath}">${escHtml(stateInfo?.name ?? f.state)}</a>
       <span class="breadcrumb-sep">›</span>
       <a href="${cityPath}">${escHtml(f.city)}</a>
       <span class="breadcrumb-sep">›</span>
@@ -1055,7 +1055,7 @@ export function facilityPage(
         {
           "@type": "ListItem",
           "position": 2,
-          "name": f.state,
+          "name": stateInfo?.name ?? f.state,
           "item": `https://nursinghomegrade.com${statePath}`
         },
         {

@@ -131,7 +131,7 @@ export function explorePage(): string {
       <div class="results-overview">
         <div class="results-kicker">National Database</div>
         <h1 class="results-count">Explore all facilities</h1>
-        <p class="results-intro">Browse 15,000+ nursing facilities by location. Pan and zoom to see regional quality trends and individual facility grades.</p>
+        <p class="results-intro">Browse 14,700+ nursing facilities by location. Pan and zoom to see regional quality trends and individual facility grades.</p>
       </div>
     </div>
 
@@ -174,8 +174,8 @@ export function explorePage(): string {
   `;
 
   return layout(
-    "Nursing Home Database — Explore 15,000+ Facilities by State & Rating",
-    "Browse independent grades for 15,000+ nursing homes nationwide. Filter by state, city, and overall rating. All data sourced from official CMS reports — no commissions.",
+    "Nursing Home Database — Explore 14,700+ Facilities by State & Rating",
+    "Browse independent grades for 14,700+ nursing homes nationwide. Filter by state, city, and overall rating. All data sourced from official CMS reports — no commissions.",
     body,
     { extraHead, extraScripts, canonicalPath: "/explore" }
   );

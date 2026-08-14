@@ -18,6 +18,10 @@ import { OG_SVG } from "./og-svg";
 import { OG_PNG_BASE64 } from "./og-png.generated";
 import { methodologyPage } from "./templates/methodology";
 import { contactPage } from "./templates/contact";
+import { privacyPage } from "./templates/privacy";
+import { termsPage } from "./templates/terms";
+import { faqPage } from "./templates/faq";
+import { glossaryPage } from "./templates/glossary";
 import { handleDataSources } from "./handlers/data-sources";
 
 // ── Agent Discovery Link Headers (RFC 8288) ──────────────────────────────
@@ -48,6 +52,13 @@ async function wrapResponse(
 ): Promise<Response> {
   const accept = request.headers.get("Accept") ?? "";
 
+  const addBaseSecurityHeaders = (headers: Headers) => {
+    headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    headers.set("X-Content-Type-Options", "nosniff");
+    headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+    headers.set("Permissions-Policy", "geolocation=(self)");
+  };
+
   // If agent requests markdown, and original is HTML, convert
   if (
     accept.includes("text/markdown") &&
@@ -61,6 +72,7 @@ async function wrapResponse(
     headers.set("Link", AGENT_LINKS);
     headers.set("Vary", "Accept");
     headers.set("Cache-Control", original.headers.get("Cache-Control") ?? "public, max-age=3600");
+    addBaseSecurityHeaders(headers);
     return new Response(md, { status: original.status, headers });
   }
 
@@ -73,6 +85,7 @@ async function wrapResponse(
     if (!headers.has("Retry-After")) headers.set("Retry-After", "120");
     headers.set("Cache-Control", "no-store");
     headers.set("Link", AGENT_LINKS);
+    addBaseSecurityHeaders(headers);
     return new Response(original.body, {
       status: original.status,
       statusText: original.statusText,
@@ -86,6 +99,7 @@ async function wrapResponse(
     const headers = new Headers(original.headers);
     headers.set("Link", AGENT_LINKS);
     headers.set("Vary", "Accept");
+    addBaseSecurityHeaders(headers);
     return new Response(original.body, {
       status: original.status,
       statusText: original.statusText,
@@ -100,6 +114,7 @@ async function wrapResponse(
     if (!existingLink) {
       headers.set("Link", AGENT_LINKS);
     }
+    addBaseSecurityHeaders(headers);
     return new Response(original.body, {
       status: original.status,
       statusText: original.statusText,
@@ -306,6 +321,12 @@ async function route(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const path = url.pathname;
 
+    if (path.length > 1 && path.endsWith("/")) {
+      const target = new URL(request.url);
+      target.pathname = path.slice(0, -1);
+      return Response.redirect(target.toString(), 301);
+    }
+
     if (REDIRECTABLE_HOSTS.has(url.hostname)) {
       url.hostname = CANONICAL_HOST;
       return Response.redirect(url.toString(), 301);
@@ -331,6 +352,10 @@ async function route(request: Request, env: Env): Promise<Response> {
     if (path === "/methodology") return wrapResponse(new Response(methodologyPage(), { headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" } }), request);
     if (path === "/data-sources") return handleDataSources(request, env).then(r => wrapResponse(r, request));
     if (path === "/contact") return wrapResponse(new Response(contactPage(), { headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" } }), request);
+    if (path === "/privacy") return wrapResponse(new Response(privacyPage(), { headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" } }), request);
+    if (path === "/terms") return wrapResponse(new Response(termsPage(), { headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" } }), request);
+    if (path === "/faq") return wrapResponse(new Response(faqPage(), { headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" } }), request);
+    if (path === "/glossary") return wrapResponse(new Response(glossaryPage(), { headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" } }), request);
     if (path === "/how-we-grade") return handleHowWeGrade(request, env).then(r => wrapResponse(r, request));
     if (path === "/api/compare") return handleCompareApi(request, env).then(r => wrapResponse(r, request));
     if (path === "/api/map/facilities") return handleMapApi(request, env).then(r => wrapResponse(r, request));

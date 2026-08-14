@@ -1,6 +1,6 @@
-// Bump after the precomputed stats migration so datacenter-local HTML caches
-// cannot serve pages rendered before site_stats/state_stats were populated.
-const HTML_CACHE_VERSION = "html:v23";
+// Bumped for the Aug 2026 audit fixes: grade contrast, facility count copy,
+// facility breadcrumb state name, and homepage meta description.
+const HTML_CACHE_VERSION = "html:v24";
 
 export function htmlCacheKey(key: string): string {
   return `${HTML_CACHE_VERSION}:${key}`;

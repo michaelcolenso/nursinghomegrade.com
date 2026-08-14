@@ -57,7 +57,7 @@ export function howWeGradePage(): string {
     </div>
 
     <h2>Where the data comes from</h2>
-    <p>All data is sourced from <a href="https://data.cms.gov/provider-data/topics/nursing-homes">CMS Nursing Home Compare</a>, the official federal dataset covering 15,000+ Medicare- and Medicaid-certified nursing facilities. Updated monthly. No editorial adjustments — what CMS reports is what you see.</p>
+    <p>All data is sourced from <a href="https://data.cms.gov/provider-data/topics/nursing-homes">CMS Nursing Home Compare</a>, the official federal dataset covering 14,700+ Medicare- and Medicaid-certified nursing facilities. Updated monthly. No editorial adjustments — what CMS reports is what you see.</p>
 
     <h2>Start searching</h2>
     <p>Ready to browse nursing home ratings for a specific facility? Search by ZIP code or browse our <a href="/states">state directory</a> to compare nursing home grades in your area.</p>

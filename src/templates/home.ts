@@ -52,9 +52,28 @@ export function homePage(pctFailing: number): string {
 
   return layout(
     "NursingHomeGrade — Independent Nursing Home Ratings",
-    `${pctFailing}% of U.S. nursing homes that report RN staffing fall below the level the 2024 federal rule would have required. Find unbiased nursing home grades based on CMS inspection, staffing, and quality data — no facility commissions, no conflicts of interest.`,
+    `${pctFailing}% of U.S. nursing homes reporting RN staffing fall short of the 2024 federal rule. Unbiased A–F grades from CMS data — no facility payments.`,
     body,
     { jsonLd, canonicalPath: "/" }
+  );
+}
+
+export function searchFormPage(): string {
+  const body = `
+    <div class="results-header">
+      <h1 style="margin-bottom:0.5rem;">Search nursing homes by ZIP code</h1>
+      <p style="color:var(--muted);margin-bottom:1.5rem;">Enter a 5-digit ZIP code to see graded nursing homes within 25 miles.</p>
+      <form action="/search" method="GET" class="search-bar" style="max-width:400px;">
+        <input type="text" name="zip" placeholder="Enter ZIP code" maxlength="5" pattern="[0-9]{5}" autocomplete="postal-code" inputmode="numeric" required>
+        <button type="submit" class="btn" data-loading-text="Searching…">Search</button>
+      </form>
+    </div>
+  `;
+  return layout(
+    "Search Nursing Homes by ZIP Code — NursingHomeGrade",
+    "Search independent A–F nursing home grades by ZIP code. Compare staffing, inspection, and quality data for facilities near you.",
+    body,
+    { canonicalPath: "/search" }
   );
 }
 
