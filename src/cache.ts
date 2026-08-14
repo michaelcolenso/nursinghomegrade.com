@@ -1,6 +1,5 @@
-// Bumped for /about changes: named-operator line, and removing the
-// advertising/referral-fee claims (site isn't monetized) from /about and
-// the facility-page CTA.
+// Bumped for /about changes (named-operator line, removed unmonetized
+// advertising/referral-fee claims) and the new /ask link on the homepage.
 const HTML_CACHE_VERSION = "html:v25";
 
 export function htmlCacheKey(key: string): string {
