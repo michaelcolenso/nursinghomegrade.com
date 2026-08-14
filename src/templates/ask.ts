@@ -39,15 +39,27 @@ interface AskChunk {
   item?: { key?: string; metadata?: Record<string, unknown> };
 }
 
+// Crawled <title> text arrives already HTML-entity-encoded (it's extracted
+// from raw page source); decode before escHtml() so output doesn't double-encode.
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#0*39;/g, "'");
+}
+
 export function askResultsPage(question: string, answer: string, chunks: AskChunk[]): string {
+  const seenUrls = new Set<string>();
   const sources = chunks
     .map((c) => {
-      const title = typeof c.item?.metadata?.["title"] === "string" ? (c.item.metadata["title"] as string) : c.item?.key;
-      const url = typeof c.item?.metadata?.["url"] === "string" ? (c.item.metadata["url"] as string) : undefined;
-      if (!title) return null;
-      return url
-        ? `<li><a href="${escHtml(url)}">${escHtml(title)}</a></li>`
-        : `<li>${escHtml(title)}</li>`;
+      const url = c.item?.key;
+      if (!url || seenUrls.has(url)) return null;
+      const rawTitle = typeof c.item?.metadata?.["title"] === "string" ? (c.item.metadata["title"] as string) : url;
+      const title = decodeHtmlEntities(rawTitle);
+      seenUrls.add(url);
+      return `<li><a href="${escHtml(url)}">${escHtml(title)}</a></li>`;
     })
     .filter((s): s is string => s !== null);
 

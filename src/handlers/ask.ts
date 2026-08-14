@@ -19,11 +19,22 @@ export async function handleAsk(request: Request, env: Env): Promise<Response> {
   }
 
   try {
+    // Reranking is forced off: the instance's reranker model has been
+    // silently returning zero results (it's hitting the same "workers ai
+    // out of capacity" error visible on ~180 items in the AI Search
+    // dashboard's indexed-items list), which made every /ask query answer
+    // "I don't have that information" despite retrieval finding real
+    // matches. match_threshold compensates as the sole relevance filter
+    // until Cloudflare's capacity issue clears — re-enable reranking then.
     const result = await env.AI_SEARCH.chatCompletions({
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: question },
       ],
+      ai_search_options: {
+        retrieval: { match_threshold: 0.3, max_num_results: 8 },
+        reranking: { enabled: false },
+      },
     });
 
     const answer = result.choices[0]?.message.content ?? "";
