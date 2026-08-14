@@ -1,4 +1,6 @@
-// Bumped for the named-operator line on /about (was a placeholder).
+// Bumped for /about changes: named-operator line, and removing the
+// advertising/referral-fee claims (site isn't monetized) from /about and
+// the facility-page CTA.
 const HTML_CACHE_VERSION = "html:v25";
 
 export function htmlCacheKey(key: string): string {
