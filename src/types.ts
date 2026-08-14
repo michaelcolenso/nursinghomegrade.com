@@ -186,4 +186,5 @@ export interface Trajectory {
 export interface Env {
   DB: D1Database;
   CACHE: KVNamespace;
+  AI_SEARCH: AiSearchInstance;
 }

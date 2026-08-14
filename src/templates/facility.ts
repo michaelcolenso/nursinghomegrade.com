@@ -887,7 +887,7 @@ export function facilityPage(
 
     <div class="cta-box">
       <h3>Need help choosing a facility?</h3>
-      <p>Get free guidance from senior living advisors. We may earn a referral fee from comparison services, but never from nursing facilities and never in ways that affect grades.</p>
+      <p>Get free guidance from senior living advisors. We don't earn a fee for these links, and we never take payment from nursing facilities.</p>
       ${primaryCta}
       ${secondaryCta}
       <p style="font-size:0.75rem;color:#c8d6e0;margin-top:var(--space-s);opacity:0.8;">↗ Links open independent third-party sites in a new tab.</p>

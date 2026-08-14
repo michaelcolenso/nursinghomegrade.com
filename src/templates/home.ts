@@ -22,6 +22,7 @@ export function homePage(pctFailing: number): string {
       <button type="submit">Search</button>
       <button type="button" id="geo-btn" class="geo-btn">Use my location</button>
     </form>
+    <p style="font-size:0.875rem;margin-top:var(--space-xs);"><a href="/ask">Or ask a question about nursing home care →</a></p>
 
     <blockquote class="pull-quote">
       <strong>Why this site exists</strong> A Place for Mom earns up to $3,500 per family they refer to a facility —

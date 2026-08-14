@@ -1,6 +1,7 @@
 import type { Env } from "./types";
 import { handleFacility } from "./handlers/facility";
 import { handleHome, handleSearch } from "./handlers/home";
+import { handleAsk } from "./handlers/ask";
 import { handleAbout } from "./handlers/about";
 import { handleState, handleStatesHub } from "./handlers/state";
 import { handleCity } from "./handlers/city";
@@ -348,6 +349,7 @@ async function route(request: Request, env: Env): Promise<Response> {
     if (path === "/states") return handleStatesHub(request, env).then(r => wrapResponse(r, request));
     if (path === "/compare") return handleCompare(request, env).then(r => wrapResponse(r, request));
     if (path === "/search") return handleSearch(request, env).then(r => wrapResponse(r, request));
+    if (path === "/ask") return handleAsk(request, env).then(r => wrapResponse(r, request));
     if (path === "/explore") return handleExplore(request, env).then(r => wrapResponse(r, request));
     if (path === "/methodology") return wrapResponse(new Response(methodologyPage(), { headers: { "Content-Type": "text/html;charset=UTF-8", "Cache-Control": "public, max-age=86400" } }), request);
     if (path === "/data-sources") return handleDataSources(request, env).then(r => wrapResponse(r, request));

@@ -17,7 +17,7 @@ const FAQ_JSON_LD = {
       "name": "Does NursingHomeGrade take payments from nursing facilities?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "No. NursingHomeGrade never receives payments from nursing facilities. We display contextual advertising and earn small referral fees when users click through to comparison services, but these relationships never affect our grades."
+        "text": "No. NursingHomeGrade never receives payments from nursing facilities and does not currently run advertising or earn referral fees. If that ever changes, we'll disclose it here."
       }
     },
     {
@@ -130,16 +130,9 @@ export function aboutPage(): string {
       We apply no editorial adjustments.
     </p>
 
-    <h2>Business model</h2>
-    <p>
-      We display contextual advertising and earn small referral fees when users click through to
-      comparison services. We never receive payments from nursing facilities. If that ever changes,
-      we'll disclose it prominently.
-    </p>
     <h2>Who runs this</h2>
     <p>
-      <!-- TODO(Michael): replace with the real named operator before merging — see PR description. -->
-      NursingHomeGrade is written and maintained by [name]. Questions or corrections:
+      NursingHomeGrade is written and maintained by The NursingHomeGrade Team. Questions or corrections:
       <a href="mailto:info@nursinghomegrade.com">info@nursinghomegrade.com</a>.
     </p>
 
