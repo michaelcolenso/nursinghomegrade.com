@@ -1,6 +1,5 @@
-// Bumped for the Aug 2026 audit fixes: grade contrast, facility count copy,
-// facility breadcrumb state name, and homepage meta description.
-const HTML_CACHE_VERSION = "html:v24";
+// Bumped for the named-operator line on /about (was a placeholder).
+const HTML_CACHE_VERSION = "html:v25";
 
 export function htmlCacheKey(key: string): string {
   return `${HTML_CACHE_VERSION}:${key}`;

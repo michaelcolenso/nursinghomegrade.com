@@ -138,8 +138,7 @@ export function aboutPage(): string {
     </p>
     <h2>Who runs this</h2>
     <p>
-      <!-- TODO(Michael): replace with the real named operator before merging — see PR description. -->
-      NursingHomeGrade is written and maintained by [name]. Questions or corrections:
+      NursingHomeGrade is written and maintained by The NursingHomeGrade Team. Questions or corrections:
       <a href="mailto:info@nursinghomegrade.com">info@nursinghomegrade.com</a>.
     </p>
 
