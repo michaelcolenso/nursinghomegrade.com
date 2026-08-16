@@ -70,8 +70,10 @@ export function layout(
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 48'%3E%3Crect width='60' height='48' rx='3' fill='%230B1D33'/%3E%3Crect x='8' y='8' width='10' height='28' fill='%23E6EBEF' rx='1'/%3E%3Crect x='28' y='8' width='10' height='28' fill='%23E6EBEF' rx='1'/%3E%3Cline x1='8' y1='36' x2='38' y2='8' stroke='%2316897A' stroke-width='3.5' stroke-linecap='round'/%3E%3Cline x1='14' y1='36' x2='44' y2='8' stroke='%2316897A' stroke-width='3.5' stroke-linecap='round'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Source+Sans+3:wght@400;500;600;700;800&display=swap">
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Source+Sans+3:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Source+Sans+3:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Source+Sans+3:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  </noscript>
   <style>
     :root {
       /* Brand Colors */
