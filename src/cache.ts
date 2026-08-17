@@ -2,7 +2,7 @@
 // per-state index, state pages are paginated) and the async Google Fonts
 // load in layout.ts. Both changed rendered HTML site-wide, so cache entries
 // must regenerate rather than serve stale for up to 24h.
-const HTML_CACHE_VERSION = "html:v27";
+const HTML_CACHE_VERSION = "html:v28";
 
 export function htmlCacheKey(key: string): string {
   return `${HTML_CACHE_VERSION}:${key}`;
