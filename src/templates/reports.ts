@@ -15,6 +15,12 @@ interface FacilityRow {
   slug: string;
 }
 
+export interface StaffingFailureStateRow {
+  stateName: string;
+  slug: string;
+  count: number;
+}
+
 function renderReportTable(rows: FacilityRow[], columns: { key: keyof FacilityRow; label: string }[]): string {
   const header = columns.map((c) => `<th style="text-align:left;padding:var(--space-s) 0;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">${escHtml(c.label)}</th>`).join("");
   const body = rows.map((row) => {
@@ -57,7 +63,34 @@ function reportMethodology(datasetDate: string): string {
   `;
 }
 
-export function staffingFailuresPage(facilities: FacilityRow[]): string {
+function renderStaffingPagination(basePath: string, page: number, totalPages: number): string {
+  const prevHref = page > 1 ? (page - 1 > 1 ? `${basePath}?page=${page - 1}` : basePath) : "";
+  const nextHref = page < totalPages ? `${basePath}?page=${page + 1}` : "";
+  const link = (href: string, rel: string, label: string) =>
+    href ? `<a class="btn-secondary" rel="${rel}" href="${escHtml(href)}">${label}</a>` : "";
+  return `
+    <nav class="pagination" aria-label="Pagination" style="display:flex;align-items:center;gap:var(--space-s);margin:var(--space-l) 0;">
+      ${link(prevHref, "prev", "← Previous")}
+      <span style="font-size:0.9rem;color:var(--muted);">Page ${page} of ${totalPages}</span>
+      ${link(nextHref, "next", "Next →")}
+    </nav>
+  `;
+}
+
+export function staffingFailuresPage(states: StaffingFailureStateRow[], total: number): string {
+  const rows = states
+    .map(
+      (state) => `
+        <tr style="border-bottom:1px solid var(--rule);">
+          <td style="padding:var(--space-s) 0;font-weight:700;">
+            <a href="/reports/staffing-failures/${escHtml(state.slug)}">${escHtml(state.stateName)}</a>
+          </td>
+          <td style="padding:var(--space-s) 0;">${state.count.toLocaleString("en-US")} facilities</td>
+        </tr>
+      `,
+    )
+    .join("");
+
   const body = `
     <nav class="breadcrumb" aria-label="Breadcrumb">
       <a href="/">Home</a>
@@ -67,18 +100,24 @@ export function staffingFailuresPage(facilities: FacilityRow[]): string {
 
     <h1>Facilities Below the 2024 RN Staffing Benchmark</h1>
     <p class="lede" style="max-width:800px;margin-bottom:var(--space-xl);">
-      Facilities with RN staffing below 0.55 hours per resident per day — the level the 2024 federal rule would have required.
+      <strong>${total.toLocaleString("en-US")} facilities</strong> across ${states.length} states report RN staffing below
+      0.55 hours per resident per day — the level the 2024 federal rule would have required.
     </p>
     ${repealDisclosureHtml()}
 
-    <h2>Facilities Below the 0.55 Hour Benchmark</h2>
-    ${renderReportTable(facilities, [
-      { key: "name", label: "Facility" },
-      { key: "city", label: "City" },
-      { key: "state", label: "State" },
-      { key: "rn_hours_per_resident_day", label: "RN Hours" },
-      { key: "grade_letter", label: "Grade" },
-    ])}
+    <h2>Facilities Below the 0.55 Hour Benchmark, by State</h2>
+    <p style="margin-bottom:var(--space-s);">Select a state to see its facilities, staffing hours, and grades.</p>
+    <div class="table-container">
+      <table style="min-width:600px;">
+        <thead>
+          <tr style="border-bottom:2px solid var(--ink);">
+            <th style="text-align:left;padding:var(--space-s) 0;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">State</th>
+            <th style="text-align:left;padding:var(--space-s) 0;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Facilities Below Benchmark</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
 
     ${reportMethodology(new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }))}
 
@@ -139,8 +178,16 @@ export function highDeficiencyPage(facilities: FacilityRow[]): string {
   );
 }
 
-export function staffingFailuresStatePage(stateName: string, facilities: FacilityRow[]): string {
+export function staffingFailuresStatePage(
+  stateName: string,
+  facilities: FacilityRow[],
+  opts: { total: number; page: number; totalPages: number },
+): string {
+  const { total, page, totalPages } = opts;
   const scope = `Staffing Failures in ${stateName}`;
+  const basePath = `/reports/staffing-failures/${stateName.toLowerCase().replace(/\s+/g, "-")}`;
+  const canonicalPath = page > 1 ? `${basePath}?page=${page}` : basePath;
+  const pagination = totalPages > 1 ? renderStaffingPagination(basePath, page, totalPages) : "";
   const body = `
     <nav class="breadcrumb" aria-label="Breadcrumb">
       <a href="/">Home</a>
@@ -152,7 +199,7 @@ export function staffingFailuresStatePage(stateName: string, facilities: Facilit
 
     <h1>${escHtml(scope)}</h1>
     <p class="lede" style="max-width:800px;margin-bottom:var(--space-xl);">
-      <strong>${facilities.length} facilities</strong> in ${escHtml(stateName)} fall below 0.55 RN hours per resident per day, the repealed 2024 federal benchmark.
+      <strong>${total.toLocaleString("en-US")} facilities</strong> in ${escHtml(stateName)} fall below 0.55 RN hours per resident per day, the repealed 2024 federal benchmark.
     </p>
 
     <h2>Facilities Below the 0.55 Hour Benchmark</h2>
@@ -162,6 +209,7 @@ export function staffingFailuresStatePage(stateName: string, facilities: Facilit
       { key: "rn_hours_per_resident_day", label: "RN Hours" },
       { key: "grade_letter", label: "Grade" },
     ])}
+    ${pagination}
 
     ${reportMethodology(new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }))}
 
@@ -174,10 +222,10 @@ export function staffingFailuresStatePage(stateName: string, facilities: Facilit
   `;
 
   return layout(
-    `${scope} — NursingHomeGrade Report`,
-    `${facilities.length} nursing facilities in ${stateName} fall below the repealed 0.55 hr federal RN benchmark.`,
+    page > 1 ? `${scope} (Page ${page}) — NursingHomeGrade Report` : `${scope} — NursingHomeGrade Report`,
+    `${total.toLocaleString("en-US")} nursing facilities in ${stateName} fall below the repealed 0.55 hr federal RN benchmark.`,
     body,
-    { canonicalPath: `/reports/staffing-failures/${stateName.toLowerCase().replace(/\s+/g, "-")}` },
+    { canonicalPath, noindex: page > 1 },
   );
 }
 

@@ -1,6 +1,7 @@
-// Bumped for /about changes (named-operator line, removed unmonetized
-// advertising/referral-fee claims) and the new /ask link on the homepage.
-const HTML_CACHE_VERSION = "html:v25";
+// Bumped for the staffing-failures report rework: the national page is now a
+// per-state index and state pages are paginated, so every report cache entry
+// must be regenerated rather than served stale for up to 24h.
+const HTML_CACHE_VERSION = "html:v26";
 
 export function htmlCacheKey(key: string): string {
   return `${HTML_CACHE_VERSION}:${key}`;
