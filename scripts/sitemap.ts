@@ -73,13 +73,13 @@ async function main() {
 
   // Pull cms_id, slug, and updated_at from D1
   const result = execSync(
-    `npx wrangler d1 execute nursinghomegrade ${d1Flag} --command "SELECT cms_id, slug, state, city, updated_at FROM facilities ORDER BY state, cms_id;" --json`,
+    `npx wrangler d1 execute nursinghomegrade ${d1Flag} --command "SELECT cms_id, slug, state, city, updated_at, rn_hours_per_resident_day FROM facilities ORDER BY state, cms_id;" --json`,
     { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
   );
 
   // wrangler d1 execute --json returns an array of result sets
   const parsed = parseWranglerJson<Array<{
-    results: Array<{ cms_id: string; slug: string; state: string; city: string; updated_at: string }>;
+    results: Array<{ cms_id: string; slug: string; state: string; city: string; updated_at: string; rn_hours_per_resident_day: number | null }>;
   }>>(result, "facility rows");
   const rows = parsed[0]?.results ?? [];
 
@@ -97,6 +97,14 @@ async function main() {
 
   const BASE = SITEMAP_BASE;
   const stateSlugs = getAllStateSlugs();
+  const staffingFailureStateSlugs = [
+    ...new Set(
+      rows
+        .filter((r) => r.rn_hours_per_resident_day !== null && r.rn_hours_per_resident_day! < 0.55)
+        .map((r) => STATE_NAMES[r.state.toUpperCase()]?.slug)
+        .filter((s): s is string => Boolean(s)),
+    ),
+  ].sort();
 
   const now = new Date().toISOString().split("T")[0];
 
@@ -193,6 +201,18 @@ async function main() {
       changefreq: "monthly",
       priority: "0.7",
     },
+    {
+      loc: `${BASE}/reports/staffing-failures`,
+      lastmod: siteLastmod,
+      changefreq: "weekly",
+      priority: "0.7",
+    },
+    ...staffingFailureStateSlugs.map((s) => ({
+      loc: `${BASE}/reports/staffing-failures/${escapeXml(s)}`,
+      lastmod: siteLastmod,
+      changefreq: "weekly",
+      priority: "0.6" as string,
+    })),
     {
       loc: `${BASE}/states`,
       lastmod: siteLastmod,
