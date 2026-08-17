@@ -1,7 +1,8 @@
-// Bumped for the staffing-failures report rework: the national page is now a
-// per-state index and state pages are paginated, so every report cache entry
-// must be regenerated rather than served stale for up to 24h.
-const HTML_CACHE_VERSION = "html:v26";
+// Bumped for the staffing-failures report rework (national page is now a
+// per-state index, state pages are paginated) and the async Google Fonts
+// load in layout.ts. Both changed rendered HTML site-wide, so cache entries
+// must regenerate rather than serve stale for up to 24h.
+const HTML_CACHE_VERSION = "html:v27";
 
 export function htmlCacheKey(key: string): string {
   return `${HTML_CACHE_VERSION}:${key}`;
