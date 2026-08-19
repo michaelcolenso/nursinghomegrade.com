@@ -1,4 +1,4 @@
-import type { Facility, FacilityInspectionDetails, Deficiency, Env, Operator, FacilitySnapshot, FacilityPenalty } from "./types";
+import type { Facility, FacilityInspectionDetails, Deficiency, Env, Operator, FacilitySnapshot, FacilityPenalty, StateFacilityCard } from "./types";
 import { cityDisplayName, citySlug } from "./states";
 import type { DataRelease } from "./templates/data-sources";
 
@@ -214,6 +214,22 @@ export async function getFacilitiesByState(env: Env, state: string, limit = 200)
   )
     .bind(state, limit)
     .all<Facility>();
+  return results.results ?? [];
+}
+
+/**
+ * The top facilities in a state as compact cards — every column the state
+ * page's ranked list and ItemList schema actually render. The previous path
+ * fetched 200 full rows (every column of `facilities`) to render ten cards:
+ * 20x the rows, and the unused columns on the wire, on every cache miss.
+ */
+export async function getTopFacilitiesByState(env: Env, state: string, limit = 10): Promise<StateFacilityCard[]> {
+  const results = await env.DB.prepare(
+    `SELECT cms_id, name, slug, city, state, grade_score, grade_letter, rn_hours_per_resident_day
+     FROM facilities WHERE state = ? ORDER BY grade_score DESC LIMIT ?`
+  )
+    .bind(state, limit)
+    .all<StateFacilityCard>();
   return results.results ?? [];
 }
 
@@ -444,7 +460,8 @@ export async function getCitySnapshot(
   limit = 200,
 ): Promise<CitySnapshot | null> {
   const results = await env.DB.prepare(
-    "SELECT * FROM facilities WHERE state = ? ORDER BY grade_score DESC"
+    `SELECT cms_id, name, address, city, state, overall_rating, rn_hours_per_resident_day, grade_score, grade_letter, slug
+     FROM facilities WHERE state = ? ORDER BY grade_score DESC`
   )
     .bind(state)
     .all<Facility>();

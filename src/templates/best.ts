@@ -12,6 +12,26 @@ interface FacilityRow {
   slug: string;
 }
 
+/**
+ * Score/rating facts computed from the rows this page actually renders, so the
+ * intro paragraph is real data rather than boilerplate: the top score, the
+ * median score, and how many of the ranked facilities hold an A grade.
+ * Returns null when there is nothing to summarise.
+ */
+function rankingStats(facilities: FacilityRow[]): { top: number; median: number; aCount: number; count: number } | null {
+  if (facilities.length === 0) return null;
+  const scores = facilities.map((f) => f.grade_score).sort((a, b) => a - b);
+  const mid = Math.floor(scores.length / 2);
+  const median =
+    scores.length % 2 === 1 ? scores[mid]! : Math.round((scores[mid - 1]! + scores[mid]!) / 2);
+  return {
+    top: scores[scores.length - 1]!,
+    median,
+    aCount: facilities.filter((f) => f.grade_letter === "A").length,
+    count: facilities.length,
+  };
+}
+
 function renderTable(facilities: FacilityRow[]): string {
   if (facilities.length === 0) {
     return `<p style="color:var(--muted);">No facilities found.</p>`;
@@ -64,9 +84,19 @@ export function bestPage(facilities: FacilityRow[], stateName?: string): string 
   const description = stateName
     ? `Top-rated nursing homes in ${escHtml(stateName)} ranked by independent NursingHomeGrade scores.`
     : "The 100 highest-rated nursing homes in the U.S., ranked by independent NursingHomeGrade scores based on CMS data.";
+
+  // Real score/rating data from the rows on this page, served in the first
+  // paragraph. A rankings page that leads with 'ranked by our composite' and
+  // no numbers gives a searcher nothing to act on; the top score, median and
+  // A-grade share are the same figures the table below shows.
+  const stats = rankingStats(facilities);
+  const statsSentence = stats
+    ? ` The top-rated facility scores ${stats.top}/100, the median score across the ${stats.count} ranked facilities is ${stats.median}/100, and ${stats.aCount} ${stats.aCount === 1 ? "holds" : "hold"} an A grade.`
+    : "";
+
   const intro = stateName
-    ? `The highest-rated nursing facilities in ${escHtml(stateName)}, ranked by NursingHomeGrade Score — a composite of RN staffing, health deficiencies, and CMS quality ratings.`
-    : "The 100 highest-rated nursing homes nationally, ranked by NursingHomeGrade Score. Our grading weighs RN staffing (35%), deficiency count (30%), CMS quality ratings (20%), and staffing consistency (15%).";
+    ? `The highest-rated nursing facilities in ${escHtml(stateName)}, ranked by NursingHomeGrade Score — a composite of RN staffing, health deficiencies, and CMS quality ratings.${statsSentence}`
+    : `The 100 highest-rated nursing homes nationally, ranked by NursingHomeGrade Score.${statsSentence} Our grading weighs RN staffing (35%), deficiency count (30%), CMS quality ratings (20%), and staffing consistency (15%).`;
 
   const jsonLd = [{
     "@context": "https://schema.org",

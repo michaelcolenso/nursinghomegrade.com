@@ -29,7 +29,10 @@ function createEnv(): Env {
     prepare(query: string) {
       const execute = {
         async all<T>() {
-          if (query.includes("SELECT * FROM facilities WHERE state = ? ORDER BY grade_score DESC LIMIT ?")) {
+          // The slim state-page query selects exactly the card columns, spread
+          // across two lines in the handler; match on the distinctive column
+          // list rather than the whitespace between columns.
+          if (query.includes("grade_score, grade_letter, rn_hours_per_resident_day") && query.includes("FROM facilities WHERE state = ? ORDER BY grade_score DESC LIMIT ?")) {
             return { results: [sampleFacility] as T[] };
           }
           if (query.includes("SELECT grade_letter, COUNT(*) as count FROM facilities WHERE state = ? GROUP BY grade_letter")) {

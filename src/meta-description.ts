@@ -44,8 +44,28 @@ function tidy(s: string): string {
   return s.replace(/\s+/g, " ").trim();
 }
 
-function gradeClause(f: Facility): string {
-  return `Grade ${f.grade_letter} (${f.grade_score}/100)`;
+/**
+ * Whether the facility's grade belongs in the SERP snippet at all.
+ *
+ * A grade only helps a searcher decide to click when it is a point in the
+ * facility's favour — an A or B. For C, D and F the letter in the snippet
+ * broadcasts a verdict with zero context: this is the exact pattern that left
+ * 'Salyersville Grade F 7/100' at position 6 with 434 impressions and a 0%
+ * CTR. Low grades are therefore omitted from the snippet so it leads with
+ * what the report contains; the grade itself is still rendered on the page,
+ * in the score hero and the ratings breakdown.
+ */
+export function shouldShowGrade(f: Facility): boolean {
+  return f.grade_letter === "A" || f.grade_letter === "B";
+}
+
+/**
+ * Sentence-fragment form of the grade for branches that include it, including
+ * the leading space and trailing period. Empty string when the grade is
+ * suppressed, so callers can interpolate it directly after any full stop.
+ */
+function gradeSentence(f: Facility): string {
+  return shouldShowGrade(f) ? ` Grade ${f.grade_letter} (${f.grade_score}/100).` : "";
 }
 
 /**
@@ -96,7 +116,10 @@ export function deriveDescriptionFacts(
 
 export function generateMetaDescription(facility: Facility, facts: DescriptionFacts): string {
   const where = `${facility.name} in ${facility.city}, ${facility.state}`;
-  const grade = gradeClause(facility);
+  // Present only for A/B — see shouldShowGrade. Every branch below leads with
+  // what the report contains and appends the grade only when it helps the
+  // searcher decide to click.
+  const grade = gradeSentence(facility);
   const rn = facility.rn_hours_per_resident_day;
 
   // 1. Unresolved violations — the single most decision-relevant fact.
@@ -105,12 +128,12 @@ export function generateMetaDescription(facility: Facility, facts: DescriptionFa
     const noun = facts.outstandingCount === 1 ? "unresolved federal violation" : "unresolved federal violations";
     // Only claim a date when we have a real one.
     const asOf = y !== null ? ` as of the ${y} inspection` : "";
-    return tidy(`${where} has ${facts.outstandingCount} ${noun}${asOf}. ${grade}.`);
+    return tidy(`${where} has ${facts.outstandingCount} ${noun}${asOf}.${grade}`);
   }
 
   // 2. Actual harm on record.
   if (facts.harmYear !== null) {
-    return tidy(`${where} was cited for actual harm to residents in ${facts.harmYear}. ${grade}.`);
+    return tidy(`${where} was cited for actual harm to residents in ${facts.harmYear}.${grade}`);
   }
 
   // 3. RN staffing notably above or below the state median.
@@ -119,7 +142,7 @@ export function generateMetaDescription(facility: Facility, facts: DescriptionFa
     if (Math.abs(pct) >= NOTABLE_PCT) {
       const direction = pct > 0 ? "above" : "below";
       return tidy(
-        `${where} provides ${rn.toFixed(2)} RN hours per resident daily, ${Math.abs(pct)}% ${direction} the ${facility.state} median. ${grade}.`,
+        `${where} provides ${rn.toFixed(2)} RN hours per resident daily, ${Math.abs(pct)}% ${direction} the ${facility.state} median.${grade}`,
       );
     }
   }
@@ -134,9 +157,10 @@ export function generateMetaDescription(facility: Facility, facts: DescriptionFa
   }
 
   if (parts.length === 0) {
-    // Nothing beyond identity and grade is known. Say only what is true.
-    return tidy(`${where}. ${grade}, based on federal CMS inspection and staffing data.`);
+    // Nothing beyond identity is known. Describe what the report covers
+    // without asserting that any particular record exists.
+    return tidy(`${where}.${grade} See inspection records, staffing data, and ratings in the full report.`);
   }
 
-  return tidy(`${where}. ${grade}, based on ${parts.join(" and ")}.`);
+  return tidy(`${where}.${grade} Based on ${parts.join(" and ")}.`);
 }

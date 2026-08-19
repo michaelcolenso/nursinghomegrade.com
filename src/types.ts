@@ -113,6 +113,22 @@ export interface Facility extends FacilityProfile {
   updated_at: string;
 }
 
+/**
+ * The compact subset of `facilities` a state page renders: one row per card
+ * in the ranked list plus the ItemList schema. State pages fetch only these
+ * columns for the ten facilities they show, never the full row for hundreds.
+ */
+export interface StateFacilityCard {
+  cms_id: string;
+  name: string;
+  slug: string;
+  city: string;
+  state: string;
+  grade_score: number;
+  grade_letter: string;
+  rn_hours_per_resident_day: number | null;
+}
+
 export interface FacilityInspectionDetails {
   complaint_deficiencies_cycle_1: number | null;
 }
