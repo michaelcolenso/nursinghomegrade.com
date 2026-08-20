@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { statePage, statesHubPage } from "../src/templates/state";
 import type { StatePageData } from "../src/templates/state";
+import type { StateFacilityCard } from "../src/types";
 
 const baseStateData: StatePageData = {
   stateName: "California",
@@ -18,45 +19,23 @@ const baseStateData: StatePageData = {
     {
       cms_id: "055001",
       name: "Golden State Care Center",
-      address: "123 Main St",
       city: "Los Angeles",
       state: "CA",
-      zip: "90210",
-      latitude: 34.0522,
-      longitude: -118.2437,
-      overall_rating: 4,
-      quality_rating: 4,
-      staffing_rating: 3,
-      inspection_rating: 4,
       rn_hours_per_resident_day: 0.72,
-      total_deficiencies: 2,
       grade_score: 88,
       grade_letter: "A",
-      grade_summary: "Strong staffing and clean inspection record.",
       slug: "golden-state-care-center",
-      updated_at: "2026-01-01T00:00:00.000Z",
-    },
+    } as StateFacilityCard,
     {
       cms_id: "055002",
       name: "Pacific Pines Nursing Home",
-      address: "456 Ocean Ave",
       city: "San Diego",
       state: "CA",
-      zip: "92101",
-      latitude: 32.7157,
-      longitude: -117.1611,
-      overall_rating: 2,
-      quality_rating: 2,
-      staffing_rating: 1,
-      inspection_rating: 2,
       rn_hours_per_resident_day: 0.38,
-      total_deficiencies: 12,
       grade_score: 34,
       grade_letter: "F",
-      grade_summary: "Severely understaffed with repeated deficiencies.",
       slug: "pacific-pines-nursing-home",
-      updated_at: "2026-01-01T00:00:00.000Z",
-    },
+    } as StateFacilityCard,
   ],
 };
 

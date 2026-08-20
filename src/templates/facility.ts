@@ -353,6 +353,7 @@ function renderRelatedLinks(
           <ul style="list-style:none;padding:0;margin:0;display:grid;gap:var(--space-xs);">
             ${peerLinks}
             <li><a href="/state/${stateSlug}/${cSlug}" style="color:var(--accent);font-weight:700;">View all ${escHtml(current.city)} facilities →</a></li>
+            <li><a href="/best/${stateSlug}" style="color:var(--accent);font-weight:700;">Highest-rated nursing homes in ${escHtml(stateName)} →</a></li>
           </ul>
         </div>`
       : `
@@ -361,6 +362,7 @@ function renderRelatedLinks(
           <ul style="list-style:none;padding:0;margin:0;display:grid;gap:var(--space-xs);">
             <li><a href="/state/${stateSlug}/${cSlug}" style="color:var(--accent);font-weight:700;">View all ${escHtml(current.city)} facilities →</a></li>
             <li><a href="/state/${stateSlug}" style="color:var(--accent);font-weight:700;">View all ${escHtml(stateName)} facilities →</a></li>
+            <li><a href="/best/${stateSlug}" style="color:var(--accent);font-weight:700;">Highest-rated nursing homes in ${escHtml(stateName)} →</a></li>
           </ul>
         </div>`;
 

@@ -3,7 +3,7 @@ import { htmlCacheKey, pageCache } from "../cache";
 import { getStateAbbreviation, getStateInfo, getAllStateSlugs } from "../states";
 import {
   countFacilitiesByState,
-  getFacilitiesByState,
+  getTopFacilitiesByState,
   getStateGradeDistribution,
   getStateCityList,
   getStatePctFailing,
@@ -37,8 +37,11 @@ export async function handleState(request: Request, env: Env, stateSlug: string)
       return new Response(html, { status: 404, headers: { "Content-Type": "text/html;charset=UTF-8" } });
     }
 
+    // Ten compact cards, not 200 full rows: the template renders only the top
+    // ten facilities and the page's aggregate figures come from the precomputed
+    // state_stats/site_stats tables (PR #33) and the aggregate queries below.
     const [facilities, totalFacilityCount, gradeDistribution, cities, pctFailing, nationalPctFailing] = await Promise.all([
-      getFacilitiesByState(env, stateAbbr, 200),
+      getTopFacilitiesByState(env, stateAbbr, 10),
       countFacilitiesByState(env, stateAbbr),
       getStateGradeDistribution(env, stateAbbr),
       getStateCityList(env, stateAbbr),
@@ -49,7 +52,7 @@ export async function handleState(request: Request, env: Env, stateSlug: string)
     const html = statePage({
       stateName: stateInfo.name,
       stateSlug: stateInfo.slug,
-      facilityCount: facilities.length,
+      facilityCount: totalFacilityCount,
       totalFacilityCount,
       pctFailing,
       nationalPctFailing,

@@ -91,4 +91,10 @@ describe("per-facility peer links", () => {
     const html = facilityPage(base, [], [peer(1)], []);
     expect(html).not.toContain("Top Rated in");
   });
+
+  it("links the state's highest-rated ranking from the related-links block", () => {
+    const html = facilityPage(base, [], [peer(1)], []);
+    expect(html).toContain('href="/best/washington"');
+    expect(html).toContain("Highest-rated nursing homes in Washington");
+  });
 });

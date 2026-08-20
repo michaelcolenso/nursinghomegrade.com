@@ -1,4 +1,4 @@
-import type { Facility } from "../types";
+import type { StateFacilityCard } from "../types";
 import { citySlug } from "../states";
 import { layout, escHtml } from "./layout";
 import { repealDisclosureHtml } from "../staffing-standard";
@@ -12,7 +12,7 @@ export interface StatePageData {
   nationalPctFailing: number;
   gradeDistribution: Record<string, number>;
   cities: Array<{ city: string; count: number }>;
-  facilities: Facility[];
+  facilities: StateFacilityCard[];
 }
 
 export function statePage(data: StatePageData): string {
@@ -139,7 +139,7 @@ function renderGradeDistribution(dist: Record<string, number>, total: number): s
   `;
 }
 
-function renderFacilityItem(f: Facility): string {
+function renderFacilityItem(f: StateFacilityCard): string {
   return `
     <div class="card" style="padding: 1.5rem;">
       <div style="display: grid; grid-template-columns: 60px 1fr auto; gap: 2rem; align-items: center;">

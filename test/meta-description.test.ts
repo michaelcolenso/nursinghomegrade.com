@@ -90,7 +90,8 @@ describe("meta description: cascade priority", () => {
     });
     expect(t).toContain("3 unresolved federal violations");
     expect(t).toContain("2025");
-    expect(t).toContain("Grade C (62/100)");
+    // base is grade C — the grade must not appear in the snippet at all.
+    expect(t).not.toContain("Grade");
   });
 
   it("singularizes a lone violation", () => {
@@ -156,5 +157,75 @@ describe("deriveDescriptionFacts", () => {
     const facts = deriveDescriptionFacts(null);
     expect(facts.totalDeficiencies).toBeNull();
     expect(facts.outstandingCount).toBe(0);
+  });
+});
+
+// ── Verdict presence in the snippet ──────────────────────────────────────────
+//
+// The SERP snippet must lead with what the report offers. A grade is included
+// only when it is a point in the facility's favour (A/B); for C/D/F it is
+// omitted so the snippet cannot broadcast a verdict the way 'Grade F 7/100'
+// did at position 6 with a 0% CTR.
+
+describe("meta description: verdict presence", () => {
+  it("keeps the grade in the snippet for A- and B-graded facilities", () => {
+    const a = generateMetaDescription(
+      { ...base, grade_letter: "A", grade_score: 92 },
+      { ...noFacts, totalDeficiencies: 7 },
+    );
+    expect(a).toContain("Grade A (92/100)");
+
+    const b = generateMetaDescription(
+      { ...base, grade_letter: "B", grade_score: 71 },
+      { ...noFacts, totalDeficiencies: 7 },
+    );
+    expect(b).toContain("Grade B (71/100)");
+  });
+
+  it("omits the grade for C-, D- and F-graded facilities", () => {
+    for (const [letter, score] of [
+      ["C", 58],
+      ["D", 42],
+      ["F", 7],
+    ] as const) {
+      const t = generateMetaDescription(
+        { ...base, grade_letter: letter, grade_score: score },
+        { ...noFacts, totalDeficiencies: 7 },
+      );
+      expect(t).not.toContain("Grade");
+      expect(t).toContain("7 federal deficiencies");
+    }
+  });
+
+  it("leads with report content, not the grade, for an F facility with violations", () => {
+    const t = generateMetaDescription(
+      { ...base, grade_letter: "F", grade_score: 7 },
+      { ...noFacts, outstandingCount: 2, latestOutstandingSurveyDate: "2025-03-14" },
+    );
+    expect(t.startsWith("Sunrise Care Center in Birmingham, AL has 2 unresolved federal violations")).toBe(true);
+    expect(t).not.toContain("Grade");
+  });
+
+  it("A-grade snippet leads with the report and appends the grade once, at the end", () => {
+    const t = generateMetaDescription(
+      { ...base, grade_letter: "A", grade_score: 92 },
+      { ...noFacts, outstandingCount: 1, latestOutstandingSurveyDate: "2025-03-14" },
+    );
+    expect(t.startsWith("Sunrise Care Center in Birmingham, AL has 1 unresolved federal violation")).toBe(true);
+    expect(t.indexOf("Grade A (92/100)")).toBeGreaterThan(t.indexOf("violation"));
+  });
+
+  it("no-data fallback describes the report without asserting data exists", () => {
+    const t = generateMetaDescription({ ...base, rn_hours_per_resident_day: null }, noFacts);
+    expect(t).toContain("inspection");
+    expect(t).toContain("full report");
+    expect(t).not.toContain("null");
+    expect(t).not.toContain("unknown");
+  });
+
+  it("keeps descriptions unique across facilities that share identical facts", () => {
+    const a = generateMetaDescription({ ...base, name: "Alpha Care" }, { ...noFacts, totalDeficiencies: 7 });
+    const b = generateMetaDescription({ ...base, name: "Beta Care" }, { ...noFacts, totalDeficiencies: 7 });
+    expect(a).not.toBe(b);
   });
 });
