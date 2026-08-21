@@ -45,8 +45,9 @@ jobs:
         run: npx tsx scripts/check-orphans.ts --remote --max 40
 
   # Live-site indexation health: sitemap structure, per-shard URL counts vs. the
-  # recorded baseline (scripts/sitemap-baseline.json), a content/canonical/robots
-  # sample across every sitemap class, and apex/www host consistency. Only runs
+  # recorded baseline (scripts/sitemap-baseline.json), unknown URL families, and
+  # core/city/facility page-class coverage; a content/canonical/robots sample
+  # across every sitemap class, and apex/www host consistency. Only runs
   # on the schedule trigger — on push/PR it would be checking whatever is
   # already live, not the code under review.
   site-health:

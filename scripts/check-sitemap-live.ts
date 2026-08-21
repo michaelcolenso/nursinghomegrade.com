@@ -14,6 +14,14 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { validateIndex, validateUrlset, SITEMAP_BASE, type SitemapEntry, type SitemapIndexEntry } from "../src/sitemap-xml";
+import {
+  classifySitemapUrl,
+  compareSitemapCoverage,
+  parseSitemapBaseline,
+  shouldUpdateSitemapBaseline,
+  type SitemapBaseline,
+  type SitemapCoverage,
+} from "../src/indexation-health";
 
 const args = process.argv.slice(2);
 const sampleSize = Number(args[args.indexOf("--sample") + 1]) || 25;
@@ -26,17 +34,12 @@ const BASELINE_PATH = "scripts/sitemap-baseline.json";
 // stale KV upload, or the discovery collapse this checker exists to catch.
 const REGRESSION_THRESHOLD = 0.9;
 
-interface Baseline {
-  totalUrls: number;
-  shardCount: number;
-  recordedAt: string;
-}
-
-function readBaseline(): Baseline | null {
+function readBaseline(): SitemapBaseline | null {
   try {
-    return JSON.parse(readFileSync(BASELINE_PATH, "utf8")) as Baseline;
-  } catch {
-    return null;
+    return parseSitemapBaseline(readFileSync(BASELINE_PATH, "utf8"));
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw err;
   }
 }
 
@@ -68,6 +71,7 @@ async function main() {
 
   let totalUrls = 0;
   const allLocs = new Set<string>();
+  const pageClasses = { core: 0, city: 0, facility: 0, unknown: 0 };
   for (const child of children) {
     const xml = await fetchText(child.loc);
     const entries = parseLocs(xml, "url") as SitemapEntry[];
@@ -82,6 +86,7 @@ async function main() {
     for (const e of entries) {
       if (allLocs.has(e.loc)) problems.push(`${e.loc} appears in more than one child sitemap`);
       allLocs.add(e.loc);
+      pageClasses[classifySitemapUrl(e.loc)] += 1;
     }
 
     // Sample the URLs: a listed URL must answer 200 on the canonical host with
@@ -151,31 +156,27 @@ async function main() {
   const shardCount = children.length;
   const baseline = readBaseline();
   if (baseline) {
-    const urlRatio = totalUrls / baseline.totalUrls;
-    const shardRatio = shardCount / baseline.shardCount;
-    if (urlRatio < REGRESSION_THRESHOLD) {
-      problems.push(
-        `Total sitemap URLs dropped to ${totalUrls} from a baseline of ${baseline.totalUrls} ` +
-          `(recorded ${baseline.recordedAt}) — a ${Math.round((1 - urlRatio) * 100)}% drop.`,
-      );
-    }
-    if (shardRatio < REGRESSION_THRESHOLD) {
-      problems.push(
-        `Sitemap shard count dropped to ${shardCount} from a baseline of ${baseline.shardCount} ` +
-          `(recorded ${baseline.recordedAt}).`,
-      );
-    }
+    const coverage: SitemapCoverage = { totalUrls, shardCount, pageClasses };
+    problems.push(...compareSitemapCoverage(coverage, baseline, REGRESSION_THRESHOLD));
   } else {
     console.log(`No baseline at ${BASELINE_PATH} yet — run with --update-baseline to record one.`);
   }
 
-  if (updateBaseline) {
-    const next: Baseline = { totalUrls, shardCount, recordedAt: new Date().toISOString() };
-    writeFileSync(BASELINE_PATH, `${JSON.stringify(next, null, 2)}\n`);
-    console.log(`Updated baseline: ${totalUrls} URLs across ${shardCount} shards.`);
+  if (updateBaseline && problems.length > 0) {
+    console.error("Refusing to update the sitemap baseline while health problems are present.");
   }
 
   if (problems.length === 0) {
+    if (shouldUpdateSitemapBaseline(updateBaseline, problems)) {
+      const next: SitemapBaseline = {
+        totalUrls,
+        shardCount,
+        pageClasses,
+        recordedAt: new Date().toISOString(),
+      };
+      writeFileSync(BASELINE_PATH, `${JSON.stringify(next, null, 2)}\n`);
+      console.log(`Updated baseline: ${totalUrls} URLs across ${shardCount} shards.`);
+    }
     console.log("No problems found in the served sitemaps.");
     return;
   }

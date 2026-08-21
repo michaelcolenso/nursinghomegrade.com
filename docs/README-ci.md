@@ -21,9 +21,11 @@ It runs three jobs:
   suspiciously small (a masked failure — a D1/subrequest error degrading to a
   thin 200 instead of the retryable 5xx the error boundary is supposed to
   produce); `www.nursinghomegrade.com` serves content instead of redirecting
-  to the apex host every canonical tag points to; or the total URL / shard
-  count drops more than 10% from `scripts/sitemap-baseline.json`. Update the
-  baseline after an intentional coverage change with
+  to the apex host every canonical tag points to; the sitemap contains an unknown
+  URL family, loses an entire core/city/facility page class, or the total URL /
+  shard count drops more than 10% from `scripts/sitemap-baseline.json`. A
+  malformed baseline fails closed rather than disabling the check. Update the
+  baseline only after an intentional, healthy coverage change with
   `npx tsx scripts/check-sitemap-live.ts --update-baseline`.
 
 The `--max` threshold on link-coverage is set to the measured orphan residue
