@@ -11,7 +11,9 @@
     "rebuild-operators": "npx tsx scripts/rebuild-operators.ts",
     "sitemap": "npx tsx scripts/sitemap.ts",
     "check-orphans": "npx tsx scripts/check-orphans.ts",
-    "check-sitemap": "npx tsx scripts/check-sitemap-live.ts"
+    "check-sitemap": "npx tsx scripts/check-sitemap-live.ts",
+    "export-archetypes": "npx tsx scripts/export-ftag-archetypes.ts",
+    "import-enrichments": "npx tsx scripts/import-enrichments.ts"
   },
   "keywords": [],
   "author": "",

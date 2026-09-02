@@ -7,3 +7,5 @@ public/sitemap.xml
 public/sitemap-*.xml
 indexnow-keys.txt
 .deepseek/
+data/
+out/
