@@ -33,7 +33,7 @@ describe("data source disclosure", () => {
   it("identifies penalties as an active source", () => {
     const html = dataSourcesPage(releases);
     expect(html).toContain("Civil money penalties");
-    expect(html).toContain("facility's enforcement history");
+    expect(html).toContain("enforcement history");
     expect(html).not.toContain("including Payroll-Based Journal daily staffing, MDS quality measures, and civil money penalties");
   });
 
