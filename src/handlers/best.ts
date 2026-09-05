@@ -16,12 +16,19 @@ interface FacilityRow {
   slug: string;
 }
 
+const RANKABLE_GRADE_SQL = "grade_letter != 'NR' AND grade_score >= 0";
+
+/**
+ * Ranked pages compare actual NursingHomeGrade results only. An NR facility is
+ * not a zero-score facility and must never become the first row on /worst merely
+ * because the persistence layer uses -1 as its legacy-schema sentinel.
+ */
 async function fetchBest(env: Env, state?: string): Promise<FacilityRow[]> {
   if (state) {
     const results = await env.DB.prepare(
       `SELECT cms_id, name, city, state, rn_hours_per_resident_day, total_deficiencies, grade_score, grade_letter, slug
        FROM facilities
-       WHERE state = ?
+       WHERE state = ? AND ${RANKABLE_GRADE_SQL}
        ORDER BY grade_score DESC
        LIMIT 100`
     ).bind(state).all<FacilityRow>();
@@ -30,6 +37,7 @@ async function fetchBest(env: Env, state?: string): Promise<FacilityRow[]> {
   const results = await env.DB.prepare(
     `SELECT cms_id, name, city, state, rn_hours_per_resident_day, total_deficiencies, grade_score, grade_letter, slug
      FROM facilities
+     WHERE ${RANKABLE_GRADE_SQL}
      ORDER BY grade_score DESC
      LIMIT 100`
   ).all<FacilityRow>();
@@ -41,7 +49,7 @@ async function fetchWorst(env: Env, state?: string): Promise<FacilityRow[]> {
     const results = await env.DB.prepare(
       `SELECT cms_id, name, city, state, rn_hours_per_resident_day, total_deficiencies, grade_score, grade_letter, slug
        FROM facilities
-       WHERE state = ?
+       WHERE state = ? AND ${RANKABLE_GRADE_SQL}
        ORDER BY grade_score ASC
        LIMIT 100`
     ).bind(state).all<FacilityRow>();
@@ -50,6 +58,7 @@ async function fetchWorst(env: Env, state?: string): Promise<FacilityRow[]> {
   const results = await env.DB.prepare(
     `SELECT cms_id, name, city, state, rn_hours_per_resident_day, total_deficiencies, grade_score, grade_letter, slug
      FROM facilities
+     WHERE ${RANKABLE_GRADE_SQL}
      ORDER BY grade_score ASC
      LIMIT 100`
   ).all<FacilityRow>();
