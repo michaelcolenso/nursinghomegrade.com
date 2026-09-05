@@ -162,21 +162,28 @@ export function scoreToGrade(score: number): string {
   return "F";
 }
 
-export function scoreToSummary(score: number, grade: string, rnHours: number | null): string {
+/**
+ * Short facility-page summary. Deliberately describes only the evidence passed
+ * to this function. The old implementation inferred inspection quality from the
+ * final composite letter (for example, A => "top tier inspection record"), which
+ * could directly contradict the citations shown lower on the same page.
+ *
+ * Inspection findings are rendered from the CMS deficiency rows elsewhere on the
+ * facility page, so this line keeps the staffing fact and sends the reader to the
+ * actual inspection/enforcement evidence instead of inventing an adjective from
+ * the overall grade.
+ */
+export function scoreToSummary(_score: number, _grade: string, rnHours: number | null): string {
   if (rnHours === null) {
-    return `Staffing data not reported — check the facility's inspection history.`;
+    return "RN staffing data not reported — review the inspection and enforcement records below.";
   }
   const meetsBenchmark = rnHours >= FEDERAL_RN_MINIMUM;
   // "benchmark" not "minimum": the 0.55 hr standard was repealed effective
   // 2026-02-02 and is no longer a federal requirement.
   const staffing = meetsBenchmark
-    ? "At or above the 2024 benchmark"
-    : `Below the repealed ${FEDERAL_RN_MINIMUM} hr RN benchmark`;
-  if (grade === "A") return `${staffing} — top tier inspection record.`;
-  if (grade === "B") return `${staffing} — above average inspection record.`;
-  if (grade === "C") return `${staffing} — average inspection record.`;
-  if (grade === "D") return `${staffing} — elevated deficiency count.`;
-  return `${staffing} — review inspection history before visiting.`;
+    ? "RN staffing is at or above the 2024 benchmark"
+    : `RN staffing is below the repealed ${FEDERAL_RN_MINIMUM} hr benchmark`;
+  return `${staffing} — review the inspection and enforcement records below for the safety history behind the grade.`;
 }
 
 export function toSlug(name: string): string {
