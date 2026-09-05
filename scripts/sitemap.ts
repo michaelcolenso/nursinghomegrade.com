@@ -32,7 +32,6 @@ const SITEMAP_UPLOADS = [
   { key: "sitemap-cities", path: "public/sitemap-cities.xml" },
 ];
 
-
 /**
  * Parses wrangler's `--json` output.
  *
@@ -71,7 +70,7 @@ async function main() {
 
   console.log(`Querying D1 ${useLocal ? "local" : "remote"} database...`);
 
-  // Pull cms_id, slug, and updated_at from D1
+  // Pull facility rows used to build the URL corpus.
   const result = execSync(
     `npx wrangler d1 execute nursinghomegrade ${d1Flag} --command "SELECT cms_id, slug, state, city, updated_at, rn_hours_per_resident_day FROM facilities ORDER BY state, cms_id;" --json`,
     { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
@@ -93,6 +92,26 @@ async function main() {
   }>>(cityResult, "city rows");
   const cityRows = cityParsed[0]?.results ?? [];
 
+  // Prefer the CMS dataset modification date over facilities.updated_at. The
+  // latter is an ingest timestamp and therefore changes when an identical CMS
+  // release is reloaded. A sitemap lastmod must not claim the page changed just
+  // because our loader ran again.
+  let authoritativeLastmod: string | undefined;
+  try {
+    const releaseResult = execSync(
+      `npx wrangler d1 execute nursinghomegrade ${d1Flag} --command "SELECT MAX(cms_modified_date) AS content_date FROM data_releases WHERE cms_modified_date IS NOT NULL;" --json`,
+      { encoding: "utf8", maxBuffer: 4 * 1024 * 1024 },
+    );
+    const releaseParsed = parseWranglerJson<Array<{
+      results: Array<{ content_date: string | null }>;
+    }>>(releaseResult, "CMS release metadata");
+    authoritativeLastmod = releaseParsed[0]?.results?.[0]?.content_date ?? undefined;
+  } catch {
+    // Backward-compatible fallback for a local D1 that has not yet applied
+    // migration 010. Production should always have authoritative metadata.
+    console.warn("CMS modified date unavailable; falling back to facility updated_at for sitemap lastmod");
+  }
+
   const { STATE_NAMES } = await import("../src/states");
 
   const BASE = SITEMAP_BASE;
@@ -110,12 +129,10 @@ async function main() {
 
   // ── lastmod, honestly ────────────────────────────────────────────────
   //
-  // A sitemap lastmod is a claim about when the PAGE last changed. Stamping
-  // every URL with the build time is the falsification the spec warns about:
-  // Google learns the field is noise and stops using it. Facility pages carry
-  // their own updated_at; city and state pages derive theirs from the most
-  // recently changed facility they list, because that is genuinely when their
-  // content last moved.
+  // With migration 010 applied, all data-driven URLs use the latest CMS source
+  // modification date. This is intentionally coarser than per-row ingest time:
+  // rerunning an unchanged import leaves lastmod untouched, while a new monthly
+  // CMS release advances it. Local databases without 010 retain the old fallback.
   const dayOf = (iso: string | null | undefined): string | undefined =>
     iso ? iso.split("T")[0] : undefined;
 
@@ -123,14 +140,14 @@ async function main() {
   const latestByCity = new Map<string, string>();
   let latestOverall = "";
   for (const r of rows) {
-    const d = dayOf(r.updated_at);
+    const d = authoritativeLastmod ?? dayOf(r.updated_at);
     if (!d) continue;
     if (d > (latestByState.get(r.state) ?? "")) latestByState.set(r.state, d);
     const cityKey = `${r.state}|${r.city.toLowerCase()}`;
     if (d > (latestByCity.get(cityKey) ?? "")) latestByCity.set(cityKey, d);
     if (d > latestOverall) latestOverall = d;
   }
-  const siteLastmod = latestOverall || now;
+  const siteLastmod = latestOverall || authoritativeLastmod || now;
 
   // ── URL validity ─────────────────────────────────────────────────────
   //
@@ -156,7 +173,7 @@ async function main() {
     for (const m of skipped.slice(0, 20)) console.warn(`  ${m}`);
   }
 
-  // State slug -> most recent facility change in that state.
+  // State slug -> most recent CMS data change in that state.
   const stateLastmodBySlug = new Map<string, string>();
   for (const [abbr, d] of latestByState) {
     const info = STATE_NAMES[abbr.toUpperCase()];
@@ -227,7 +244,7 @@ async function main() {
     })),
   ];
 
-  // City URL -> most recent change among the facilities it lists.
+  // City URL -> most recent CMS data change among the facilities it lists.
   const cityLastmodByUrl = new Map<string, string>();
   for (const [key, d] of latestByCity) {
     const [abbr, cityLower] = key.split("|");
@@ -263,7 +280,7 @@ async function main() {
     const list = byState.get(slug) ?? [];
     list.push({
       loc: `${BASE}/facility/${escapeXml(r.cms_id)}-${escapeXml(r.slug)}`,
-      lastmod: dayOf(r.updated_at) ?? siteLastmod,
+      lastmod: authoritativeLastmod ?? dayOf(r.updated_at) ?? siteLastmod,
       changefreq: "monthly",
       priority: "0.6",
     });
