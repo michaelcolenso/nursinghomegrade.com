@@ -61,20 +61,26 @@ describe("scoreToGrade", () => {
 describe("scoreToSummary", () => {
   it("describes failing facilities against the repealed benchmark, not a current minimum", () => {
     const summary = scoreToSummary(20, "F", 0.2);
-    expect(summary).toContain("repealed 0.55 hr RN benchmark");
+    expect(summary).toContain("repealed 0.55 hr benchmark");
     expect(summary).not.toContain("federal staffing minimum");
   });
 
-  it("returns a positive string for A-grade facilities", () => {
+  it("does not infer inspection quality from an A grade", () => {
     const summary = scoreToSummary(90, "A", 1.2);
-    expect(typeof summary).toBe("string");
-    expect(summary.length).toBeGreaterThan(10);
+    expect(summary).not.toMatch(/top tier inspection|clean inspection|above average inspection/i);
+    expect(summary).toContain("inspection and enforcement records");
   });
 
-  it("handles null rnHours gracefully", () => {
+  it("does not infer inspection quality from a B grade", () => {
+    const summary = scoreToSummary(75, "B", 0.8);
+    expect(summary).not.toMatch(/top tier inspection|clean inspection|above average inspection/i);
+  });
+
+  it("handles null rnHours gracefully without implying a clean inspection record", () => {
     const summary = scoreToSummary(50, "C", null);
-    expect(typeof summary).toBe("string");
-    expect(summary.length).toBeGreaterThan(10);
+    expect(summary).toContain("RN staffing data not reported");
+    expect(summary).toContain("inspection and enforcement records");
+    expect(summary).not.toMatch(/clean inspection|average inspection/i);
   });
 });
 
