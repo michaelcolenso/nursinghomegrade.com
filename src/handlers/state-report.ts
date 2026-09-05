@@ -2,7 +2,6 @@ import type { Env } from "../types";
 import { htmlCacheKey, pageCache } from "../cache";
 import { getStateAbbreviation, getStateInfo } from "../states";
 import {
-  getFacilitiesByState,
   countFacilitiesByState,
   getStateGradeDistribution,
   getStatePctFailing,
@@ -11,6 +10,12 @@ import {
 } from "../db";
 import { stateReportPage } from "../templates/state-report";
 import { notFoundPage, errorPage } from "../templates/subscribe";
+
+interface StateAverages {
+  avg_grade: number | null;
+  avg_rn_hours: number | null;
+  avg_deficiencies: number | null;
+}
 
 export async function handleStateReport(request: Request, env: Env, stateSlug: string): Promise<Response> {
   try {
@@ -34,35 +39,34 @@ export async function handleStateReport(request: Request, env: Env, stateSlug: s
       });
 
     const [
-      facilities,
       totalCount,
       gradeDistribution,
       pctFailing,
       nationalPctFailing,
       nationalAvg,
+      stateAverages,
     ] = await Promise.all([
-      getFacilitiesByState(env, stateAbbr, 200),
       countFacilitiesByState(env, stateAbbr),
       getStateGradeDistribution(env, stateAbbr),
       getStatePctFailing(env, stateAbbr),
       getNationalPctFailing(env),
       getNationalAverages(env),
+      env.DB.prepare(
+        `SELECT
+           ROUND(AVG(CASE WHEN grade_letter != 'NR' AND grade_score >= 0 THEN grade_score END), 1) AS avg_grade,
+           ROUND(AVG(rn_hours_per_resident_day), 2) AS avg_rn_hours,
+           ROUND(AVG(total_deficiencies), 1) AS avg_deficiencies
+         FROM facilities
+         WHERE state = ?`,
+      ).bind(stateAbbr).first<StateAverages>(),
     ]);
 
-    // Compute state averages
-    const avgGrade = facilities.length > 0
-      ? Math.round(facilities.reduce((sum, f) => sum + f.grade_score, 0) / facilities.length * 10) / 10
-      : 0;
-    const avgRnHours = facilities.length > 0
-      ? Math.round(facilities
-          .filter((f) => f.rn_hours_per_resident_day !== null)
-          .reduce((sum, f) => sum + (f.rn_hours_per_resident_day as number), 0) / facilities.length * 100) / 100
-      : null;
-    const avgDeficiencies = facilities.length > 0
-      ? Math.round(facilities
-          .filter((f) => f.total_deficiencies !== null)
-          .reduce((sum, f) => sum + (f.total_deficiencies as number), 0) / facilities.length * 10) / 10
-      : null;
+    // Grade averages use only facilities with an actual grade. Staffing and
+    // deficiency averages use every facility that reports those measures,
+    // including NR facilities, because gradeability must not erase valid CMS evidence.
+    const avgGrade = stateAverages?.avg_grade ?? 0;
+    const avgRnHours = stateAverages?.avg_rn_hours ?? null;
+    const avgDeficiencies = stateAverages?.avg_deficiencies ?? null;
 
     // Most common deficiency categories in the state
     const deficiencyCats = await env.DB.prepare(
@@ -75,15 +79,18 @@ export async function handleStateReport(request: Request, env: Env, stateSlug: s
        LIMIT 5`
     ).bind(stateAbbr).all<{ deficiency_category: string; count: number }>();
 
-    // Compute state rank (by average grade)
+    // Compute state rank by the average of actual grades only. States with no
+    // currently gradeable facilities do not enter the ranking.
     const allStateAvgs = await env.DB.prepare(
       `SELECT state, ROUND(AVG(grade_score), 1) as avg_grade
        FROM facilities
+       WHERE grade_letter != 'NR' AND grade_score >= 0
        GROUP BY state
        ORDER BY avg_grade DESC`
     ).all<{ state: string; avg_grade: number }>();
 
-    const stateRank = (allStateAvgs.results ?? []).findIndex((r) => r.state === stateAbbr) + 1;
+    const stateIndex = (allStateAvgs.results ?? []).findIndex((r) => r.state === stateAbbr);
+    const stateRank = stateIndex >= 0 ? stateIndex + 1 : 0;
     const totalStates = (allStateAvgs.results ?? []).length;
 
     // Most recent snapshot date
