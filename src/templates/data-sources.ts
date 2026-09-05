@@ -28,7 +28,7 @@ const SOURCE_NOTES: Record<string, { cadence: string; used_for: string }> = {
   penalties: {
     cadence: "Monthly",
     used_for:
-      "Facility record / enforcement history. Supplies civil money penalties and Medicare/Medicaid payment denials, including action dates, fine amounts and denial lengths when CMS publishes them.",
+      "Civil money penalties and Medicare/Medicaid payment denials, including individual action dates, fine amounts and denial lengths when CMS publishes them. Shown in each facility's enforcement history.",
   },
   ownership: {
     cadence: "Monthly",
