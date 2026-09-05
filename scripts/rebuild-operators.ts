@@ -90,7 +90,7 @@ export function rebuildOperatorsFromData(owners: OwnerRow[], facilities: Facilit
   let dropped = 0;
 
   for (const [name, entry] of operatorMap) {
-    if (entry.cmsIds.size < 2) continue; // Only operators with 2+ facilities
+    if (entry.cmsIds.size < 2) continue;
 
     const cls = classifyOperatorName(name);
     if (cls === "financial") {
@@ -112,7 +112,10 @@ export function rebuildOperatorsFromData(owners: OwnerRow[], facilities: Facilit
       const f = facilityByCmsId.get(cmsId);
       if (!f) continue;
       const g = Number(f.grade_score);
-      if (Number.isFinite(g)) {
+      // -1 is the persisted NR sentinel, not a score. Excluding it preserves
+      // facility_count while preventing missing evidence from depressing an
+      // operator's quality average.
+      if (Number.isFinite(g) && g >= 0) {
         gradeSum += g;
         gradeCount += 1;
       }
