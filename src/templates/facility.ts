@@ -3,7 +3,7 @@ import { citySlug, getStateInfo } from "../states";
 import { layout, escHtml } from "./layout";
 import { renderTrustModule } from "./trust";
 import { RN_BENCHMARK, BENCHMARK_ROW_NOTE, benchmarkLabel, repealDisclosureHtml } from "../staffing-standard";
-import { scoreToSummary } from "../scoring";
+import { scoreToSummary, type ScoreInputKey } from "../scoring";
 import {
   buildContactFacts,
   buildFacilityTitle,
@@ -279,7 +279,7 @@ function renderNearbyFacilities(current: FacilityPageData, nearby: Facility[]): 
             <h3 class="nearby-name"><a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}">${escHtml(f.name)}</a></h3>
             <p class="nearby-meta">${escHtml(f.address)}, ${escHtml(f.city)}, ${escHtml(f.state)} ${escHtml(f.zip)}</p>
             <div class="nearby-stats" aria-label="Nearby facility quality metrics">
-              <span><strong>${f.grade_score}/100</strong> score</span>
+              <span><strong>${f.grade_letter === "NR" || f.grade_score < 0 ? "Not rated" : `${f.grade_score}/100`}</strong> score</span>
               <span><strong>${escHtml(rnText)}</strong> RN staffing</span>
               <span><strong>${escHtml(deficiencyText)}</strong> deficiencies</span>
             </div>
@@ -816,7 +816,13 @@ export function facilityPage(
     ${renderReviewsContext(f)}
 
     <p class="lede" style="max-width:800px;margin-bottom:var(--space-xl);">
-      ${escHtml(scoreToSummary(f.grade_score, f.grade_letter, f.rn_hours_per_resident_day))}
+      ${escHtml(scoreToSummary(
+        f.grade_score < 0 ? null : f.grade_score,
+        f.grade_letter === "NR" ? null : f.grade_letter,
+        f.rn_hours_per_resident_day,
+        f.grade_completeness ?? (f.grade_letter === "NR" ? "insufficient" : "complete"),
+        (f.grade_missing_inputs ?? "").split(",").filter(Boolean) as ScoreInputKey[],
+      ))}
     </p>
 
     <h3 id="quality">Ratings and Grade Breakdown</h3>
@@ -859,7 +865,7 @@ export function facilityPage(
           <td class="quality-label-cell" style="padding:var(--space-m) 0;">
             <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">NursingHomeGrade Score</div>
           </td>
-          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Source Sans 3',system-ui,sans-serif;font-size:2.5rem;text-align:right;">${f.grade_score}/100</td>
+          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Source Sans 3',system-ui,sans-serif;font-size:2.5rem;text-align:right;">${f.grade_letter === "NR" || f.grade_score < 0 ? "Not rated" : `${f.grade_score}/100`}</td>
         </tr>
       </table>
     </div>
@@ -999,10 +1005,18 @@ export function facilityPage(
   // not a count of user reviews, and Google requires a ratingCount/
   // reviewCount for aggregateRating — using it without one risks a manual
   // action for misleading structured data.
-  const additionalProperty: Array<Record<string, unknown>> = [
-    { "@type": "PropertyValue", "name": "NursingHomeGrade Score", "value": f.grade_score, "unitText": "out of 100" },
-    { "@type": "PropertyValue", "name": "NursingHomeGrade Letter Grade", "value": f.grade_letter },
-  ];
+  const additionalProperty: Array<Record<string, unknown>> = [];
+  if (f.grade_letter !== "NR" && f.grade_score >= 0) {
+    additionalProperty.push(
+      { "@type": "PropertyValue", "name": "NursingHomeGrade Score", "value": f.grade_score, "unitText": "out of 100" },
+      { "@type": "PropertyValue", "name": "NursingHomeGrade Letter Grade", "value": f.grade_letter },
+    );
+  }
+  additionalProperty.push({
+    "@type": "PropertyValue",
+    "name": "NursingHomeGrade Data Completeness",
+    "value": f.grade_completeness ?? (f.grade_letter === "NR" ? "insufficient" : "complete"),
+  });
   if (rnHours !== null) {
     additionalProperty.push({ "@type": "PropertyValue", "name": "RN Staffing Hours per Resident Day", "value": rnHours, "unitText": "hours" });
   }
