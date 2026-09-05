@@ -7,7 +7,7 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "test": "vitest run",
-    "ingest": "npx tsx scripts/ingest.ts",
+    "ingest": "npx tsx scripts/ingest-current.ts",
     "rebuild-operators": "npx tsx scripts/rebuild-operators.ts",
     "sitemap": "npx tsx scripts/sitemap.ts",
     "check-orphans": "npx tsx scripts/check-orphans.ts",
