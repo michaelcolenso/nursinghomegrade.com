@@ -12,7 +12,7 @@ SELECT
   1,
   COALESCE((SELECT ROUND(AVG(grade_score), 1)
               FROM facilities
-             WHERE grade_letter != 'NR' AND grade_score >= 0), 0),
+             WHERE grade_score >= 0), 0),
   ROUND(AVG(rn_hours_per_resident_day), 2),
   ROUND(AVG(total_deficiencies), 1),
   COUNT(*),

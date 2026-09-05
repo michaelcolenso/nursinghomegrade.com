@@ -18,6 +18,7 @@ const SAMPLE_CMS: CMSFacility = {
   reported_rn_staffing_hours_per_resident_per_day: "0.48",
   reported_total_nurse_staffing_hours_per_resident_per_day: "3.2",
   rating_cycle_1_total_number_of_health_deficiencies: "7",
+  rating_cycle_1_standard_survey_health_date: "2024-03-01",
   total_weighted_health_survey_score: "45",
 };
 

@@ -8,6 +8,7 @@ describe("computeGradeScore", () => {
       totalDeficiencies: 0,
       qualityRating: 5,
       staffingRating: 5,
+      inspectionEvidenceAvailable: true,
     });
     expect(score).toBe(100);
   });
@@ -18,6 +19,7 @@ describe("computeGradeScore", () => {
       totalDeficiencies: 20,
       qualityRating: 1,
       staffingRating: 1,
+      inspectionEvidenceAvailable: true,
     });
     expect(score).toBe(0);
   });
@@ -28,12 +30,14 @@ describe("computeGradeScore", () => {
       totalDeficiencies: 0,
       qualityRating: 5,
       staffingRating: 5,
+      inspectionEvidenceAvailable: true,
     });
     const uncapped = computeGradeScore({
       rnHoursPerResidentDay: 2.0,
       totalDeficiencies: 0,
       qualityRating: 5,
       staffingRating: 5,
+      inspectionEvidenceAvailable: true,
     });
     expect(capped).toBe(uncapped);
   });
@@ -44,6 +48,7 @@ describe("computeGradeScore", () => {
       totalDeficiencies: 5,
       qualityRating: 3,
       staffingRating: 3,
+      inspectionEvidenceAvailable: true,
     });
     expect(score).toBeGreaterThanOrEqual(0);
     expect(score).toBeLessThanOrEqual(100);
