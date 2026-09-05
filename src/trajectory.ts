@@ -46,7 +46,6 @@ export function computeTrajectory(snapshots: FacilitySnapshot[]): Trajectory {
 
   const sorted = [...snapshots].sort((a, b) => a.snapshot_date.localeCompare(b.snapshot_date));
 
-  // Filter to last 24 months
   const cutoff = new Date();
   cutoff.setMonth(cutoff.getMonth() - 24);
   const recent = sorted.filter((s) => new Date(s.snapshot_date) >= cutoff);
@@ -58,18 +57,21 @@ export function computeTrajectory(snapshots: FacilitySnapshot[]): Trajectory {
   const deficiencies = use
     .map((s) => s.total_deficiencies)
     .filter((v): v is number => v !== null);
-  const grades = use.map((s) => s.grade_score);
+  // Grade -1 is the persisted NR sentinel. It is absence of a grade, not a
+  // catastrophic grade change, so omit it from historical grade deltas.
+  const grades = use
+    .map((s) => s.grade_score)
+    .filter((v) => Number.isFinite(v) && v >= 0);
 
   const rnSlope = rnHours.length >= 3 ? linearRegression(rnHours).slope : 0;
   const defSlope = deficiencies.length >= 3 ? linearRegression(deficiencies).slope : 0;
 
-  const rnThreshold = 0.005; // per snapshot period
+  const rnThreshold = 0.005;
   const defThreshold = 0.3;
 
   const rnTrend = rnHours.length >= 3 ? classifyTrend(rnSlope, rnThreshold) : null;
   const defTrend = deficiencies.length >= 3 ? classifyTrend(defSlope, defThreshold) : null;
 
-  // For deficiencies, "up" in count is bad (declining), "down" is good (improving)
   const staffingImproving = rnTrend === "up";
   const staffingDeclining = rnTrend === "down";
   const defImproving = defTrend === "down";
