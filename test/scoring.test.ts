@@ -94,6 +94,6 @@ describe("toSlug", () => {
   });
 
   it("collapses multiple hyphens", () => {
-    expect(toSlug("A  B   C")).toBe("a-b-c"));
+    expect(toSlug("A  B   C")).toBe("a-b-c");
   });
 });
