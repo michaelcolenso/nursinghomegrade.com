@@ -31,6 +31,7 @@ jobs:
           cache: npm
 
       - run: npm ci
+
       - name: Require Cloudflare credentials
         shell: bash
         run: |
@@ -41,6 +42,30 @@ jobs:
       - name: Run repository test suite before touching production
         run: npm test
 
+      - name: Record production baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx wrangler d1 execute nursinghomegrade --remote --json \
+            --command "SELECT COUNT(*) AS facilities FROM facilities;" > /tmp/baseline.json
+          jq -e '.[0].results[0].facilities >= 10000' /tmp/baseline.json >/dev/null || {
+            echo "Production baseline has fewer than 10,000 facilities; refusing refresh." >&2
+            cat /tmp/baseline.json >&2
+            exit 1
+          }
+          cat /tmp/baseline.json
+
+      - name: Export production D1 recovery snapshot
+        run: npx wrangler d1 export nursinghomegrade --remote --output=/tmp/nursinghomegrade-before-refresh.sql
+
+      - name: Upload pre-refresh recovery snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: nursinghomegrade-before-refresh
+          path: /tmp/nursinghomegrade-before-refresh.sql
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Apply Grade 1.x and Grade 2 schema additions safely
         shell: bash
         run: |
@@ -48,14 +73,15 @@ jobs:
           has_column() {
             local table="$1" column="$2"
             npx wrangler d1 execute nursinghomegrade --remote --json --command "PRAGMA table_info(${table});" \
-              | grep -q "\"name\":\"${column}\""
+              | jq -e --arg column "$column" '.[0].results[]? | select(.name == $column)' >/dev/null
           }
           add_column() {
             local table="$1" column="$2" definition="$3"
             if has_column "$table" "$column"; then
               echo "$table.$column already exists"
             else
-              npx wrangler d1 execute nursinghomegrade --remote --command "ALTER TABLE ${table} ADD COLUMN ${column} ${definition};"
+              npx wrangler d1 execute nursinghomegrade --remote \
+                --command "ALTER TABLE ${table} ADD COLUMN ${column} ${definition};"
             fi
           }
 
@@ -65,7 +91,8 @@ jobs:
           add_column facilities grade_missing_inputs TEXT
           add_column facility_snapshots grade_completeness "TEXT NOT NULL DEFAULT 'complete'"
           add_column facility_snapshots grade_missing_inputs TEXT
-          npx wrangler d1 execute nursinghomegrade --remote --command "CREATE INDEX IF NOT EXISTS idx_facilities_grade_completeness ON facilities(grade_completeness);"
+          npx wrangler d1 execute nursinghomegrade --remote \
+            --command "CREATE INDEX IF NOT EXISTS idx_facilities_grade_completeness ON facilities(grade_completeness);"
           npx wrangler d1 execute nursinghomegrade --remote --file=migrations/012_grade2_phase_a.sql
 
       - name: Generate current Grade 1.x CMS seed
@@ -87,9 +114,29 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npx wrangler d1 execute nursinghomegrade --remote --command "SELECT COUNT(*) AS facilities, SUM(CASE WHEN grade_letter='NR' THEN 1 ELSE 0 END) AS not_rated, SUM(CASE WHEN grade_completeness='partial' THEN 1 ELSE 0 END) AS partial_grades FROM facilities;"
-          npx wrangler d1 execute nursinghomegrade --remote --command "SELECT source_key,cms_release_date,cms_modified_date,next_update_date,ingested_at FROM data_releases ORDER BY source_key;"
-          npx wrangler d1 execute nursinghomegrade --remote --command "SELECT (SELECT COUNT(*) FROM facility_staffing_features) AS staffing_rows, (SELECT COUNT(*) FROM facility_survey_summaries) AS survey_rows, (SELECT COUNT(*) FROM facility_mds_quality_measures) AS mds_rows, (SELECT COUNT(*) FROM facility_claims_quality_measures) AS claims_rows;"
+
+          npx wrangler d1 execute nursinghomegrade --remote --json --command \
+            "SELECT COUNT(*) AS facilities, SUM(CASE WHEN grade_letter='NR' THEN 1 ELSE 0 END) AS not_rated, SUM(CASE WHEN grade_completeness='partial' THEN 1 ELSE 0 END) AS partial_grades FROM facilities;" \
+            > /tmp/facilities.json
+          jq -e '.[0].results[0].facilities >= 10000' /tmp/facilities.json >/dev/null || {
+            echo "Post-refresh facility count is implausibly low." >&2
+            cat /tmp/facilities.json >&2
+            exit 1
+          }
+          cat /tmp/facilities.json
+
+          npx wrangler d1 execute nursinghomegrade --remote --json --command \
+            "SELECT (SELECT COUNT(*) FROM facility_staffing_features) AS staffing_rows, (SELECT COUNT(*) FROM facility_survey_summaries) AS survey_rows, (SELECT COUNT(*) FROM facility_mds_quality_measures) AS mds_rows, (SELECT COUNT(*) FROM facility_claims_quality_measures) AS claims_rows;" \
+            > /tmp/grade2.json
+          jq -e '.[0].results[0] | (.staffing_rows >= 10000 and .survey_rows > 0 and .mds_rows > 0 and .claims_rows > 0)' /tmp/grade2.json >/dev/null || {
+            echo "Grade 2 Phase A shadow tables failed minimum row-count invariants." >&2
+            cat /tmp/grade2.json >&2
+            exit 1
+          }
+          cat /tmp/grade2.json
+
+          npx wrangler d1 execute nursinghomegrade --remote --command \
+            "SELECT source_key,cms_release_date,cms_modified_date,next_update_date,ingested_at FROM data_releases ORDER BY source_key;"
 
       - name: Verify public site
         shell: bash
