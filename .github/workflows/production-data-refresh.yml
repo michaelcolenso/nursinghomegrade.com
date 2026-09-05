@@ -7,6 +7,11 @@ on:
         description: "Type RUN-PRODUCTION-DATA-REFRESH to continue"
         required: true
         type: string
+  push:
+    branches:
+      - primary
+    paths:
+      - .github/run-production-data-refresh
 
 concurrency:
   group: nursinghomegrade-production-data-refresh
@@ -21,7 +26,7 @@ env:
 
 jobs:
   refresh:
-    if: ${{ inputs.confirm == 'RUN-PRODUCTION-DATA-REFRESH' }}
+    if: ${{ github.event_name == 'push' || inputs.confirm == 'RUN-PRODUCTION-DATA-REFRESH' }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
