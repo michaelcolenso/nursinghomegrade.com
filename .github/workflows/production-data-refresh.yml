@@ -79,18 +79,60 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          has_column() {
-            local table="$1" column="$2"
-            npx wrangler d1 execute nursinghomegrade --remote --json --command "PRAGMA table_info(${table});" \
-              | jq -e --arg column "$column" '.[0].results[]? | select(.name == $column)' >/dev/null
+
+          retry_json_query() {
+            local command="$1" out attempt=1 max_attempts=4
+            while true; do
+              if out=$(npx wrangler d1 execute nursinghomegrade --remote --json --command "$command"); then
+                printf '%s\n' "$out"
+                return 0
+              fi
+              if [ "$attempt" -ge "$max_attempts" ]; then
+                echo "D1 query failed after ${attempt} attempts: ${command}" >&2
+                return 2
+              fi
+              echo "Transient D1 query failure on attempt ${attempt}; retrying..." >&2
+              sleep $((attempt * 5))
+              attempt=$((attempt + 1))
+            done
           }
+
+          retry_execute() {
+            local attempt=1 max_attempts=4
+            while true; do
+              if npx wrangler d1 execute nursinghomegrade --remote "$@"; then
+                return 0
+              fi
+              if [ "$attempt" -ge "$max_attempts" ]; then
+                echo "D1 execute failed after ${attempt} attempts." >&2
+                return 2
+              fi
+              echo "Transient D1 execute failure on attempt ${attempt}; retrying..." >&2
+              sleep $((attempt * 5))
+              attempt=$((attempt + 1))
+            done
+          }
+
+          column_exists() {
+            local table="$1" column="$2" out
+            out=$(retry_json_query "PRAGMA table_info(${table});") || return 2
+            if jq -e --arg column "$column" '.[0].results[]? | select(.name == $column)' <<<"$out" >/dev/null; then
+              return 0
+            fi
+            return 1
+          }
+
           add_column() {
-            local table="$1" column="$2" definition="$3"
-            if has_column "$table" "$column"; then
+            local table="$1" column="$2" definition="$3" rc
+            if column_exists "$table" "$column"; then
               echo "$table.$column already exists"
             else
-              npx wrangler d1 execute nursinghomegrade --remote \
-                --command "ALTER TABLE ${table} ADD COLUMN ${column} ${definition};"
+              rc=$?
+              if [ "$rc" -ne 1 ]; then
+                echo "Could not determine whether $table.$column exists." >&2
+                return "$rc"
+              fi
+              retry_execute --command "ALTER TABLE ${table} ADD COLUMN ${column} ${definition};"
             fi
           }
 
@@ -100,9 +142,8 @@ jobs:
           add_column facilities grade_missing_inputs TEXT
           add_column facility_snapshots grade_completeness "TEXT NOT NULL DEFAULT 'complete'"
           add_column facility_snapshots grade_missing_inputs TEXT
-          npx wrangler d1 execute nursinghomegrade --remote \
-            --command "CREATE INDEX IF NOT EXISTS idx_facilities_grade_completeness ON facilities(grade_completeness);"
-          npx wrangler d1 execute nursinghomegrade --remote --file=migrations/012_grade2_phase_a.sql
+          retry_execute --command "CREATE INDEX IF NOT EXISTS idx_facilities_grade_completeness ON facilities(grade_completeness);"
+          retry_execute --file=migrations/012_grade2_phase_a.sql
 
       - name: Generate current Grade 1.x CMS seed
         run: npm run ingest
