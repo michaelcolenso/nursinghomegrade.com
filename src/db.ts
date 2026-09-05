@@ -210,7 +210,7 @@ export async function getFacilityDeficiencies(env: Env, cmsId: string): Promise<
 
 export async function getFacilitiesByState(env: Env, state: string, limit = 200): Promise<Facility[]> {
   const results = await env.DB.prepare(
-    "SELECT * FROM facilities WHERE state = ? AND grade_letter != 'NR' AND grade_score >= 0 ORDER BY grade_score DESC LIMIT ?"
+    "SELECT * FROM facilities WHERE state = ? ORDER BY CASE WHEN grade_letter = 'NR' THEN 1 ELSE 0 END, grade_score DESC LIMIT ?"
   )
     .bind(state, limit)
     .all<Facility>();
@@ -226,7 +226,7 @@ export async function getFacilitiesByState(env: Env, state: string, limit = 200)
 export async function getTopFacilitiesByState(env: Env, state: string, limit = 10): Promise<StateFacilityCard[]> {
   const results = await env.DB.prepare(
     `SELECT cms_id, name, slug, city, state, grade_score, grade_letter, rn_hours_per_resident_day
-     FROM facilities WHERE state = ? ORDER BY grade_score DESC LIMIT ?`
+     FROM facilities WHERE state = ? AND grade_letter != 'NR' AND grade_score >= 0 ORDER BY grade_score DESC LIMIT ?`
   )
     .bind(state, limit)
     .all<StateFacilityCard>();

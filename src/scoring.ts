@@ -23,7 +23,7 @@ const FEDERAL_RN_MINIMUM = RN_BENCHMARK;
 function missingScoreInputs(inputs: ScoreInputs): ScoreInputKey[] {
   const missing: ScoreInputKey[] = [];
   if (inputs.rnHoursPerResidentDay === null) missing.push("rn_staffing");
-  if (inputs.totalDeficiencies === null || inputs.inspectionEvidenceAvailable === false) {
+  if (inputs.totalDeficiencies === null || inputs.inspectionEvidenceAvailable !== true) {
     missing.push("inspection_deficiencies");
   }
   if (inputs.qualityRating === null) missing.push("quality_rating");
