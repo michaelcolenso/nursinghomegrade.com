@@ -9,6 +9,7 @@
     "test": "vitest run",
     "ingest": "npx tsx scripts/ingest-current.ts",
     "ingest:grade2": "npx tsx scripts/ingest-grade2-phase-a.ts",
+    "grade2:features": "npx tsx scripts/grade2/build-features.ts",
     "rebuild-operators": "npx tsx scripts/rebuild-operators.ts",
     "sitemap": "npx tsx scripts/sitemap.ts",
     "check-orphans": "npx tsx scripts/check-orphans.ts",
