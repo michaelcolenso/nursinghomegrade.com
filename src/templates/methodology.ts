@@ -13,9 +13,9 @@ export function methodologyPage(): string {
       "@type": "Article",
       headline: "NursingHomeGrade Methodology",
       description:
-        "The full NursingHomeGrade formula: component weights, penalty terms, grade band cutoffs, update cadence, and the grade changelog.",
+        "The full NursingHomeGrade formula: component weights, missing-data policy, penalty terms, grade band cutoffs, update cadence, and the grade changelog.",
       datePublished: "2026-07-27",
-      dateModified: "2026-09-04",
+      dateModified: "2026-09-05",
       author: { "@type": "Organization", name: "NursingHomeGrade" },
       publisher: { "@type": "Organization", name: "NursingHomeGrade" },
     },
@@ -36,46 +36,56 @@ export function methodologyPage(): string {
     </p>
 
     <h2 id="base">The base score</h2>
-    <p>
-      Each facility starts with a 0–100 composite of four CMS measures, weighted as follows:
-    </p>
+    <p>Each facility starts with a 0–100 composite of four CMS measures, weighted as follows:</p>
     <div class="table-container">
       <table class="quality-table">
         <thead>
-          <tr>
-            <th style="text-align:left;">Component</th>
-            <th style="text-align:right;">Weight</th>
-            <th style="text-align:left;">How it is scored</th>
-          </tr>
+          <tr><th style="text-align:left;">Component</th><th style="text-align:right;">Weight</th><th style="text-align:left;">How it is scored</th></tr>
         </thead>
         <tbody>
           <tr>
-            <td>Staffing compliance</td>
-            <td style="text-align:right;">35%</td>
+            <td>Staffing compliance</td><td style="text-align:right;">35%</td>
             <td>Reported RN hours per resident per day divided by ${RN_BENCHMARK}, capped at 150% of the benchmark. A facility at or above ${RN_BENCHMARK} scores at least 0.67 on this component; one at 0.825 or higher scores the full 1.0.</td>
           </tr>
           <tr>
-            <td>Inspection clean rate</td>
-            <td style="text-align:right;">30%</td>
-            <td>1.0 at zero deficiencies, falling linearly to 0.0 at 20 or more.</td>
+            <td>Inspection clean rate</td><td style="text-align:right;">30%</td>
+            <td>1.0 at a verified zero-deficiency current survey, falling linearly to 0.0 at 20 or more deficiencies. A missing inspection is never treated as zero.</td>
           </tr>
           <tr>
-            <td>Quality measures</td>
-            <td style="text-align:right;">20%</td>
+            <td>Quality measures</td><td style="text-align:right;">20%</td>
             <td>CMS quality star rating, normalized from 1–5 stars to 0.0–1.0.</td>
           </tr>
           <tr>
-            <td>Staffing consistency</td>
-            <td style="text-align:right;">15%</td>
+            <td>Staffing consistency</td><td style="text-align:right;">15%</td>
             <td>CMS staffing star rating, normalized from 1–5 stars to 0.0–1.0.</td>
           </tr>
         </tbody>
       </table>
     </div>
-    <p>
-      The weighted components are summed and multiplied by 100. That is the base score.
-    </p>
+    <p>The weighted components are summed and multiplied by 100. That is the base score.</p>
     ${repealDisclosureHtml()}
+
+    <h2 id="missing-data">Missing-data policy</h2>
+    <p>
+      Missing evidence is not a zero, and it is not a clean record. Every facility is assigned one of
+      three evidence-completeness states before the grade is published.
+    </p>
+    <div class="table-container">
+      <table class="quality-table">
+        <thead><tr><th style="text-align:left;">State</th><th style="text-align:left;">Meaning</th><th style="text-align:left;">Grade behavior</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Complete</strong></td><td>All four Grade 1.x score inputs and current inspection evidence are present.</td><td>Normal score and letter grade.</td></tr>
+          <tr><td><strong>Partial</strong></td><td>Current inspection evidence is present, but RN staffing, the CMS quality rating, or the CMS staffing rating is unavailable.</td><td>A conservative lower-bound score is shown. Missing components earn zero points and the remaining weights are <em>not</em> renormalized upward.</td></tr>
+          <tr><td><strong>Insufficient</strong></td><td>The current inspection/deficiency evidence required to distinguish a real clean survey from missing data is unavailable.</td><td>The NursingHomeGrade score and letter are withheld and displayed as not rated.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      This policy is intentionally asymmetric: missing evidence is never allowed to improve a score.
+      A verified survey with zero deficiencies can earn the full inspection component; a missing survey
+      cannot. Grade 2.0 will use the CMS Survey Summary source as an additional authoritative check
+      because that file records inspection dates even when an inspection produced no citations.
+    </p>
 
     <h2 id="penalties">Penalty terms</h2>
     <p>
@@ -91,29 +101,23 @@ export function methodologyPage(): string {
     </p>
     <ul>
       <li><strong>Severity weight</strong> — immediate jeopardy (J–L): 4. Actual harm (G–I): 3. Potential for more than minimal harm (D–F): 1.5. Minimal (A–C): 1.</li>
-      <li><strong>Plan weight</strong> — no plan of correction on file: 2. Plan submitted but not yet verified: 1. A missing plan is a refusal to act; a submitted plan is action awaiting confirmation.</li>
-      <li><strong>Recency weight</strong> — most recent survey cycle: 1.0. Second cycle: 0.6. Third: 0.35. An open finding from the last inspection is stronger evidence than one from three years ago.</li>
+      <li><strong>Plan weight</strong> — no plan of correction on file: 2. Plan submitted but not yet verified: 1.</li>
+      <li><strong>Recency weight</strong> — most recent survey cycle: 1.0. Second cycle: 0.6. Third: 0.35.</li>
     </ul>
     <p>The total is capped at 25 points.</p>
 
     <h3>Actual harm (up to 25 points)</h3>
     <p>
-      Scored on a separate axis from raw deficiency counts, so that harm is not diluted by volume.
-      Each citation at scope and severity G through L costs 8 points for immediate jeopardy (J–L) or
-      4 points for actual harm (G–I), multiplied by the same recency weight. Capped at 25 points.
-    </p>
-    <p>
-      The practical consequence is that one J-level citation costs more than three D-level ones. That
-      is deliberate. They are not equivalent events.
+      Scored separately from raw deficiency counts. Each citation at scope and severity G through L
+      costs 8 points for immediate jeopardy (J–L) or 4 points for actual harm (G–I), multiplied by
+      the same recency weight. Capped at 25 points.
     </p>
 
     <h2 id="hard-rule">The no-plan rule</h2>
     <p>
       Independent of the arithmetic above: <strong>no facility holding any deficiency in "no plan of
       correction" status can be graded A.</strong> Such a facility is capped at B regardless of its
-      score. An open violation the operator has not committed to fixing is the single most
-      decision-relevant fact on a facility page, and no amount of good staffing should paper over it.
-      This rule only ever lowers a grade — it never raises one.
+      score. This rule only ever lowers a grade — it never raises one.
     </p>
 
     <h2 id="bands">Grade bands</h2>
@@ -126,6 +130,7 @@ export function methodologyPage(): string {
           <tr><td>C</td><td>50–64</td></tr>
           <tr><td>D</td><td>35–49</td></tr>
           <tr><td>F</td><td>0–34</td></tr>
+          <tr><td>NR</td><td>Not rated because critical current inspection evidence is insufficient</td></tr>
         </tbody>
       </table>
     </div>
@@ -137,15 +142,22 @@ export function methodologyPage(): string {
       new source release is loaded.
     </p>
     <p>
-      We track three dates separately because they mean different things: the date CMS says the source
-      data was <strong>modified</strong>, the date CMS <strong>released</strong> that copy publicly, and the
-      timestamp when NursingHomeGrade <strong>imported</strong> it. Facility records also carry CMS's own
-      processing/data-period date. See <a href="/data-sources">data sources</a> for the release and import
-      dates currently in production.
+      We track the CMS source-modified date, CMS public release date, NursingHomeGrade import timestamp,
+      and CMS processing/data-period date separately. See <a href="/data-sources">data sources</a> for
+      the release and import dates currently in production.
     </p>
     <p>
       Sitemap freshness uses the CMS source-modified date rather than the import clock. Rerunning an
       unchanged ingest therefore does not manufacture a newer <code>lastmod</code> date.
+    </p>
+
+    <h2 id="grade2">Grade 2.0 research track</h2>
+    <p>
+      Grade 2.0 is being built and validated separately from the public Grade 1.x formula. Its Phase A
+      evidence layer adds CMS Survey Summary, measure-level MDS quality measures, Medicare claims quality
+      measures, and richer case-mix-adjusted staffing data. Those sources are stored in shadow tables and
+      do <strong>not</strong> change the public grade until a versioned model passes temporal validation and
+      migration review.
     </p>
 
     <h2 id="changelog">Grade changelog</h2>
@@ -154,15 +166,16 @@ export function methodologyPage(): string {
         <thead><tr><th style="text-align:left;">Date</th><th style="text-align:left;">Change</th></tr></thead>
         <tbody>
           <tr>
+            <td style="white-space:nowrap;">2026-09-05</td>
+            <td>Added explicit complete/partial/insufficient grading semantics. Missing inspection evidence now withholds the grade instead of receiving clean-inspection credit; other missing components produce a labelled lower-bound partial score without weight renormalization.</td>
+          </tr>
+          <tr>
             <td style="white-space:nowrap;">2026-07-27</td>
             <td>
-              Added the uncorrected-findings and actual-harm penalty terms and the no-plan rule
-              described above. Before this change the grade counted deficiencies but ignored both
-              their severity and whether they had been fixed, which allowed facilities with open,
-              unaddressed harm citations to hold an A. Of 14,703 facilities, 3,858 (26%) moved down
-              at least one letter grade and 10,845 were unchanged. The number of A grades fell from
-              2,677 to 2,184, so 493 facilities lost an A. No facility's grade improved as a result
-              of this change. Every pre-change grade is retained and can be supplied on request.
+              Added the uncorrected-findings and actual-harm penalty terms and the no-plan rule.
+              Of 14,703 facilities, 3,858 (26%) moved down at least one letter grade and 10,845 were
+              unchanged. The number of A grades fell from 2,677 to 2,184. No facility's grade improved
+              as a result of this change.
             </td>
           </tr>
         </tbody>
@@ -187,7 +200,7 @@ export function methodologyPage(): string {
 
   return layout(
     "Methodology — How NursingHomeGrade Scores Are Computed",
-    "The full NursingHomeGrade formula: component weights, the uncorrected-findings and actual-harm penalties, the no-plan rule, grade band cutoffs, update cadence, and the grade changelog.",
+    "The full NursingHomeGrade formula: component weights, missing-data policy, penalty terms, grade band cutoffs, update cadence, and the grade changelog.",
     body,
     { canonicalPath: "/methodology", jsonLd },
   );
