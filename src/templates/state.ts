@@ -144,8 +144,8 @@ function renderFacilityItem(f: StateFacilityCard): string {
     <div class="card" style="padding: 1.5rem;">
       <div style="display: grid; grid-template-columns: 60px 1fr auto; gap: 2rem; align-items: center;">
         <div class="grade-badge grade-${f.grade_letter}" style="width: 60px; height: 60px; border-radius: 0;">
-          <div class="grade-badge-letter" style="font-size: 1.75rem;">${f.grade_letter}</div>
-          <div class="grade-badge-score" style="font-size: 0.6rem;">${f.grade_score}</div>
+          <div class="grade-badge-letter" style="font-size: 1.75rem;">${f.grade_letter === "NR" ? "NR" : f.grade_letter}</div>
+          <div class="grade-badge-score" style="font-size: 0.6rem;">${f.grade_letter === "NR" || f.grade_score < 0 ? "Not rated" : f.grade_score}</div>
         </div>
         <div>
           <a href="/facility/${f.cms_id}-${f.slug}" style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.25rem; font-weight: 800; color: var(--ink); text-decoration: none;">${escHtml(f.name)}</a>

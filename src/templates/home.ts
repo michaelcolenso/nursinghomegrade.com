@@ -1,7 +1,7 @@
 import type { Facility } from "../types";
 import { layout, escHtml } from "./layout";
 import { RN_BENCHMARK, benchmarkLabel, repealDisclosureHtml } from "../staffing-standard";
-import { scoreToSummary } from "../scoring";
+import { scoreToSummary, type ScoreInputKey } from "../scoring";
 
 export function homePage(pctFailing: number): string {
   const body = `
@@ -169,8 +169,8 @@ export function searchResultsPage(
           <div class="result-main">
             <div class="result-grade">
               <span class="result-rank">${resultRank}</span>
-              <span class="grade-${f.grade_letter} result-grade-letter">${escHtml(f.grade_letter)}</span>
-              <span class="result-grade-score">${f.grade_score}/100</span>
+              <span class="grade-${f.grade_letter} result-grade-letter">${f.grade_letter === "NR" ? "NR" : escHtml(f.grade_letter)}</span>
+              <span class="result-grade-score">${f.grade_letter === "NR" || f.grade_score < 0 ? "Not rated" : `${f.grade_score}/100`}</span>
             </div>
             <div class="result-info">
               <div style="display:flex; justify-content:space-between; align-items:start;">
@@ -202,7 +202,13 @@ export function searchResultsPage(
                 ${f.distance !== undefined ? `<span class="result-stat"><span class="result-stat-label">Distance</span><span class="result-stat-value" style="color:var(--accent)">${f.distance.toFixed(1)} mi</span></span>` : ""}
               </div>
               
-              <p class="result-summary">${escHtml(scoreToSummary(f.grade_score, f.grade_letter, f.rn_hours_per_resident_day))}</p>
+              <p class="result-summary">${escHtml(scoreToSummary(
+                f.grade_score < 0 ? null : f.grade_score,
+                f.grade_letter === "NR" ? null : f.grade_letter,
+                f.rn_hours_per_resident_day,
+                f.grade_completeness ?? (f.grade_letter === "NR" ? "insufficient" : "complete"),
+                (f.grade_missing_inputs ?? "").split(",").filter(Boolean) as ScoreInputKey[],
+              ))}</p>
             </div>
           </div>
         </div>
@@ -254,7 +260,7 @@ const extraScripts = `
                 opacity: 1,
                 fillOpacity: 1
               });
-              m.bindPopup(\`<strong>\${f.n}</strong><br>Grade \${f.g} (\${f.s}/100)<br><a href="/facility/\${f.id}-\${f.sl}">View Details →</a>\`);
+              m.bindPopup(\`<strong>\${f.n}</strong><br>\${f.g === "NR" || Number(f.s) < 0 ? "Not rated" : `Grade ${f.g} (${f.s}/100)`}<br><a href="/facility/\${f.id}-\${f.sl}">View Details →</a>\`);
               m.addTo(group);
             });
             group.addTo(map);

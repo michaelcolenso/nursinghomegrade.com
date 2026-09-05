@@ -106,7 +106,7 @@ export function explorePage(): string {
                 
                 marker.bindPopup(\`
                   <div class="map-tooltip">
-                    <div style="font-weight:800;text-transform:uppercase;font-size:0.7rem;letter-spacing:0.1em;color:var(--muted);margin-bottom:0.25rem;">Grade \${f.g} (\${f.s}/100)</div>
+                    <div style="font-weight:800;text-transform:uppercase;font-size:0.7rem;letter-spacing:0.1em;color:var(--muted);margin-bottom:0.25rem;">\${f.g === "NR" || Number(f.s) < 0 ? "Not rated" : `Grade ${f.g} (${f.s}/100)`}</div>
                     <a href="/facility/\${f.id}-\${f.sl}" style="font-family:'Playfair Display', Georgia, serif;font-weight:800;font-size:1.1rem;color:var(--ink);text-decoration:none;display:block;line-height:1.2;margin-bottom:0.5rem;">\${f.n}</a>
                     <a href="/facility/\${f.id}-\${f.sl}" class="btn" style="padding:0.4rem 0.8rem;font-size:0.75rem;display:inline-block;">View Report →</a>
                   </div>
