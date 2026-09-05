@@ -93,7 +93,7 @@ export function comparePage(noindex = false): string {
             <tbody>
               <tr style="border-bottom: 1px solid var(--rule);">
                 <td style="padding: 1rem; font-weight: 700;">Grade</td>
-                \${facilities.map(function(f) { return \`<td style="padding: 1rem;"><strong class="grade-\${esc(f.grade_letter)}">\${esc(f.grade_letter)}</strong> (\${esc(f.grade_score)}/100)</td>\`; }).join('')}
+                \${facilities.map(function(f) { return f.grade_letter === "NR" || Number(f.grade_score) < 0 ? \`<td style="padding: 1rem;"><strong>Not rated</strong></td>\` : \`<td style="padding: 1rem;"><strong class="grade-\${esc(f.grade_letter)}">\${esc(f.grade_letter)}</strong> (\${esc(f.grade_score)}/100)</td>\`; }).join('')}
               </tr>
               <tr style="border-bottom: 1px solid var(--rule);">
                 <td style="padding: 1rem; font-weight: 700;">RN Staffing</td>

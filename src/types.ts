@@ -38,42 +38,29 @@ export interface CMSFacility {
   processing_date?: string;
 }
 
+export type GradeCompleteness = "complete" | "partial" | "insufficient";
+
 /**
  * Profile fields carried verbatim from the CMS Provider Information file.
- *
- * Every property is optional AND nullable, and the two mean different things:
- * absent = the column has not been added/populated in this environment yet,
- * null = CMS publishes no value for this facility. Templates treat both the
- * same way — render nothing — so a page never implies data it does not hold.
- *
- * There is no email field because the federal source files contain none.
  */
 export interface FacilityProfile {
-  /** Digits as CMS publishes them, e.g. "9198518000". Formatted at render time. */
   phone?: string | null;
-  /** e.g. "For profit - Corporation", "Government - County", "Non profit - Church related". */
   ownership_type?: string | null;
   legal_business_name?: string | null;
-  /** e.g. "Medicare and Medicaid". */
   provider_type?: string | null;
   county?: string | null;
   certified_beds?: number | null;
   avg_residents_per_day?: number | null;
-  /** Date first approved to provide Medicare and Medicaid services. */
   certification_date?: string | null;
-  /** "SFF" or "SFF Candidate" when CMS flags the facility; empty otherwise. */
   special_focus_status?: string | null;
-  /** "Y" when CMS displays the abuse icon for this facility. */
   abuse_icon?: string | null;
   number_of_fines?: number | null;
   total_fines_dollars?: number | null;
   number_of_payment_denials?: number | null;
   total_penalties?: number | null;
-  /** Date of the most recent standard health survey (rating cycle 1). */
   latest_standard_survey_date?: string | null;
   rn_turnover_pct?: number | null;
   total_nursing_turnover_pct?: number | null;
-  /** CMS processing date for the source file — the vintage of everything above. */
   cms_processing_date?: string | null;
 }
 
@@ -82,7 +69,6 @@ export interface FacilityPenalty {
   id: number;
   cms_id: string;
   penalty_date: string | null;
-  /** "Fine" or "Payment Denial". */
   penalty_type: string | null;
   fine_amount: number | null;
   payment_denial_start_date: string | null;
@@ -106,18 +92,18 @@ export interface Facility extends FacilityProfile {
   inspection_rating: number | null;
   rn_hours_per_resident_day: number | null;
   total_deficiencies: number | null;
+  /** -1 only for persisted legacy-schema compatibility when grade is withheld. */
   grade_score: number;
+  /** A/B/C/D/F, or NR when required evidence is insufficient. */
   grade_letter: string;
   grade_summary: string;
+  grade_completeness?: GradeCompleteness;
+  /** Comma-separated machine keys for unavailable score inputs. */
+  grade_missing_inputs?: string | null;
   slug: string;
   updated_at: string;
 }
 
-/**
- * The compact subset of `facilities` a state page renders: one row per card
- * in the ranked list plus the ItemList schema. State pages fetch only these
- * columns for the ten facilities they show, never the full row for hundreds.
- */
 export interface StateFacilityCard {
   cms_id: string;
   name: string;
@@ -196,6 +182,52 @@ export interface Trajectory {
   deficiency_change_pct: number | null;
   grade_change: number | null;
   rn_hours_trend: "up" | "down" | "flat" | null;
+}
+
+// ── Grade 2.0 Phase A evidence ──────────────────────────────────────────────
+
+export interface Grade2StaffingEvidence {
+  cms_id: string;
+  reported_total_nurse_hprd: number | null;
+  weekend_total_nurse_hprd: number | null;
+  weekend_rn_hprd: number | null;
+  rn_turnover_pct: number | null;
+  total_nursing_turnover_pct: number | null;
+  administrators_left: number | null;
+  nursing_case_mix_index: number | null;
+  nursing_case_mix_index_ratio: number | null;
+  case_mix_rn_hprd: number | null;
+  case_mix_total_nurse_hprd: number | null;
+  case_mix_weekend_total_nurse_hprd: number | null;
+  adjusted_rn_hprd: number | null;
+  adjusted_total_nurse_hprd: number | null;
+  adjusted_weekend_total_nurse_hprd: number | null;
+  processing_date: string | null;
+}
+
+export interface Grade2SurveySummary {
+  cms_id: string;
+  inspection_cycle: number;
+  health_survey_date: string | null;
+  fire_safety_survey_date: string | null;
+  total_health_deficiencies: number | null;
+  total_fire_safety_deficiencies: number | null;
+  infection_control_deficiencies: number | null;
+  processing_date: string | null;
+}
+
+export interface Grade2QualityMeasure {
+  cms_id: string;
+  measure_code: string;
+  measure_description: string | null;
+  resident_type: string | null;
+  score: number | null;
+  observed_score?: number | null;
+  expected_score?: number | null;
+  footnote: string | null;
+  used_in_five_star: string | null;
+  measure_period: string | null;
+  processing_date: string | null;
 }
 
 // Cloudflare Worker environment bindings

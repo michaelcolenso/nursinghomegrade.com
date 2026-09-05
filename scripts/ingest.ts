@@ -53,19 +53,27 @@ export function mapCMSFacility(
   const cycle1Deficiencies = parseIntOrNull(raw.rating_cycle_1_total_number_of_health_deficiencies);
   const qualityRating = parseIntOrNull(raw.qm_rating);
   const staffingRating = parseIntOrNull(raw.staffing_rating);
+  const surveyDate = textOrNull(raw.rating_cycle_1_standard_survey_health_date);
 
   const graded = computeGrade(
     {
-      rnHoursPerResidentDay: rnHours ?? 0,
-      totalDeficiencies: cycle1Deficiencies ?? 0,
-      qualityRating: qualityRating ?? 1,
-      staffingRating: staffingRating ?? 1,
+      rnHoursPerResidentDay: rnHours,
+      totalDeficiencies: cycle1Deficiencies,
+      qualityRating,
+      staffingRating,
+      inspectionEvidenceAvailable: cycle1Deficiencies !== null && surveyDate !== null,
     },
     deficiencies,
   );
-  const safeScore = Number.isFinite(graded.score) ? graded.score : 0;
-  const grade_letter = graded.letter;
-  const grade_summary = scoreToSummary(safeScore, grade_letter, rnHours);
+  const safeScore = graded.score ?? -1;
+  const grade_letter = graded.letter ?? "NR";
+  const grade_summary = scoreToSummary(
+    graded.score,
+    graded.letter,
+    rnHours,
+    graded.completeness,
+    graded.missingInputs,
+  );
 
   return {
     cms_id: raw.cms_certification_number_ccn,
@@ -85,6 +93,8 @@ export function mapCMSFacility(
     grade_score: safeScore,
     grade_letter,
     grade_summary,
+    grade_completeness: graded.completeness,
+    grade_missing_inputs: graded.missingInputs.length > 0 ? graded.missingInputs.join(",") : null,
     slug: toSlug(raw.provider_name ?? raw.cms_certification_number_ccn ?? "unknown"),
     updated_at: new Date().toISOString(),
     // Profile fields, copied verbatim from CMS. `textOrNull` maps an empty
@@ -104,7 +114,7 @@ export function mapCMSFacility(
     total_fines_dollars: parseNum(raw.total_amount_of_fines_in_dollars ?? ""),
     number_of_payment_denials: parseIntOrNull(raw.number_of_payment_denials ?? ""),
     total_penalties: parseIntOrNull(raw.total_number_of_penalties ?? ""),
-    latest_standard_survey_date: textOrNull(raw.rating_cycle_1_standard_survey_health_date),
+    latest_standard_survey_date: surveyDate,
     rn_turnover_pct: parseNum(raw.registered_nurse_turnover ?? ""),
     total_nursing_turnover_pct: parseNum(raw.total_nursing_staff_turnover ?? ""),
     cms_processing_date: textOrNull(raw.processing_date),
@@ -289,11 +299,11 @@ async function main() {
     const values = batch
       .map(
         (f) =>
-          `('${esc(f.cms_id)}','${esc(f.name)}','${esc(f.address)}','${esc(f.city)}','${esc(f.state)}','${esc(f.zip)}',${f.latitude ?? "NULL"},${f.longitude ?? "NULL"},${f.overall_rating ?? "NULL"},${f.quality_rating ?? "NULL"},${f.staffing_rating ?? "NULL"},${f.inspection_rating ?? "NULL"},${f.rn_hours_per_resident_day ?? "NULL"},${f.total_deficiencies ?? "NULL"},${f.grade_score},'${esc(f.grade_letter)}','${esc(f.grade_summary)}','${esc(f.slug)}','${esc(f.updated_at)}',${sqlText(f.phone)},${sqlText(f.ownership_type)},${sqlText(f.legal_business_name)},${sqlText(f.provider_type)},${sqlText(f.county)},${f.certified_beds ?? "NULL"},${f.avg_residents_per_day ?? "NULL"},${sqlText(f.certification_date)},${sqlText(f.special_focus_status)},${sqlText(f.abuse_icon)},${f.number_of_fines ?? "NULL"},${f.total_fines_dollars ?? "NULL"},${f.number_of_payment_denials ?? "NULL"},${f.total_penalties ?? "NULL"},${sqlText(f.latest_standard_survey_date)},${f.rn_turnover_pct ?? "NULL"},${f.total_nursing_turnover_pct ?? "NULL"},${sqlText(f.cms_processing_date)})`,
+          `('${esc(f.cms_id)}','${esc(f.name)}','${esc(f.address)}','${esc(f.city)}','${esc(f.state)}','${esc(f.zip)}',${f.latitude ?? "NULL"},${f.longitude ?? "NULL"},${f.overall_rating ?? "NULL"},${f.quality_rating ?? "NULL"},${f.staffing_rating ?? "NULL"},${f.inspection_rating ?? "NULL"},${f.rn_hours_per_resident_day ?? "NULL"},${f.total_deficiencies ?? "NULL"},${f.grade_score},'${esc(f.grade_letter)}','${esc(f.grade_summary)}','${esc(f.grade_completeness ?? "complete")}',${sqlText(f.grade_missing_inputs)},'${esc(f.slug)}','${esc(f.updated_at)}',${sqlText(f.phone)},${sqlText(f.ownership_type)},${sqlText(f.legal_business_name)},${sqlText(f.provider_type)},${sqlText(f.county)},${f.certified_beds ?? "NULL"},${f.avg_residents_per_day ?? "NULL"},${sqlText(f.certification_date)},${sqlText(f.special_focus_status)},${sqlText(f.abuse_icon)},${f.number_of_fines ?? "NULL"},${f.total_fines_dollars ?? "NULL"},${f.number_of_payment_denials ?? "NULL"},${f.total_penalties ?? "NULL"},${sqlText(f.latest_standard_survey_date)},${f.rn_turnover_pct ?? "NULL"},${f.total_nursing_turnover_pct ?? "NULL"},${sqlText(f.cms_processing_date)})`,
       )
       .join(",\n");
     facilitySqls.push(
-      `INSERT OR REPLACE INTO facilities (cms_id,name,address,city,state,zip,latitude,longitude,overall_rating,quality_rating,staffing_rating,inspection_rating,rn_hours_per_resident_day,total_deficiencies,grade_score,grade_letter,grade_summary,slug,updated_at,phone,ownership_type,legal_business_name,provider_type,county,certified_beds,avg_residents_per_day,certification_date,special_focus_status,abuse_icon,number_of_fines,total_fines_dollars,number_of_payment_denials,total_penalties,latest_standard_survey_date,rn_turnover_pct,total_nursing_turnover_pct,cms_processing_date) VALUES\n${values};`,
+      `INSERT OR REPLACE INTO facilities (cms_id,name,address,city,state,zip,latitude,longitude,overall_rating,quality_rating,staffing_rating,inspection_rating,rn_hours_per_resident_day,total_deficiencies,grade_score,grade_letter,grade_summary,grade_completeness,grade_missing_inputs,slug,updated_at,phone,ownership_type,legal_business_name,provider_type,county,certified_beds,avg_residents_per_day,certification_date,special_focus_status,abuse_icon,number_of_fines,total_fines_dollars,number_of_payment_denials,total_penalties,latest_standard_survey_date,rn_turnover_pct,total_nursing_turnover_pct,cms_processing_date) VALUES\n${values};`,
     );
   }
 
@@ -305,11 +315,11 @@ async function main() {
       .map((f) => {
         const raw = allFacilities.find((r) => r.cms_certification_number_ccn === f.cms_id);
         const nurseHours = raw ? parseNum(raw.reported_total_nurse_staffing_hours_per_resident_per_day) : null;
-        return `('${esc(f.cms_id)}',date('now'),${f.overall_rating ?? "NULL"},${f.quality_rating ?? "NULL"},${f.staffing_rating ?? "NULL"},${f.inspection_rating ?? "NULL"},${f.rn_hours_per_resident_day ?? "NULL"},${f.total_deficiencies ?? "NULL"},${f.grade_score},'${esc(f.grade_letter)}',${nurseHours ?? "NULL"},${f.total_deficiencies ?? "NULL"})`;
+        return `('${esc(f.cms_id)}',date('now'),${f.overall_rating ?? "NULL"},${f.quality_rating ?? "NULL"},${f.staffing_rating ?? "NULL"},${f.inspection_rating ?? "NULL"},${f.rn_hours_per_resident_day ?? "NULL"},${f.total_deficiencies ?? "NULL"},${f.grade_score},'${esc(f.grade_letter)}','${esc(f.grade_completeness ?? "complete")}',${sqlText(f.grade_missing_inputs)},${nurseHours ?? "NULL"},${f.total_deficiencies ?? "NULL"})`;
       })
       .join(",\n");
     snapshotSqls.push(
-      `INSERT OR IGNORE INTO facility_snapshots (cms_id,snapshot_date,overall_rating,quality_rating,staffing_rating,inspection_rating,rn_hours_per_resident_day,total_deficiencies,grade_score,grade_letter,nurse_hours_per_resident_day,deficiency_count) VALUES\n${values};`,
+      `INSERT OR IGNORE INTO facility_snapshots (cms_id,snapshot_date,overall_rating,quality_rating,staffing_rating,inspection_rating,rn_hours_per_resident_day,total_deficiencies,grade_score,grade_letter,grade_completeness,grade_missing_inputs,nurse_hours_per_resident_day,deficiency_count) VALUES\n${values};`,
     );
   }
 
@@ -362,7 +372,7 @@ async function main() {
     for (const cmsId of op.cmsIds) {
       const facility = facilityByCmsId.get(cmsId);
       if (facility) {
-        facilityGrades.push(facility.grade_score);
+        if (facility.grade_letter !== "NR" && facility.grade_score >= 0) facilityGrades.push(facility.grade_score);
         if (facility.rn_hours_per_resident_day !== null) staffingScores.push(facility.rn_hours_per_resident_day);
         if (facility.total_deficiencies !== null) deficiencyScores.push(facility.total_deficiencies);
       }

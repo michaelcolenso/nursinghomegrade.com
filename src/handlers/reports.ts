@@ -96,7 +96,7 @@ async function handleStaffingFailuresState(request: Request, env: Env, stateSlug
     `SELECT cms_id, name, city, state, rn_hours_per_resident_day, grade_score, grade_letter, slug
      FROM facilities
      WHERE rn_hours_per_resident_day < 0.55 AND state = ?
-     ORDER BY grade_score ASC
+     ORDER BY CASE WHEN grade_letter = 'NR' THEN 1 ELSE 0 END, grade_score ASC
      LIMIT ? OFFSET ?`
   ).bind(stateAbbr, STAFFING_FAILURES_PAGE_SIZE, offset).all<FacilityRow>();
 

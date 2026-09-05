@@ -22,13 +22,15 @@ export interface CityPageData {
   nearbyOutsideCity?: Facility[];
 }
 
-function renderCityGradeDistribution(dist: Record<string, number>, total: number): string {
+function renderCityGradeDistribution(dist: Record<string, number>, _total: number): string {
   const letters = ["A", "B", "C", "D", "F"];
+  const ratedTotal = letters.reduce((sum, letter) => sum + (dist[letter] ?? 0), 0);
+  const notRated = dist.NR ?? 0;
   return `
     <div style="display: flex; gap: 2px; height: 32px; border-radius: 0; overflow: hidden; margin-bottom: var(--space-s);">
       ${letters.map(l => {
         const count = dist[l] ?? 0;
-        const pct = total > 0 ? (count / total) * 100 : 0;
+        const pct = ratedTotal > 0 ? (count / ratedTotal) * 100 : 0;
         return `<div class="grade-${l}" style="width: ${pct}%; min-width: 4px;" title="${l}: ${count} facilities"></div>`;
       }).join('')}
     </div>
@@ -41,6 +43,7 @@ function renderCityGradeDistribution(dist: Record<string, number>, total: number
         </div>
       `).join('')}
     </div>
+    ${notRated > 0 ? `<p style="margin-top:var(--space-xs);color:var(--muted);font-size:0.85rem;"><strong>${notRated}</strong> ${notRated === 1 ? "facility is" : "facilities are"} not rated because current inspection evidence is insufficient. A–F percentages above use rated facilities only.</p>` : ""}
   `;
 }
 
@@ -63,7 +66,7 @@ function renderCityRelatedLinks(
     .slice(0, 6)
     .map(
       (f) =>
-        `<li><a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}" style="color:var(--ink);text-decoration:none;font-weight:600;font-size:0.95rem;">${escHtml(f.name)} — ${escHtml(f.city)} (Grade ${escHtml(f.grade_letter)})</a></li>`,
+        `<li><a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}" style="color:var(--ink);text-decoration:none;font-weight:600;font-size:0.95rem;">${escHtml(f.name)} — ${escHtml(f.city)} (${f.grade_letter === "NR" ? "Not rated" : `Grade ${escHtml(f.grade_letter)}`})</a></li>`,
     )
     .join("");
 
@@ -180,8 +183,8 @@ export function cityPage(data: CityPageData): string {
         <div class="card city-result-card" data-grade="${f.grade_letter}" data-name="${escHtml(f.name)}" data-score="${f.grade_score}" style="padding: 1.5rem; ${i >= 15 ? 'display:none;' : ''}">
           <div class="city-result-grid" style="display: grid; grid-template-columns: 80px 1fr auto; gap: 2rem; align-items: start;">
             <div class="grade-badge grade-${f.grade_letter}" style="width:80px;height:80px;border-radius:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-              <div class="grade-badge-letter" style="font-size:2.5rem;font-weight:900;line-height:1;">${f.grade_letter}</div>
-              <div class="grade-badge-score" style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-top:2px;">${f.grade_score}/100</div>
+              <div class="grade-badge-letter" style="font-size:2.5rem;font-weight:900;line-height:1;">${f.grade_letter === "NR" ? "NR" : f.grade_letter}</div>
+              <div class="grade-badge-score" style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-top:2px;">${f.grade_letter === "NR" || f.grade_score < 0 ? "Not rated" : `${f.grade_score}/100`}</div>
             </div>
             <div>
               <a href="/facility/${f.cms_id}-${f.slug}" style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.5rem; font-weight: 800; color: var(--ink); text-decoration: none; display: block; margin-bottom: 0.5rem;">${escHtml(f.name)}</a>

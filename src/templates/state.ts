@@ -117,13 +117,15 @@ export function statePage(data: StatePageData): string {
   );
 }
 
-function renderGradeDistribution(dist: Record<string, number>, total: number): string {
+function renderGradeDistribution(dist: Record<string, number>, _total: number): string {
   const letters = ["A", "B", "C", "D", "F"];
+  const ratedTotal = letters.reduce((sum, letter) => sum + (dist[letter] ?? 0), 0);
+  const notRated = dist.NR ?? 0;
   return `
     <div style="display: flex; gap: 2px; height: 40px; border-radius: 0; overflow: hidden; margin-bottom: 2rem;">
       ${letters.map(l => {
         const count = dist[l] ?? 0;
-        const pct = (count / total) * 100;
+        const pct = ratedTotal > 0 ? (count / ratedTotal) * 100 : 0;
         return `<div class="grade-${l}" style="width: ${pct}%;" title="${l}: ${count} facilities"></div>`;
       }).join('')}
     </div>
@@ -136,6 +138,7 @@ function renderGradeDistribution(dist: Record<string, number>, total: number): s
         </div>
       `).join('')}
     </div>
+    ${notRated > 0 ? `<p style="margin-top:var(--space-s);color:var(--muted);font-size:0.9rem;"><strong>${notRated}</strong> ${notRated === 1 ? "facility is" : "facilities are"} not rated because current inspection evidence is insufficient. A–F percentages above use rated facilities only.</p>` : ""}
   `;
 }
 
@@ -144,8 +147,8 @@ function renderFacilityItem(f: StateFacilityCard): string {
     <div class="card" style="padding: 1.5rem;">
       <div style="display: grid; grid-template-columns: 60px 1fr auto; gap: 2rem; align-items: center;">
         <div class="grade-badge grade-${f.grade_letter}" style="width: 60px; height: 60px; border-radius: 0;">
-          <div class="grade-badge-letter" style="font-size: 1.75rem;">${f.grade_letter}</div>
-          <div class="grade-badge-score" style="font-size: 0.6rem;">${f.grade_score}</div>
+          <div class="grade-badge-letter" style="font-size: 1.75rem;">${f.grade_letter === "NR" ? "NR" : f.grade_letter}</div>
+          <div class="grade-badge-score" style="font-size: 0.6rem;">${f.grade_letter === "NR" || f.grade_score < 0 ? "Not rated" : f.grade_score}</div>
         </div>
         <div>
           <a href="/facility/${f.cms_id}-${f.slug}" style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.25rem; font-weight: 800; color: var(--ink); text-decoration: none;">${escHtml(f.name)}</a>

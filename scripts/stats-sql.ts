@@ -10,7 +10,9 @@
 export const SITE_STATS_REFRESH_SQL = `INSERT INTO site_stats (id,avg_grade,avg_rn_hours,avg_deficiencies,total_facilities,pct_failing,computed_at)
 SELECT
   1,
-  COALESCE(ROUND(AVG(grade_score), 1), 0),
+  COALESCE((SELECT ROUND(AVG(grade_score), 1)
+              FROM facilities
+             WHERE grade_letter != 'NR' AND grade_score >= 0), 0),
   ROUND(AVG(rn_hours_per_resident_day), 2),
   ROUND(AVG(total_deficiencies), 1),
   COUNT(*),

@@ -1,9 +1,9 @@
 import { layout, escHtml } from "./layout";
 
 // Names every CMS file behind the site, its release cadence, its URL, and the
-// release date of the copy currently in production. The release dates come from
-// the `data_releases` table rather than being written into this file — a
-// hardcoded freshness date is exactly the failure mode this page documents.
+// release date of the copy currently in production. Release dates come from
+// `data_releases`; hard-coding freshness here would recreate the bug this page
+// is intended to prevent.
 
 export interface DataRelease {
   source_key: string;
@@ -13,17 +13,17 @@ export interface DataRelease {
   source_url: string | null;
 }
 
-/** Files the site reads today, in the order a reader would care about them. */
+/** Files we ingest, including clearly labelled shadow/research sources. */
 const SOURCE_NOTES: Record<string, { cadence: string; used_for: string }> = {
   provider_info: {
     cadence: "Monthly",
     used_for:
-      "Facility name, address, ownership type, bed count, CMS star ratings, and reported RN staffing hours per resident per day. Supplies the four components of the base grade.",
+      "Public Grade 1.x + facility profile. Supplies facility identity, ownership/bed fields, CMS star ratings, reported RN staffing, and the four base-grade components. Grade 2.0 also extracts richer adjusted staffing fields from this file into shadow evidence tables.",
   },
   health_deficiencies: {
     cadence: "Monthly, reflecting surveys conducted on a rolling basis",
     used_for:
-      "Every health inspection citation for the last three survey cycles, with scope and severity letter and correction status. Supplies the deficiency counts and both penalty terms.",
+      "Public Grade 1.x. Supplies health inspection citations for the last three survey cycles, including scope/severity and correction status, used for deficiency counts and both safety penalty terms.",
   },
   penalties: {
     cadence: "Monthly",
@@ -32,15 +32,27 @@ const SOURCE_NOTES: Record<string, { cadence: string; used_for: string }> = {
   },
   ownership: {
     cadence: "Monthly",
-    used_for: "Owning organizations and individuals, used to group facilities into chains.",
+    used_for: "Facility record. Supplies owning organizations and individuals used to group facilities into chains.",
+  },
+  survey_summary: {
+    cadence: "Monthly, reflecting surveys conducted on a rolling basis",
+    used_for:
+      "Grade 2.0 shadow/research evidence only. Records the three most recent inspection cycles, including survey dates even when an inspection produced zero citations, so a verified clean survey can be distinguished from missing deficiency data.",
+  },
+  mds_quality_measures: {
+    cadence: "Monthly",
+    used_for:
+      "Grade 2.0 shadow/research evidence only. Stores facility/measure-level MDS quality outcomes and quarterly/four-quarter values for validation; these rows do not change the public Grade 1.x score.",
+  },
+  claims_quality_measures: {
+    cadence: "Monthly",
+    used_for:
+      "Grade 2.0 shadow/research evidence only. Stores facility/measure-level Medicare claims outcomes, including adjusted/observed/expected values where CMS supplies them; these rows do not change the public Grade 1.x score.",
   },
 };
 
 function formatDate(value: string | null): string {
   if (!value) return "Not recorded";
-  // CMS metadata dates are normally YYYY-MM-DD. Render date-only values without
-  // passing through a timezone conversion that could move midnight UTC backward
-  // a day for a US reader.
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
   if (match) {
     const [, year, month, day] = match;
@@ -101,37 +113,45 @@ export function dataSourcesPage(releases: DataRelease[]): string {
     <h1>Data sources</h1>
     <p class="lede" style="max-width:800px;">
       Every figure on this site comes from a public CMS file. We apply no editorial adjustments to
-      the underlying records — the grade is a computation over them, not a revision of them.
+      the underlying records. The table also identifies Grade 2.0 shadow sources that we ingest for
+      research and validation but do not yet use to change the public Grade 1.x score.
     </p>
 
     ${table}
 
     <h2>Data period, release date and import date are different</h2>
     <p>
-      <strong>CMS public release</strong> is when CMS made that monthly copy available. <strong>Imported by
+      <strong>CMS public release</strong> is when CMS made that copy available. <strong>Imported by
       NursingHomeGrade</strong> is when we loaded that copy. Facility pages separately show the CMS
       processing/data-period date carried by the provider record. A later import date never makes an
       older survey or reporting period more current.
     </p>
     <p>
-      The ingest pipeline reads the release metadata from CMS itself rather than stamping the current
-      date into this page. That same source metadata is used for sitemap freshness so rerunning an
-      unchanged import does not manufacture a new content date.
+      The ingest pipeline reads release metadata from CMS itself rather than stamping the current date
+      into this page. That same source metadata is used for sitemap freshness so rerunning an unchanged
+      public-data import does not manufacture a new content date.
     </p>
 
-    <h2>What we do not yet use directly</h2>
+    <h2>Public grade inputs vs. Grade 2.0 shadow evidence</h2>
     <p>
-      CMS publishes additional files we do not currently ingest directly, including Payroll-Based
-      Journal daily staffing and the facility-level MDS Quality Measures file. We do use CMS's
-      published staffing and quality star ratings from Provider Information, but not the full daily
-      PBJ or measure-level MDS records yet.
+      The public Grade 1.x formula still uses Provider Information plus Health Deficiencies for its score
+      and penalties. Grade 2.0 research additionally ingests Survey Summary, measure-level MDS Quality
+      Measures, Medicare Claims Quality Measures, and richer staffing fields from Provider Information.
+      Those Phase A tables are intentionally <strong>shadow evidence only</strong>: they are stored so we
+      can test missingness, build historical features and backtest candidate models without silently
+      changing anyone's public grade.
+    </p>
+    <p>
+      Payroll-Based Journal daily staffing remains a later Grade 2.0 phase and is not ingested by the
+      Phase A pipeline in this change.
     </p>
 
     <h2>Reproducing our numbers</h2>
     <p>
-      The files above are public and free. Combined with the
-      <a href="/methodology">published formula</a>, they are sufficient to reproduce every grade we
-      display. If you do that and get a different answer, we would like to know —
+      The public Grade 1.x source files are public and free. Combined with the
+      <a href="/methodology">published formula</a>, they are sufficient to reproduce every public grade
+      we display. Shadow Grade 2.0 evidence is versioned separately and is not part of that production
+      calculation. If you reproduce the public formula and get a different answer,
       <a href="/contact">tell us</a>.
     </p>
 
@@ -145,7 +165,7 @@ export function dataSourcesPage(releases: DataRelease[]): string {
 
   return layout(
     "Data Sources — The CMS Files Behind Every Grade",
-    "Every CMS file NursingHomeGrade uses, its release cadence, public release date, import date, and role in the grade or facility record.",
+    "Every CMS file NursingHomeGrade ingests, its release dates, and whether it powers the public Grade 1.x model or Grade 2.0 shadow research.",
     body,
     { canonicalPath: "/data-sources" },
   );
