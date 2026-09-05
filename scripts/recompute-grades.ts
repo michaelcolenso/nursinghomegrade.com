@@ -1,18 +1,14 @@
 /**
- * Recomputes every facility grade with the Phase 2.3 penalty terms.
+ * Recomputes every facility grade with the current Grade 1.x penalty terms.
  *
  * Order matters and is not negotiable:
  *   1. Snapshot every current grade into `grade_history` (append-only).
  *   2. Recompute from `facilities` joined to `facility_deficiencies`.
- *   3. Write back only the rows whose score or letter actually changed.
+ *   3. Write back only the rows whose grade state actually changed.
  *
- * The snapshot exists so a facility disputing its new grade can be shown what it
- * held before and why it moved, and so Phase 5 can render grade trends. Never
- * run step 2 without step 1 having succeeded.
- *
- * This is a one-time migration for the existing database. Ongoing grades are
- * computed with the same penalties by scripts/ingest.ts on every run, so this
- * script does not need to be re-run after a normal ingest.
+ * Missing inspection evidence is never defaulted to zero. A grade is computed
+ * only when the persisted provider record affirmatively carries both the current
+ * deficiency count and the latest standard-survey date.
  *
  * Usage:
  *   npx tsx scripts/recompute-grades.ts --local          # dry run against local D1
@@ -20,7 +16,13 @@
  *   npx tsx scripts/recompute-grades.ts --remote --apply
  */
 import { execFileSync } from "node:child_process";
-import { computeGrade, type PenaltyDeficiency, type ScoreInputs } from "../src/scoring";
+import {
+  computeGrade,
+  scoreToSummary,
+  type GradeCompleteness,
+  type PenaltyDeficiency,
+  type ScoreInputs,
+} from "../src/scoring";
 
 const DB_NAME = "nursinghomegrade";
 const REASON = "pre-penalty-baseline";
@@ -55,6 +57,7 @@ interface FacilityRow {
   total_deficiencies: number | null;
   quality_rating: number | null;
   staffing_rating: number | null;
+  latest_standard_survey_date: string | null;
   grade_score: number;
   grade_letter: string;
 }
@@ -63,12 +66,23 @@ interface DeficiencyRow extends PenaltyDeficiency {
   cms_id: string;
 }
 
+interface GradeChange {
+  cms_id: string;
+  score: number;
+  letter: string;
+  summary: string;
+  completeness: GradeCompleteness;
+  missingInputs: string | null;
+  from: string;
+  fromScore: number;
+}
+
 async function main() {
   console.log(`Recomputing grades (${remote ? "remote" : "local"}, ${apply ? "APPLY" : "dry run"})`);
 
   const facilities = query<FacilityRow>(
     `SELECT cms_id, rn_hours_per_resident_day, total_deficiencies, quality_rating,
-            staffing_rating, grade_score, grade_letter
+            staffing_rating, latest_standard_survey_date, grade_score, grade_letter
        FROM facilities`,
   );
   console.log(`Loaded ${facilities.length} facilities.`);
@@ -86,12 +100,6 @@ async function main() {
     byFacility.set(d.cms_id, list);
   }
 
-  // Step 1 — snapshot before touching anything.
-  //
-  // Exactly one baseline row per facility, ever. Re-running this command (after a
-  // failed update batch, say) must not record already-penalized grades as a
-  // second "pre-penalty" baseline — that would corrupt the very provenance the
-  // table exists to preserve for disputes.
   const alreadySnapshotted = new Set(
     query<{ cms_id: string }>(
       `SELECT DISTINCT cms_id FROM grade_history WHERE reason = '${REASON}'`,
@@ -117,85 +125,95 @@ async function main() {
     console.log(`Snapshotted ${needsSnapshot.length} rows.`);
   }
 
-  // Step 2 — recompute.
-  const changes: Array<{ cms_id: string; score: number; letter: string; from: string; fromScore: number }> = [];
+  const changes: GradeChange[] = [];
   let cappedCount = 0;
+  let withheldCount = 0;
   const letterMoves = new Map<string, number>();
 
   for (const f of facilities) {
     const inputs: ScoreInputs = {
-      rnHoursPerResidentDay: f.rn_hours_per_resident_day ?? 0,
-      totalDeficiencies: f.total_deficiencies ?? 0,
-      qualityRating: f.quality_rating ?? 1,
-      staffingRating: f.staffing_rating ?? 1,
+      rnHoursPerResidentDay: f.rn_hours_per_resident_day,
+      totalDeficiencies: f.total_deficiencies,
+      qualityRating: f.quality_rating,
+      staffingRating: f.staffing_rating,
+      inspectionEvidenceAvailable:
+        f.total_deficiencies !== null && f.latest_standard_survey_date !== null,
     };
     const result = computeGrade(inputs, byFacility.get(f.cms_id) ?? []);
     if (result.cappedByNoPlan) cappedCount += 1;
-    if (result.score !== f.grade_score || result.letter !== f.grade_letter) {
+    if (result.letter === null) withheldCount += 1;
+
+    const nextScore = result.score ?? -1;
+    const nextLetter = result.letter ?? "NR";
+    const summary = scoreToSummary(
+      result.score,
+      result.letter,
+      f.rn_hours_per_resident_day,
+      result.completeness,
+      result.missingInputs,
+    );
+    const missingInputs = result.missingInputs.length > 0 ? result.missingInputs.join(",") : null;
+
+    if (nextScore !== f.grade_score || nextLetter !== f.grade_letter) {
       changes.push({
         cms_id: f.cms_id,
-        score: result.score,
-        letter: result.letter,
+        score: nextScore,
+        letter: nextLetter,
+        summary,
+        completeness: result.completeness,
+        missingInputs,
         from: f.grade_letter,
         fromScore: f.grade_score,
       });
-      if (result.letter !== f.grade_letter) {
-        const key = `${f.grade_letter}→${result.letter}`;
+      if (nextLetter !== f.grade_letter) {
+        const key = `${f.grade_letter}→${nextLetter}`;
         letterMoves.set(key, (letterMoves.get(key) ?? 0) + 1);
       }
     }
   }
 
-  console.log(`\n${changes.length} facilities change score or letter.`);
+  console.log(`\n${changes.length} facilities change grade state, score, or letter.`);
+  console.log(`${withheldCount} facilities are not gradeable because current inspection evidence is insufficient.`);
   console.log(`${cappedCount} capped at B by the no-plan rule.`);
   console.log("\nLetter transitions:");
   for (const [move, n] of [...letterMoves.entries()].sort((a, b) => b[1] - a[1])) {
     console.log(`  ${move}: ${n}`);
   }
 
+  const numericChanges = changes.filter((c) => c.fromScore >= 0 && c.score >= 0);
   const avgDrop =
-    changes.length > 0
-      ? changes.reduce((sum, c) => sum + (c.fromScore - c.score), 0) / changes.length
+    numericChanges.length > 0
+      ? numericChanges.reduce((sum, c) => sum + (c.fromScore - c.score), 0) / numericChanges.length
       : 0;
-  console.log(`\nMean score change: ${avgDrop >= 0 ? "-" : "+"}${Math.abs(avgDrop).toFixed(1)} points.`);
+  console.log(
+    `\nMean numeric score change among facilities rated before and after: ${avgDrop >= 0 ? "-" : "+"}${Math.abs(avgDrop).toFixed(1)} points.`,
+  );
 
   if (!apply) {
     console.log("\nDry run — nothing written. Re-run with --apply to write.");
     return;
   }
 
-  // Step 3 — write back only what changed.
   console.log("\nWriting new grades...");
   for (let i = 0; i < changes.length; i += BATCH_SIZE) {
     const batch = changes.slice(i, i + BATCH_SIZE);
     const sql = batch
-      .map(
-        (c) =>
-          `UPDATE facilities SET grade_score=${c.score}, grade_letter='${esc(c.letter)}' WHERE cms_id='${esc(c.cms_id)}';`,
-      )
+      .map((c) => {
+        const missing = c.missingInputs === null ? "NULL" : `'${esc(c.missingInputs)}'`;
+        return `UPDATE facilities SET grade_score=${c.score}, grade_letter='${esc(c.letter)}', grade_summary='${esc(c.summary)}', grade_completeness='${esc(c.completeness)}', grade_missing_inputs=${missing} WHERE cms_id='${esc(c.cms_id)}';`;
+      })
       .join("\n");
     query(sql);
     console.log(`  ${Math.min(i + BATCH_SIZE, changes.length)}/${changes.length}`);
   }
 
-  // Operator pages and the best/worst chain reports read operators.avg_grade,
-  // which ingest computed from base scores. Left stale, those pages would
-  // contradict their own penalty-adjusted facility rows and rank chains on
-  // superseded numbers.
-  // Trajectory is computed from facility_snapshots. Left on old-formula scores,
-  // a facility could keep announcing "the overall grade improved" immediately
-  // after this migration lowered it.
-  //
-  // Derived from the current facilities table rather than this run's `changes`
-  // list: if an earlier attempt updated facilities and then died before this
-  // step, those rows no longer appear as changes and their snapshots would never
-  // be aligned. Comparing against facilities makes the step idempotent and
-  // recoverable on rerun.
   console.log("\nAligning latest facility snapshot with the new grade...");
   query(
     `UPDATE facility_snapshots
         SET grade_score = (SELECT f.grade_score FROM facilities f WHERE f.cms_id = facility_snapshots.cms_id),
-            grade_letter = (SELECT f.grade_letter FROM facilities f WHERE f.cms_id = facility_snapshots.cms_id)
+            grade_letter = (SELECT f.grade_letter FROM facilities f WHERE f.cms_id = facility_snapshots.cms_id),
+            grade_completeness = (SELECT f.grade_completeness FROM facilities f WHERE f.cms_id = facility_snapshots.cms_id),
+            grade_missing_inputs = (SELECT f.grade_missing_inputs FROM facilities f WHERE f.cms_id = facility_snapshots.cms_id)
       WHERE snapshot_date = (
               SELECT MAX(s2.snapshot_date) FROM facility_snapshots s2 WHERE s2.cms_id = facility_snapshots.cms_id
             )
@@ -203,16 +221,13 @@ async function main() {
               SELECT 1 FROM facilities f
                WHERE f.cms_id = facility_snapshots.cms_id
                  AND (f.grade_score <> facility_snapshots.grade_score
-                      OR f.grade_letter <> facility_snapshots.grade_letter)
+                      OR f.grade_letter <> facility_snapshots.grade_letter
+                      OR f.grade_completeness <> facility_snapshots.grade_completeness
+                      OR COALESCE(f.grade_missing_inputs, '') <> COALESCE(facility_snapshots.grade_missing_inputs, ''))
             );`,
   );
 
-  console.log("\nRefreshing operator aggregates...");
-  // Averaged over DISTINCT facilities, not over facility_owners rows. An
-  // operator can hold several ownership rows for the same facility, which would
-  // weight that facility's score multiple times and produce a record-weighted
-  // average. Ingest deduplicates via op.cmsIds; this must match, or the refresh
-  // would change chain headlines and best/worst rankings to a different figure.
+  console.log("\nRefreshing operator grade aggregates...");
   query(
     `UPDATE operators SET avg_grade = (
        SELECT ROUND(AVG(t.grade_score)) FROM (
@@ -220,21 +235,22 @@ async function main() {
            FROM facility_owners o
            JOIN facilities f ON f.cms_id = o.cms_id
           WHERE o.normalized_name = operators.normalized_name
+            AND f.grade_letter != 'NR'
+            AND f.grade_score >= 0
        ) t
      ) WHERE EXISTS (
        SELECT 1 FROM facility_owners o WHERE o.normalized_name = operators.normalized_name
      );`,
   );
 
-  // site_stats.avg_grade is precomputed by scripts/ingest.ts (see
-  // migrations/008_stats_tables.sql) so getNationalAverages doesn't scan
-  // `facilities` on every page load. This script rewrites grade_score
-  // directly against D1 rather than through ingest, so it must refresh the
-  // one stat it can invalidate. rn_hours/deficiencies/pct_failing/rn_median
-  // are untouched by this script and stay as ingest last computed them.
   console.log("\nRefreshing site_stats.avg_grade...");
   query(
-    `UPDATE site_stats SET avg_grade = (SELECT ROUND(AVG(grade_score), 1) FROM facilities), computed_at = datetime('now') WHERE id = 1;`,
+    `UPDATE site_stats
+        SET avg_grade = COALESCE((SELECT ROUND(AVG(grade_score), 1)
+                                    FROM facilities
+                                   WHERE grade_letter != 'NR' AND grade_score >= 0), 0),
+            computed_at = datetime('now')
+      WHERE id = 1;`,
   );
 
   console.log("Done.");
