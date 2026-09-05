@@ -1,0 +1,30 @@
+name: Fix Explore NR popup
+
+on:
+  push:
+    branches: [fix/post-57-ci-remediation]
+    paths:
+      - scripts/fix-explore-nr-popup.mjs
+      - .github/workflows/fix-explore-nr-popup.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/post-57-ci-remediation
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/fix-explore-nr-popup.mjs
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm scripts/fix-explore-nr-popup.mjs .github/workflows/fix-explore-nr-popup.yml
+          git add src/templates/explore.ts
+          git commit -m "Fix Explore NR popup template"
+          git push origin HEAD:fix/post-57-ci-remediation
