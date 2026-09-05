@@ -1,0 +1,101 @@
+name: Production data refresh
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type RUN-PRODUCTION-DATA-REFRESH to continue"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+jobs:
+  refresh:
+    if: ${{ inputs.confirm == 'RUN-PRODUCTION-DATA-REFRESH' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: primary
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - name: Require Cloudflare credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${CLOUDFLARE_API_TOKEN:-}" || { echo "Missing GitHub Actions secret CLOUDFLARE_API_TOKEN" >&2; exit 1; }
+          test -n "${CLOUDFLARE_ACCOUNT_ID:-}" || { echo "Missing GitHub Actions secret CLOUDFLARE_ACCOUNT_ID" >&2; exit 1; }
+
+      - name: Run repository test suite before touching production
+        run: npm test
+
+      - name: Apply Grade 1.x and Grade 2 schema additions safely
+        shell: bash
+        run: |
+          set -euo pipefail
+          has_column() {
+            local table="$1" column="$2"
+            npx wrangler d1 execute nursinghomegrade --remote --json --command "PRAGMA table_info(${table});" \
+              | grep -q "\"name\":\"${column}\""
+          }
+          add_column() {
+            local table="$1" column="$2" definition="$3"
+            if has_column "$table" "$column"; then
+              echo "$table.$column already exists"
+            else
+              npx wrangler d1 execute nursinghomegrade --remote --command "ALTER TABLE ${table} ADD COLUMN ${column} ${definition};"
+            fi
+          }
+
+          add_column data_releases cms_modified_date TEXT
+          add_column data_releases next_update_date TEXT
+          add_column facilities grade_completeness "TEXT NOT NULL DEFAULT 'complete'"
+          add_column facilities grade_missing_inputs TEXT
+          add_column facility_snapshots grade_completeness "TEXT NOT NULL DEFAULT 'complete'"
+          add_column facility_snapshots grade_missing_inputs TEXT
+          npx wrangler d1 execute nursinghomegrade --remote --command "CREATE INDEX IF NOT EXISTS idx_facilities_grade_completeness ON facilities(grade_completeness);"
+          npx wrangler d1 execute nursinghomegrade --remote --file=migrations/012_grade2_phase_a.sql
+
+      - name: Generate current Grade 1.x CMS seed
+        run: npm run ingest
+
+      - name: Load current Grade 1.x CMS data into production D1
+        run: bash scripts/load-remote.sh
+
+      - name: Generate Grade 2.0 Phase A shadow evidence
+        run: npm run ingest:grade2
+
+      - name: Load Grade 2.0 Phase A shadow evidence into production D1
+        run: bash scripts/load-grade2-phase-a-remote.sh
+
+      - name: Rebuild production sitemap
+        run: npm run sitemap -- --remote
+
+      - name: Verify production database invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx wrangler d1 execute nursinghomegrade --remote --command "SELECT COUNT(*) AS facilities, SUM(CASE WHEN grade_letter='NR' THEN 1 ELSE 0 END) AS not_rated, SUM(CASE WHEN grade_completeness='partial' THEN 1 ELSE 0 END) AS partial_grades FROM facilities;"
+          npx wrangler d1 execute nursinghomegrade --remote --command "SELECT source_key,cms_release_date,cms_modified_date,next_update_date,ingested_at FROM data_releases ORDER BY source_key;"
+          npx wrangler d1 execute nursinghomegrade --remote --command "SELECT (SELECT COUNT(*) FROM facility_staffing_features) AS staffing_rows, (SELECT COUNT(*) FROM facility_survey_summaries) AS survey_rows, (SELECT COUNT(*) FROM facility_mds_quality_measures) AS mds_rows, (SELECT COUNT(*) FROM facility_claims_quality_measures) AS claims_rows;"
+
+      - name: Verify public site
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location https://nursinghomegrade.com/ >/dev/null
+          curl --fail --silent --show-error --location https://nursinghomegrade.com/data-sources >/dev/null
+          curl --fail --silent --show-error --location https://nursinghomegrade.com/sitemap.xml >/dev/null
+          echo "Production HTTP verification passed."
