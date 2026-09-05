@@ -15,7 +15,7 @@ export function methodologyPage(): string {
       description:
         "The full NursingHomeGrade formula: component weights, penalty terms, grade band cutoffs, update cadence, and the grade changelog.",
       datePublished: "2026-07-27",
-      dateModified: "2026-07-27",
+      dateModified: "2026-09-04",
       author: { "@type": "Organization", name: "NursingHomeGrade" },
       publisher: { "@type": "Organization", name: "NursingHomeGrade" },
     },
@@ -130,17 +130,22 @@ export function methodologyPage(): string {
       </table>
     </div>
 
-    <h2 id="cadence">Update cadence</h2>
+    <h2 id="cadence">Update cadence and freshness</h2>
     <p>
-      CMS publishes Nursing Home Compare data monthly, and the underlying health inspection surveys
-      on a rolling basis. We re-ingest monthly and recompute all grades on each ingest.
+      CMS publishes the nursing-home datasets we use on a recurring schedule, while individual health
+      inspections occur on a rolling basis. We re-ingest the CMS files and recompute all grades when a
+      new source release is loaded.
     </p>
     <p>
-      <strong>Known gap:</strong> the date shown on a facility page is currently the date we loaded
-      the record, not the date CMS published it. Those are different, sometimes by months, and the
-      load date overstates how current the information is. The
-      <a href="/data-sources">data sources page</a> carries the dates to rely on until this is
-      fixed.
+      We track three dates separately because they mean different things: the date CMS says the source
+      data was <strong>modified</strong>, the date CMS <strong>released</strong> that copy publicly, and the
+      timestamp when NursingHomeGrade <strong>imported</strong> it. Facility records also carry CMS's own
+      processing/data-period date. See <a href="/data-sources">data sources</a> for the release and import
+      dates currently in production.
+    </p>
+    <p>
+      Sitemap freshness uses the CMS source-modified date rather than the import clock. Rerunning an
+      unchanged ingest therefore does not manufacture a newer <code>lastmod</code> date.
     </p>
 
     <h2 id="changelog">Grade changelog</h2>
