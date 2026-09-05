@@ -61,6 +61,7 @@ function facilitiesTableSql(rows = "") {
       cms_id TEXT PRIMARY KEY,
       state TEXT NOT NULL,
       grade_score REAL NOT NULL,
+      grade_letter TEXT NOT NULL,
       rn_hours_per_resident_day REAL,
       total_deficiencies REAL
     );
@@ -73,9 +74,9 @@ describe("stats migration and refresh SQL", () => {
     const [siteStats, stateStats] = executeFixture(
       `${facilitiesTableSql(`
         INSERT INTO facilities VALUES
-          ('al-1', 'AL', 80, 0.4, 2),
-          ('al-2', 'AL', 90, 0.6, 4),
-          ('ca-1', 'CA', 70, 0.8, NULL);
+          ('al-1', 'AL', 80, 'A', 0.4, 2),
+          ('al-2', 'AL', 90, 'A', 0.6, 4),
+          ('ca-1', 'CA', 70, 'B', 0.8, NULL);
       `)}
       ${migrationSql}
       SELECT avg_grade, avg_rn_hours, avg_deficiencies, total_facilities, pct_failing FROM site_stats;
@@ -112,8 +113,8 @@ describe("stats migration and refresh SQL", () => {
       `${facilitiesTableSql()}
       ${migrationSql}
       INSERT INTO facilities VALUES
-        ('wa-1', 'WA', 80, 0.4, 1),
-        ('or-1', 'OR', 90, 0.8, 2);
+        ('wa-1', 'WA', 80, 'A', 0.4, 1),
+        ('or-1', 'OR', 90, 'A', 0.8, 2);
       ${SITE_STATS_REFRESH_SQL}
       ${STATE_STATS_CLEANUP_SQL}
       ${STATE_STATS_REFRESH_SQL}
@@ -129,5 +130,22 @@ describe("stats migration and refresh SQL", () => {
 
     expect(siteStats).toEqual([{ total_facilities: 2, avg_grade: 85 }]);
     expect(stateStats).toEqual([{ state: "WA" }]);
+  }, 20_000);
+
+  it("excludes an NR row even if a stale nonnegative compatibility score remains", () => {
+    const [siteStats] = executeFixture(
+      `${facilitiesTableSql(`
+        INSERT INTO facilities VALUES
+          ('rated', 'WA', 80, 'A', 0.7, 1),
+          ('withheld', 'WA', 95, 'NR', 0.7, 1);
+      `)}
+      ${migrationSql}
+      ${SITE_STATS_REFRESH_SQL}
+      SELECT total_facilities, avg_grade FROM site_stats;
+    `,
+      1,
+    );
+
+    expect(siteStats).toEqual([{ total_facilities: 2, avg_grade: 80 }]);
   }, 20_000);
 });

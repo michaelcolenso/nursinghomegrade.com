@@ -260,7 +260,7 @@ const extraScripts = `
                 opacity: 1,
                 fillOpacity: 1
               });
-              m.bindPopup(\`<strong>\${f.n}</strong><br>\${f.g === "NR" || Number(f.s) < 0 ? "Not rated" : `Grade ${f.g} (${f.s}/100)`}<br><a href="/facility/\${f.id}-\${f.sl}">View Details →</a>\`);
+              m.bindPopup(\`<strong>\${f.n}</strong><br>\${f.g === "NR" || Number(f.s) < 0 ? "Not rated" : "Grade " + f.g + " (" + f.s + "/100)"}<br><a href="/facility/\${f.id}-\${f.sl}">View Details →</a>\`);
               m.addTo(group);
             });
             group.addTo(map);

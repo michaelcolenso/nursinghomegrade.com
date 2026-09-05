@@ -16,6 +16,7 @@ const strongFacility: ScoreInputs = {
   totalDeficiencies: 1,
   qualityRating: 5,
   staffingRating: 5,
+  inspectionEvidenceAvailable: true,
 };
 
 function def(partial: Partial<PenaltyDeficiency>): PenaltyDeficiency {
@@ -124,6 +125,7 @@ describe("no-plan hard rule", () => {
       totalDeficiencies: 30,
       qualityRating: 1,
       staffingRating: 1,
+      inspectionEvidenceAvailable: true,
     };
     const result = computeGrade(weak, [
       def({ deficiency_corrected: "Deficient, Provider has no plan of correction" }),
@@ -155,7 +157,7 @@ describe("grade result shape", () => {
     const many = Array.from({ length: 500 }, () =>
       def({ scope_severity_code: "L", deficiency_corrected: "Deficient, Provider has no plan of correction" }),
     );
-    const r = computeGrade({ rnHoursPerResidentDay: 0, totalDeficiencies: 99, qualityRating: 1, staffingRating: 1 }, many);
+    const r = computeGrade({ rnHoursPerResidentDay: 0, totalDeficiencies: 99, qualityRating: 1, staffingRating: 1, inspectionEvidenceAvailable: true }, many);
     expect(r.score).toBeGreaterThanOrEqual(0);
     expect(r.score).toBeLessThanOrEqual(100);
   });

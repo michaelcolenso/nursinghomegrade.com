@@ -88,11 +88,14 @@ describe("unrated facility display", () => {
     expect(html).not.toContain(">-1<");
   });
 
-  it("makes compare and map UIs explicitly recognize NR", () => {
+  it("makes compare and map UIs explicitly recognize NR without nested template literals", () => {
     expect(comparePage(true)).toContain('f.grade_letter === "NR"');
     expect(comparePage(true)).toContain("Not rated");
-    expect(explorePage()).toContain('f.g === "NR"');
-    expect(explorePage()).toContain("Not rated");
+    const explore = explorePage();
+    expect(explore).toContain('f.g === "NR"');
+    expect(explore).toContain("Not rated");
+    expect(explore).toContain('"Grade " + f.g + " (" + f.s + "/100)"');
+    expect(explore).not.toContain('`Grade ${f.g} (${f.s}/100)`');
   });
 });
 
