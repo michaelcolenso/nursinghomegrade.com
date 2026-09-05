@@ -117,13 +117,15 @@ export function statePage(data: StatePageData): string {
   );
 }
 
-function renderGradeDistribution(dist: Record<string, number>, total: number): string {
+function renderGradeDistribution(dist: Record<string, number>, _total: number): string {
   const letters = ["A", "B", "C", "D", "F"];
+  const ratedTotal = letters.reduce((sum, letter) => sum + (dist[letter] ?? 0), 0);
+  const notRated = dist.NR ?? 0;
   return `
     <div style="display: flex; gap: 2px; height: 40px; border-radius: 0; overflow: hidden; margin-bottom: 2rem;">
       ${letters.map(l => {
         const count = dist[l] ?? 0;
-        const pct = (count / total) * 100;
+        const pct = ratedTotal > 0 ? (count / ratedTotal) * 100 : 0;
         return `<div class="grade-${l}" style="width: ${pct}%;" title="${l}: ${count} facilities"></div>`;
       }).join('')}
     </div>
@@ -136,6 +138,7 @@ function renderGradeDistribution(dist: Record<string, number>, total: number): s
         </div>
       `).join('')}
     </div>
+    ${notRated > 0 ? `<p style="margin-top:var(--space-s);color:var(--muted);font-size:0.9rem;"><strong>${notRated}</strong> ${notRated === 1 ? "facility is" : "facilities are"} not rated because current inspection evidence is insufficient. A–F percentages above use rated facilities only.</p>` : ""}
   `;
 }
 

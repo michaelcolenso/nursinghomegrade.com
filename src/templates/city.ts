@@ -22,13 +22,15 @@ export interface CityPageData {
   nearbyOutsideCity?: Facility[];
 }
 
-function renderCityGradeDistribution(dist: Record<string, number>, total: number): string {
+function renderCityGradeDistribution(dist: Record<string, number>, _total: number): string {
   const letters = ["A", "B", "C", "D", "F"];
+  const ratedTotal = letters.reduce((sum, letter) => sum + (dist[letter] ?? 0), 0);
+  const notRated = dist.NR ?? 0;
   return `
     <div style="display: flex; gap: 2px; height: 32px; border-radius: 0; overflow: hidden; margin-bottom: var(--space-s);">
       ${letters.map(l => {
         const count = dist[l] ?? 0;
-        const pct = total > 0 ? (count / total) * 100 : 0;
+        const pct = ratedTotal > 0 ? (count / ratedTotal) * 100 : 0;
         return `<div class="grade-${l}" style="width: ${pct}%; min-width: 4px;" title="${l}: ${count} facilities"></div>`;
       }).join('')}
     </div>
@@ -41,6 +43,7 @@ function renderCityGradeDistribution(dist: Record<string, number>, total: number
         </div>
       `).join('')}
     </div>
+    ${notRated > 0 ? `<p style="margin-top:var(--space-xs);color:var(--muted);font-size:0.85rem;"><strong>${notRated}</strong> ${notRated === 1 ? "facility is" : "facilities are"} not rated because current inspection evidence is insufficient. A–F percentages above use rated facilities only.</p>` : ""}
   `;
 }
 
