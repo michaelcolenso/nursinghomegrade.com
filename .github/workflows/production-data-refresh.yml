@@ -8,6 +8,10 @@ on:
         required: true
         type: string
 
+concurrency:
+  group: nursinghomegrade-production-data-refresh
+  cancel-in-progress: false
+
 permissions:
   contents: read
 
