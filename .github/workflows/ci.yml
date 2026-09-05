@@ -9,7 +9,9 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  # A scheduled production-health run must never cancel (or be cancelled by)
+  # branch CI on the same ref. Event name separates those independent purposes.
+  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
