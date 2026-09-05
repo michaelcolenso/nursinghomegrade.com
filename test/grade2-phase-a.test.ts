@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { cmsField, normalizeCmsRow } from "../scripts/ingest-grade2-phase-a";
 
@@ -30,5 +31,22 @@ describe("Grade 2.0 Phase A CMS field normalization", () => {
     const row = normalizeCmsRow({ adjusted_score: "", observed_score: null });
     expect(cmsField(row, "Adjusted Score")).toBeNull();
     expect(cmsField(row, "Observed Score")).toBeNull();
+  });
+});
+
+describe("Grade 2.0 Phase A refresh safety", () => {
+  const source = readFileSync("scripts/ingest-grade2-phase-a.ts", "utf8");
+
+  it("fails closed when a source or transform produces no usable rows", () => {
+    expect(source).toContain("returned an empty first page; refusing destructive refresh");
+    expect(source).toContain("transform produced zero rows; refusing to replace existing shadow evidence");
+  });
+
+  it("loads into staging and swaps the live shadow table only in a final transaction", () => {
+    expect(source).toContain('const staging = `${table}__next`');
+    expect(source).toContain("CREATE TABLE ${staging} AS SELECT * FROM ${table} WHERE 0");
+    expect(source).toContain('"BEGIN TRANSACTION;"');
+    expect(source).toContain("INSERT INTO ${table}");
+    expect(source).toContain('"COMMIT;"');
   });
 });
