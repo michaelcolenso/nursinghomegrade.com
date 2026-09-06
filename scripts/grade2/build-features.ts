@@ -319,13 +319,12 @@ async function main(): Promise<void> {
     text("Conservative direction inferred from an explicit outcome-family description; shadow research only."),
   ].join(",")})`);
 
+  // D1 wraps a remote --file import atomically and rejects explicit BEGIN/COMMIT.
   const sql = [
-    "BEGIN TRANSACTION;",
     `INSERT INTO grade2_feature_runs (run_id,feature_version,model_version,as_of_date,source_release_json,notes) VALUES (${text(runId)},${text(FEATURE_VERSION)},${text(MODEL_VERSION)},${text(asOf)},${jsonText(sourceReleaseJson)},${text("Phase B shadow research baseline; not public scoring.")});`,
     ...batchInsert("grade2_measure_registry", ["source_key","measure_code","resident_type","measure_label","favorable_direction","registry_version","enabled","rationale"], registryRows, 200, "INSERT OR REPLACE"),
     ...batchInsert("grade2_feature_snapshots", ["run_id","cms_id","pillar","feature_key","raw_value","normalized_value","weight","missing_reason","source_key","source_field","source_period","source_processing_date"], featureRows, 50),
     ...batchInsert("grade2_shadow_scores", ["run_id","cms_id","safety_score","staffing_score","outcomes_score","overall_score","confidence","evidence_coverage","missing_pillars","explanation_json"], shadowRows, 20),
-    "COMMIT;",
     "",
   ].join("\n\n");
 

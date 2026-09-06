@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { getAllStateSlugs } from "../src/states";
 import {
   classifySitemapUrl,
   compareSitemapCoverage,
@@ -33,6 +34,25 @@ describe("sitemap URL page classes", () => {
 
   it("rejects an unexpected sitemap route class", () => {
     expect(classifySitemapUrl("https://nursinghomegrade.com/search?zip=27518")).toBe("unknown");
+  });
+
+  it("recognizes the staffing report hub and every supported state report", () => {
+    expect(classifySitemapUrl("https://nursinghomegrade.com/reports/staffing-failures")).toBe("core");
+    for (const slug of getAllStateSlugs()) {
+      expect(classifySitemapUrl(`https://nursinghomegrade.com/reports/staffing-failures/${slug}`)).toBe("core");
+    }
+  });
+
+  it.each([
+    "/reports/staffing-failures/atlantis",
+    "/reports/staffing-failures/constructor",
+    "/reports/staffing-failures/washington/seattle",
+    "/reports/staffing-failures/washington/",
+    "/reports/staffing-failures/washington?page=2",
+    "/reports/staffing-failures#table",
+    "/reports/unreviewed",
+  ])("keeps unapproved report URLs out of the sitemap: %s", (path) => {
+    expect(classifySitemapUrl(`https://nursinghomegrade.com${path}`)).toBe("unknown");
   });
 });
 

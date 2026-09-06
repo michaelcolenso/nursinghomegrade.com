@@ -1,4 +1,5 @@
 import { SITEMAP_BASE } from "./sitemap-xml";
+import { getAllStateSlugs } from "./states";
 
 export type SitemapPageClass = "core" | "city" | "facility" | "unknown";
 
@@ -32,8 +33,12 @@ const CORE_PATHS = new Set([
   "/faq",
   "/glossary",
   "/reports/staffing-standard-repeal",
+  "/reports/staffing-failures",
   "/states",
 ]);
+const STAFFING_REPORT_PATHS = new Set(
+  getAllStateSlugs().map((slug) => `/reports/staffing-failures/${slug}`),
+);
 
 function isPositiveInteger(value: unknown): value is number {
   return typeof value === "number" && Number.isSafeInteger(value) && value > 0;
@@ -58,7 +63,7 @@ export function classifySitemapUrl(rawUrl: string): SitemapPageClass {
     if (url.origin !== SITEMAP_BASE || url.search || url.hash) return "unknown";
     if (url.pathname.startsWith("/facility/") && /^\/facility\/[A-Za-z0-9-]+$/.test(url.pathname)) return "facility";
     if (/^\/state\/[a-z-]+\/[a-z-]+$/.test(url.pathname)) return "city";
-    if (/^\/state\/[a-z-]+$/.test(url.pathname) || CORE_PATHS.has(url.pathname)) return "core";
+    if (/^\/state\/[a-z-]+$/.test(url.pathname) || CORE_PATHS.has(url.pathname) || STAFFING_REPORT_PATHS.has(url.pathname)) return "core";
   } catch {
     return "unknown";
   }
@@ -137,7 +142,7 @@ export function compareSitemapCoverage(
     problems.push("Current sitemap page classes do not sum to totalUrls.");
   }
   if ((current.pageClasses.unknown ?? 0) > 0) {
-    problems.push(`Current sitemap contains ${current.pageClasses.unknown} unknown URL class(es).`);
+    problems.push(`Current sitemap contains ${current.pageClasses.unknown} URL(s) with an unknown page class.`);
   }
 
   const urlRatio = current.totalUrls / baseline.totalUrls;

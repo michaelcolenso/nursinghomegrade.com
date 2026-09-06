@@ -42,11 +42,9 @@ describe("Grade 2.0 Phase A refresh safety", () => {
     expect(source).toContain("transform produced zero rows; refusing to replace existing shadow evidence");
   });
 
-  it("loads into staging and swaps the live shadow table only in a final transaction", () => {
+  it("loads into staging and publishes through a single D1 import finalizer", () => {
     expect(source).toContain('const staging = `${table}__next`');
     expect(source).toContain("CREATE TABLE ${staging} AS SELECT * FROM ${table} WHERE 0");
-    expect(source).toContain('"BEGIN TRANSACTION;"');
-    expect(source).toContain("INSERT INTO ${table}");
-    expect(source).toContain('"COMMIT;"');
+    expect(source).toContain("writeFileSync(finalizer, buildShadowTableFinalizer(table, columns))");
   });
 });
