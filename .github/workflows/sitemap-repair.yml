@@ -1,0 +1,57 @@
+name: Repair production sitemap
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [primary]
+    paths:
+      - .github/run-sitemap-repair
+
+# Share the refresh lock: sitemap publication must not race a database import.
+concurrency:
+  group: nursinghomegrade-production-data-refresh
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Require credentials and a populated production database
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${CLOUDFLARE_API_TOKEN:-}"
+          test -n "${CLOUDFLARE_ACCOUNT_ID:-}"
+          npx wrangler d1 execute nursinghomegrade --remote --json \
+            --command "SELECT COUNT(*) AS facilities FROM facilities;" > /tmp/sitemap-facilities.json
+          jq -e '.[0].results[0].facilities >= 10000' /tmp/sitemap-facilities.json >/dev/null
+          cat /tmp/sitemap-facilities.json
+      - name: Rebuild production sitemap from current D1
+        run: npm run sitemap -- --remote
+      - name: Verify served sitemaps and canonical pages
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run check-sitemap 2>&1 | tee sitemap-health.txt
+      - name: Preserve sitemap health output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sitemap-health
+          path: sitemap-health.txt
+          if-no-files-found: ignore
+          retention-days: 7

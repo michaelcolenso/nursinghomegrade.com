@@ -151,16 +151,8 @@ jobs:
       - name: Load current Grade 1.x CMS data into production D1
         run: bash scripts/load-remote.sh
 
-      - name: Generate Grade 2.0 Phase A shadow evidence
-        run: npm run ingest:grade2
-
-      - name: Load Grade 2.0 Phase A shadow evidence into production D1
-        run: bash scripts/load-grade2-phase-a-remote.sh
-
-      - name: Rebuild production sitemap
-        run: npm run sitemap -- --remote
-
-      - name: Verify production database invariants
+      # Finish the public refresh before shadow research can fail independently.
+      - name: Verify public database invariants
         shell: bash
         run: |
           set -euo pipefail
@@ -175,18 +167,11 @@ jobs:
           }
           cat /tmp/facilities.json
 
-          npx wrangler d1 execute nursinghomegrade --remote --json --command \
-            "SELECT (SELECT COUNT(*) FROM facility_staffing_features) AS staffing_rows, (SELECT COUNT(*) FROM facility_survey_summaries) AS survey_rows, (SELECT COUNT(*) FROM facility_mds_quality_measures) AS mds_rows, (SELECT COUNT(*) FROM facility_claims_quality_measures) AS claims_rows;" \
-            > /tmp/grade2.json
-          jq -e '.[0].results[0] | (.staffing_rows >= 10000 and .survey_rows > 0 and .mds_rows > 0 and .claims_rows > 0)' /tmp/grade2.json >/dev/null || {
-            echo "Grade 2 Phase A shadow tables failed minimum row-count invariants." >&2
-            cat /tmp/grade2.json >&2
-            exit 1
-          }
-          cat /tmp/grade2.json
-
           npx wrangler d1 execute nursinghomegrade --remote --command \
             "SELECT source_key,cms_release_date,cms_modified_date,next_update_date,ingested_at FROM data_releases ORDER BY source_key;"
+
+      - name: Rebuild production sitemap
+        run: npm run sitemap -- --remote
 
       - name: Verify public site
         shell: bash
@@ -196,3 +181,27 @@ jobs:
           curl --fail --silent --show-error --location https://nursinghomegrade.com/data-sources >/dev/null
           curl --fail --silent --show-error --location https://nursinghomegrade.com/sitemap.xml >/dev/null
           echo "Production HTTP verification passed."
+
+      - name: Verify live sitemap population and canonical health
+        run: npm run check-sitemap
+
+      - name: Generate Grade 2.0 Phase A shadow evidence
+        run: npm run ingest:grade2
+
+      - name: Load Grade 2.0 Phase A shadow evidence into production D1
+        run: bash scripts/load-grade2-phase-a-remote.sh
+
+      - name: Verify shadow database invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          npx wrangler d1 execute nursinghomegrade --remote --json --command \
+            "SELECT (SELECT COUNT(*) FROM facility_staffing_features) AS staffing_rows, (SELECT COUNT(*) FROM facility_survey_summaries) AS survey_rows, (SELECT COUNT(*) FROM facility_mds_quality_measures) AS mds_rows, (SELECT COUNT(*) FROM facility_claims_quality_measures) AS claims_rows;" \
+            > /tmp/grade2.json
+          jq -e '.[0].results[0] | (.staffing_rows >= 10000 and .survey_rows > 0 and .mds_rows > 0 and .claims_rows > 0)' /tmp/grade2.json >/dev/null || {
+            echo "Grade 2 Phase A shadow tables failed minimum row-count invariants." >&2
+            cat /tmp/grade2.json >&2
+            exit 1
+          }
+          cat /tmp/grade2.json

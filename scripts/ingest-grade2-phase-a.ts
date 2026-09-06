@@ -107,6 +107,19 @@ function removeOldShards(prefix: string): void {
   }
 }
 
+// Wrangler's remote --file import is atomic. Explicit transaction-control SQL
+// is rejected by D1. Keep the replacement and staging cleanup in one file.
+// https://developers.cloudflare.com/d1/best-practices/import-export-data/
+export function buildShadowTableFinalizer(table: string, columns: string[]): string {
+  const staging = `${table}__next`;
+  return [
+    `DELETE FROM ${table};`,
+    `INSERT INTO ${table} (${columns.join(",")} ) SELECT ${columns.join(",")} FROM ${staging};`,
+    `DROP TABLE IF EXISTS ${staging};`,
+    "",
+  ].join("\n");
+}
+
 function writeShards(
   prefix: string,
   table: string,
@@ -146,17 +159,7 @@ function writeShards(
   }
 
   const finalizer = `scripts/${prefix}_finalize.sql`;
-  writeFileSync(
-    finalizer,
-    [
-      "BEGIN TRANSACTION;",
-      `DELETE FROM ${table};`,
-      `INSERT INTO ${table} (${columns.join(",")} ) SELECT ${columns.join(",")} FROM ${staging};`,
-      "COMMIT;",
-      `DROP TABLE IF EXISTS ${staging};`,
-      "",
-    ].join("\n"),
-  );
+  writeFileSync(finalizer, buildShadowTableFinalizer(table, columns));
   files.push(finalizer);
 
   console.log(`${table}: wrote ${values.length.toLocaleString()} staged rows across ${files.length - 1} shard(s) + finalizer`);
