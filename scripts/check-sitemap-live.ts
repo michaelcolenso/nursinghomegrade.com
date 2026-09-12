@@ -13,6 +13,7 @@
 // canonical apex host it claims in every rel=canonical tag.
 
 import { readFileSync, writeFileSync } from "node:fs";
+import { fetchWithRetry } from "../src/fetch-retry";
 import { validateIndex, validateUrlset, SITEMAP_BASE, type SitemapEntry, type SitemapIndexEntry } from "../src/sitemap-xml";
 import {
   classifySitemapUrl,
@@ -52,9 +53,13 @@ function parseLocs(xml: string, tag: "url" | "sitemap"): Array<{ loc: string; la
 }
 
 async function fetchText(url: string): Promise<string> {
-  const res = await fetch(url);
+  const res = await fetchWithRetry(url);
   if (!res.ok) throw new Error(`${url} returned ${res.status}`);
   return res.text();
+}
+
+async function fetchPage(url: string, init?: RequestInit): Promise<Response> {
+  return fetchWithRetry(url, init);
 }
 
 async function main() {
@@ -96,7 +101,7 @@ async function main() {
     const step = Math.max(1, Math.floor(locs.length / sampleSize));
     for (let i = 0; i < locs.length; i += step) {
       const url = locs[i]!;
-      const res = await fetch(url, { redirect: "manual" });
+      const res = await fetchPage(url, { redirect: "manual" });
       if (res.status !== 200) {
         problems.push(`${url} returned ${res.status} (sitemaps must list only 200 URLs)`);
         continue;
@@ -126,6 +131,7 @@ async function main() {
       }
     }
     console.log(`Checked ${name}: ${entries.length} URLs, sampled ${Math.ceil(locs.length / step)}.`);
+    await new Promise((resolve) => setTimeout(resolve, 50));
   }
 
   console.log(`\nTotal URLs across the index: ${totalUrls}`);
@@ -138,7 +144,7 @@ async function main() {
   // duplicate content the canonical tag alone does not prevent a crawler from
   // fetching, and crawl budget the facility corpus needs instead.
   const wwwUrl = `https://www.nursinghomegrade.com/`;
-  const wwwRes = await fetch(wwwUrl, { redirect: "manual" });
+  const wwwRes = await fetchPage(wwwUrl, { redirect: "manual" });
   if (wwwRes.status < 300 || wwwRes.status >= 400) {
     problems.push(`${wwwUrl} returned ${wwwRes.status} instead of redirecting to the apex host`);
   } else {
