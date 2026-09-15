@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { fetchWithRetry, isTransientNetworkError, isTransientStatus } from "../src/fetch-retry";
+import { fetchAndRead, fetchWithRetry, isTransientNetworkError, isTransientStatus } from "../src/fetch-retry";
 
 const realFetch = globalThis.fetch;
 
@@ -90,5 +90,37 @@ describe("fetchWithRetry", () => {
       fetchWithRetry("https://nursinghomegrade.com/sitemap.xml", undefined, { retries: 2, backoffMs: 1 }),
     ).rejects.toThrow("fetch failed");
     expect(n).toBe(3);
+  });
+});
+
+function socketError(): Error {
+  return Object.assign(new Error("terminated"), { code: "UND_ERR_SOCKET" });
+}
+
+describe("fetchAndRead", () => {
+  it("retries when headers succeed but the body stream resets", async () => {
+    let n = 0;
+    globalThis.fetch = async () => {
+      n += 1;
+      if (n === 1) {
+        return {
+          status: 200,
+          ok: true,
+          headers: new Headers(),
+          text: async () => {
+            throw socketError();
+          },
+          arrayBuffer: async () => new ArrayBuffer(0),
+        } as unknown as Response;
+      }
+      return new Response("<urlset></urlset>", { status: 200 });
+    };
+    const res = await fetchAndRead("https://nursinghomegrade.com/sitemap-facilities-florida.xml", undefined, {
+      retries: 3,
+      backoffMs: 1,
+    });
+    expect(res.status).toBe(200);
+    expect(res.text).toContain("urlset");
+    expect(n).toBe(2);
   });
 });

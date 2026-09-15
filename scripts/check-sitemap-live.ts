@@ -13,7 +13,7 @@
 // canonical apex host it claims in every rel=canonical tag.
 
 import { readFileSync, writeFileSync } from "node:fs";
-import { fetchWithRetry } from "../src/fetch-retry";
+import { fetchAndRead, fetchWithRetry } from "../src/fetch-retry";
 import { validateIndex, validateUrlset, SITEMAP_BASE, type SitemapEntry, type SitemapIndexEntry } from "../src/sitemap-xml";
 import {
   classifySitemapUrl,
@@ -53,13 +53,13 @@ function parseLocs(xml: string, tag: "url" | "sitemap"): Array<{ loc: string; la
 }
 
 async function fetchText(url: string): Promise<string> {
-  const res = await fetchWithRetry(url);
-  if (!res.ok) throw new Error(`${url} returned ${res.status}`);
-  return res.text();
+  const res = await fetchAndRead(url);
+  if (res.status < 200 || res.status >= 300) throw new Error(`${url} returned ${res.status}`);
+  return res.text;
 }
 
-async function fetchPage(url: string, init?: RequestInit): Promise<Response> {
-  return fetchWithRetry(url, init);
+async function fetchPage(url: string, init?: RequestInit): Promise<{ status: number; text: string }> {
+  return fetchAndRead(url, init);
 }
 
 async function main() {
@@ -106,7 +106,7 @@ async function main() {
         problems.push(`${url} returned ${res.status} (sitemaps must list only 200 URLs)`);
         continue;
       }
-      const html = await res.text();
+      const html = res.text;
       const canonical = html.match(/<link rel="canonical" href="([^"]+)"/)?.[1];
       if (canonical === undefined) {
         // Absent is a failure, not a pass: the checker's contract is that every
