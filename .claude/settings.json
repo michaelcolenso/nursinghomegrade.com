@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx wrangler d1 execute nursinghomegrade --remote*)",
+      "Bash(bash scripts/load-remote.sh)"
+    ]
+  }
+}
