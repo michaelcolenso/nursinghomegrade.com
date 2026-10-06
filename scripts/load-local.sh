@@ -425,6 +425,7 @@ echo "Loading scripts/seed_deficiencies_416.sql..." && npx wrangler d1 execute n
 echo "Loading scripts/seed_deficiencies_417.sql..." && npx wrangler d1 execute nursinghomegrade --local --file=scripts/seed_deficiencies_417.sql
 echo "Loading scripts/seed_deficiencies_418.sql..." && npx wrangler d1 execute nursinghomegrade --local --file=scripts/seed_deficiencies_418.sql
 echo "Loading scripts/seed_deficiencies_419.sql..." && npx wrangler d1 execute nursinghomegrade --local --file=scripts/seed_deficiencies_419.sql
+echo "Loading scripts/seed_deficiencies_420.sql..." && npx wrangler d1 execute nursinghomegrade --local --file=scripts/seed_deficiencies_420.sql
 echo "Loading facilities and grades..."
 npx wrangler d1 execute nursinghomegrade --local --file=scripts/seed.sql
 echo "Done!"
