@@ -267,6 +267,26 @@ echo "[{\\"results\\":[{\\"n\\":$n}],\\"success\\":true}]"
     expect(allowed.live).toBe(expected);
   });
 
+  it("keeps load-deficiencies-batched.ts from running setup and swap after the batches", () => {
+    const dir = tempDir("nhg-batched");
+    mkdirSync(join(dir, "scripts"), { recursive: true });
+    mkdirSync(join(dir, "bin"));
+    for (const f of files) writeFileSync(join(dir, f.name), f.sql);
+    writeFileSync(join(dir, SETUP_FILE), buildStagingSetupSql());
+    writeFileSync(join(dir, SWAP_FILE), buildSwapSql());
+    writeFileSync(join(dir, "calls.log"), "");
+    writeFileSync(join(dir, "bin/npx"), `#!/bin/bash\necho "$*" >> "${join(dir, "calls.log")}"\n`);
+    chmodSync(join(dir, "bin/npx"), 0o755);
+    const r = spawnSync(
+      join(repoRoot, "node_modules/.bin/tsx"),
+      [join(repoRoot, "scripts/load-deficiencies-batched.ts"), "--remote"],
+      { cwd: dir, env: { ...process.env, PATH: `${join(dir, "bin")}:${process.env.PATH}` }, encoding: "utf8" },
+    );
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/load-remote\.sh/);
+    expect(readFileSync(join(dir, "calls.log"), "utf8")).toBe("");
+  }, 60_000);
+
   it("refuses seed files written by the old in-place loader", () => {
     const r = runLoader(
       { LIVE: "1000" },
