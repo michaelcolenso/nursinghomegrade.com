@@ -9,6 +9,7 @@ import { citySlug } from "../src/states";
 import {
   SITEMAP_BASE,
   escapeXml,
+  newestDate,
   newestLastmod,
   toSitemapIndex,
   toXml,
@@ -62,7 +63,7 @@ function parseWranglerJson<T>(raw: string, what: string): T {
 }
 
 async function main() {
-  const { execSync } = await import("child_process");
+  const { execFileSync, execSync } = await import("child_process");
   const { existsSync, writeFileSync, mkdirSync } = await import("fs");
 
   const args = process.argv.slice(2);
@@ -108,14 +109,61 @@ async function main() {
 
   const now = new Date().toISOString().split("T")[0];
 
+  // A data timestamp alone is not a truthful page lastmod: templates and
+  // render-time logic can change while CMS rows stay untouched. That happened
+  // on 2026-08-19, when facility/state/report HTML changed but the served
+  // sitemaps continued to claim 2026-08-01. Derive a date from each page
+  // family's actual source dependencies and combine it with the row date.
+  const sourceLastmod = (paths: string[]): string => {
+    const date = execFileSync("git", ["log", "-1", "--format=%cs", "--", ...paths], {
+      encoding: "utf8",
+    }).trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      throw new Error(`Could not determine a source lastmod for: ${paths.join(", ")}`);
+    }
+    return date;
+  };
+  const sharedRenderSources = ["src/templates/layout.ts"];
+  const coreSourceLastmod = sourceLastmod([
+    ...sharedRenderSources,
+    "src/index.ts",
+    "src/db.ts",
+    "src/handlers/about.ts",
+    "src/handlers/home.ts",
+    "src/handlers/state.ts",
+    "src/handlers/reports.ts",
+    "src/templates/about.ts",
+    "src/templates/faq.ts",
+    "src/templates/glossary.ts",
+    "src/templates/home.ts",
+    "src/templates/privacy.ts",
+    "src/templates/state.ts",
+    "src/templates/staffing-failures.ts",
+    "src/templates/staffing-repeal.ts",
+    "src/templates/terms.ts",
+  ]);
+  const citySourceLastmod = sourceLastmod([
+    ...sharedRenderSources,
+    "src/db.ts",
+    "src/handlers/city.ts",
+    "src/templates/city.ts",
+  ]);
+  const facilitySourceLastmod = sourceLastmod([
+    ...sharedRenderSources,
+    "src/db.ts",
+    "src/handlers/facility.ts",
+    "src/templates/facility.ts",
+    "src/scoring.ts",
+  ]);
+
   // ── lastmod, honestly ────────────────────────────────────────────────
   //
   // A sitemap lastmod is a claim about when the PAGE last changed. Stamping
   // every URL with the build time is the falsification the spec warns about:
   // Google learns the field is noise and stops using it. Facility pages carry
   // their own updated_at; city and state pages derive theirs from the most
-  // recently changed facility they list, because that is genuinely when their
-  // content last moved.
+  // recently changed facility they list. Every family also includes the last
+  // source change that could alter its rendered representation.
   const dayOf = (iso: string | null | undefined): string | undefined =>
     iso ? iso.split("T")[0] : undefined;
 
@@ -130,7 +178,8 @@ async function main() {
     if (d > (latestByCity.get(cityKey) ?? "")) latestByCity.set(cityKey, d);
     if (d > latestOverall) latestOverall = d;
   }
-  const siteLastmod = latestOverall || now;
+  const siteDataLastmod = latestOverall || now;
+  const coreLastmod = newestDate(siteDataLastmod, coreSourceLastmod)!;
 
   // ── URL validity ─────────────────────────────────────────────────────
   //
@@ -164,64 +213,64 @@ async function main() {
   }
 
   const coreEntries: SitemapEntry[] = [
-    { loc: `${BASE}/`, lastmod: siteLastmod, changefreq: "weekly", priority: "1.0" },
+    { loc: `${BASE}/`, lastmod: coreLastmod, changefreq: "weekly", priority: "1.0" },
     {
       loc: `${BASE}/about`,
-      lastmod: siteLastmod,
+      lastmod: coreLastmod,
       changefreq: "monthly",
       priority: "0.5",
     },
     {
       loc: `${BASE}/privacy`,
-      lastmod: siteLastmod,
+      lastmod: coreLastmod,
       changefreq: "yearly",
       priority: "0.3",
     },
     {
       loc: `${BASE}/terms`,
-      lastmod: siteLastmod,
+      lastmod: coreLastmod,
       changefreq: "yearly",
       priority: "0.3",
     },
     {
       loc: `${BASE}/faq`,
-      lastmod: siteLastmod,
+      lastmod: coreLastmod,
       changefreq: "monthly",
       priority: "0.5",
     },
     {
       loc: `${BASE}/glossary`,
-      lastmod: siteLastmod,
+      lastmod: coreLastmod,
       changefreq: "monthly",
       priority: "0.5",
     },
     {
       loc: `${BASE}/reports/staffing-standard-repeal`,
-      lastmod: siteLastmod,
+      lastmod: coreLastmod,
       changefreq: "monthly",
       priority: "0.7",
     },
     {
       loc: `${BASE}/reports/staffing-failures`,
-      lastmod: siteLastmod,
+      lastmod: coreLastmod,
       changefreq: "weekly",
       priority: "0.7",
     },
     ...staffingFailureStateSlugs.map((s) => ({
       loc: `${BASE}/reports/staffing-failures/${escapeXml(s)}`,
-      lastmod: siteLastmod,
+      lastmod: coreLastmod,
       changefreq: "weekly",
       priority: "0.6" as string,
     })),
     {
       loc: `${BASE}/states`,
-      lastmod: siteLastmod,
+      lastmod: coreLastmod,
       changefreq: "weekly",
       priority: "0.9",
     },
     ...stateSlugs.map((s) => ({
       loc: `${BASE}/state/${escapeXml(s)}`,
-      lastmod: stateLastmodBySlug.get(s) ?? siteLastmod,
+      lastmod: newestDate(stateLastmodBySlug.get(s) ?? siteDataLastmod, coreSourceLastmod),
       changefreq: "weekly",
       priority: "0.8" as string,
     })),
@@ -244,7 +293,7 @@ async function main() {
     })
     .filter((u): u is string => u !== null))].map((u) => ({
       loc: escapeXml(u),
-      lastmod: cityLastmodByUrl.get(u) ?? siteLastmod,
+      lastmod: newestDate(cityLastmodByUrl.get(u) ?? siteDataLastmod, citySourceLastmod),
       changefreq: "weekly",
       priority: "0.7" as string,
     }));
@@ -263,7 +312,7 @@ async function main() {
     const list = byState.get(slug) ?? [];
     list.push({
       loc: `${BASE}/facility/${escapeXml(r.cms_id)}-${escapeXml(r.slug)}`,
-      lastmod: dayOf(r.updated_at) ?? siteLastmod,
+      lastmod: newestDate(dayOf(r.updated_at) ?? siteDataLastmod, facilitySourceLastmod),
       changefreq: "monthly",
       priority: "0.6",
     });

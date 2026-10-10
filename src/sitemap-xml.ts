@@ -69,6 +69,14 @@ export function newestLastmod(entries: SitemapEntry[]): string | undefined {
   return newest;
 }
 
+/** The newest defined W3C date, for combining data and rendered-code changes. */
+export function newestDate(...dates: Array<string | undefined>): string | undefined {
+  return dates.reduce<string | undefined>(
+    (newest, date) => date && (newest === undefined || date > newest) ? date : newest,
+    undefined,
+  );
+}
+
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 export interface ValidationIssue {
