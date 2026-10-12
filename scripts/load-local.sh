@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 FLAG="--local"
-EXPECTED_ROWS=419479
+EXPECTED_ROWS=418947
 
 if [ ! -s scripts/seed.sql ]; then
   echo "scripts/seed.sql is missing or empty — run 'npm run ingest' first." >&2
@@ -497,8 +497,7 @@ load_batch scripts/seed_deficiencies_415.sql 414000 415000
 load_batch scripts/seed_deficiencies_416.sql 415000 416000
 load_batch scripts/seed_deficiencies_417.sql 416000 417000
 load_batch scripts/seed_deficiencies_418.sql 417000 418000
-load_batch scripts/seed_deficiencies_419.sql 418000 419000
-load_batch scripts/seed_deficiencies_420.sql 419000 419479
+load_batch scripts/seed_deficiencies_419.sql 418000 418947
 
 STAGED=$(count_rows facility_deficiencies_next)
 if [ "$STAGED" -ne "$EXPECTED_ROWS" ]; then
