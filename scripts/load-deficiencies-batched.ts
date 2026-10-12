@@ -5,6 +5,7 @@ import { execSync } from "child_process";
 import { readFileSync, writeFileSync, mkdtempSync, rmSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { STAGING_TABLE } from "./deficiency-seed";
 
 const BATCH_SIZE_MB = 5; // Target batch size in megabytes (conservative for API reliability)
 const BATCH_SIZE_BYTES = BATCH_SIZE_MB * 1024 * 1024;
@@ -33,14 +34,25 @@ async function main() {
   const useRemote = args.includes("--remote");
   const remoteFlag = useRemote ? "--remote" : "";
 
-  // Gather all deficiency seed files
+  // Gather the numbered deficiency batches only. The staged seed also writes
+  // seed_deficiencies_setup.sql and seed_deficiencies_swap.sql, which must not
+  // be concatenated into batches (they sort after the numbers).
   const { readdirSync } = await import("fs");
   const files = readdirSync("scripts")
-    .filter((f) => f.startsWith("seed_deficiencies_") && f.endsWith(".sql"))
+    .filter((f) => /^seed_deficiencies_\d{3}\.sql$/.test(f))
     .sort()
     .map((f) => join("scripts", f));
 
   console.log(`Found ${files.length} deficiency seed files.`);
+
+  // Staged seeds load into a staging table that only the generated loaders
+  // create, verify and swap in. Loading them here would leave the live table
+  // unchanged while reporting success.
+  if (files[0] && readFileSync(files[0], "utf8").includes(`INSERT INTO ${STAGING_TABLE} `)) {
+    throw new Error(
+      `Deficiency seed is in the staged format; load it with bash scripts/load-${useRemote ? "remote" : "local"}.sh instead.`,
+    );
+  }
 
   // Group files into batches by size
   const batches: string[][] = [];

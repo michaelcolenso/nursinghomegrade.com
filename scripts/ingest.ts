@@ -2,6 +2,14 @@ import type { CMSFacility, Facility } from "../src/types";
 import { computeGrade, scoreToSummary, toSlug, type PenaltyDeficiency } from "../src/scoring";
 import { normalizeOwnerName, toOperatorSlug } from "../src/ownership";
 import { SITE_STATS_REFRESH_SQL, STATE_STATS_CLEANUP_SQL, STATE_STATS_REFRESH_SQL } from "./stats-sql";
+import {
+  SETUP_FILE,
+  SWAP_FILE,
+  buildDeficiencySeedFiles,
+  buildLoaderScript,
+  buildStagingSetupSql,
+  buildSwapSql,
+} from "./deficiency-seed";
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
 
@@ -225,6 +233,9 @@ async function main() {
     if (page.length < PAGE_SIZE) break;
   }
   console.log(`Total deficiencies: ${allDeficiencies.length}`);
+  // An empty result would otherwise generate a seed that replaces every
+  // citation with nothing. Treat it as a failed fetch, as penalties do.
+  if (allDeficiencies.length === 0) throw new Error("CMS Deficiency API returned no results");
 
   // Fetch all ownership records
   console.log("Fetching ownership data...");
@@ -447,10 +458,9 @@ async function main() {
   writeFileSync("scripts/seed.sql", seedSql);
   console.log(`Wrote scripts/seed.sql (${mapped.length} facilities + snapshots + ownership)`);
 
-  // Build deficiency INSERT statements in small batches and split into files
-  const DEF_BATCH = 50;
-  const INSERTS_PER_FILE = 20;
-
+  // Build deficiency INSERT statements in small batches and split into files.
+  // Batches load into a staging table and are swapped in only after the loader
+  // verifies the row count (see scripts/deficiency-seed.ts).
   const defValues: string[] = [];
   for (const [cmsId, defs] of deficienciesByCmsId) {
     for (const d of defs) {
@@ -460,60 +470,27 @@ async function main() {
     }
   }
 
-  let fileIndex = 1;
-  const defFiles: string[] = [];
-  let currentFileSqls: string[] = ["DELETE FROM facility_deficiencies;"];
-  let currentInserts = 0;
-
-  for (let i = 0; i < defValues.length; i += DEF_BATCH) {
-    const batch = defValues.slice(i, i + DEF_BATCH);
-    const values = batch.join(",\n");
-    currentFileSqls.push(
-      `INSERT INTO facility_deficiencies (cms_id,survey_date,deficiency_category,deficiency_tag_number,deficiency_description,scope_severity_code,deficiency_corrected,correction_date,inspection_cycle,standard_deficiency,complaint_deficiency) VALUES\n${values};`,
-    );
-    currentInserts++;
-
-    if (currentInserts >= INSERTS_PER_FILE) {
-      const fileName = `scripts/seed_deficiencies_${String(fileIndex).padStart(3, "0")}.sql`;
-      writeFileSync(fileName, currentFileSqls.join("\n\n"));
-      defFiles.push(fileName);
-      console.log(`Wrote ${fileName} (${currentInserts} inserts, ~${batch.length * currentInserts} rows)`);
-      fileIndex++;
-      currentFileSqls = [];
-      currentInserts = 0;
-    }
+  // Remove the previous run's batches so a smaller dataset can't leave stale
+  // files behind for anything that globs scripts/seed_deficiencies_*.sql.
+  const { readdirSync, unlinkSync } = await import("fs");
+  for (const f of readdirSync("scripts")) {
+    if (/^seed_deficiencies_.*\.sql$/.test(f)) unlinkSync(`scripts/${f}`);
   }
 
-  if (currentFileSqls.length > 0) {
-    const fileName = `scripts/seed_deficiencies_${String(fileIndex).padStart(3, "0")}.sql`;
-    writeFileSync(fileName, currentFileSqls.join("\n\n"));
-    defFiles.push(fileName);
-    console.log(`Wrote ${fileName} (${currentInserts} inserts)`);
-  }
+  const defFiles = buildDeficiencySeedFiles(defValues);
+  writeFileSync(SETUP_FILE, buildStagingSetupSql());
+  for (const file of defFiles) writeFileSync(file.name, file.sql);
+  writeFileSync(SWAP_FILE, buildSwapSql());
+  console.log(`Wrote ${defFiles.length} deficiency files (${defValues.length} rows), ${SETUP_FILE} and ${SWAP_FILE}`);
 
-  // Generate loader scripts
-  const loadLocal = defFiles.map((f) => `echo "Loading ${f}..." && npx wrangler d1 execute nursinghomegrade --local --file=${f}`).join("\n");
-  const loadRemote = defFiles.map((f) => `echo "Loading ${f}..." && npx wrangler d1 execute nursinghomegrade --remote --file=${f}`).join("\n");
+  // Deficiencies load BEFORE seed.sql. Grades carry harm and uncorrected
+  // penalties derived from these rows; loading detail first means the worst
+  // case is grades that lag their citations, which understates rather than
+  // fabricates. The loader stages every batch, verifies the count, and swaps,
+  // so an interrupted load leaves the previous citations live.
+  writeFileSync("scripts/load-local.sh", buildLoaderScript(defFiles, "--local"));
+  writeFileSync("scripts/load-remote.sh", buildLoaderScript(defFiles, "--remote"));
 
-  // Deficiencies load BEFORE seed.sql. Grades now carry harm and uncorrected
-  // penalties derived from these rows, and the first deficiency file starts with
-  // DELETE FROM facility_deficiencies. Publishing grades first would leave a
-  // window — the whole load, or indefinitely if a command fails — where a
-  // facility's score reflects citations its own page cannot display. Loading
-  // detail first means the worst case is grades that lag their citations, which
-  // understates rather than fabricates.
-  // scripts/seed.sql is gitignored, so a fresh checkout has the 400+ deficiency
-  // batches but not the facility seed. Without this guard the loader would
-  // delete and reload every citation and only then fail on the missing file,
-  // leaving D1 with new citations scored by stale grades and no profile or
-  // penalty data. Fail before the first destructive statement instead.
-  const loadHeader = `#!/bin/bash\nset -e\nif [ ! -s scripts/seed.sql ]; then\n  echo "scripts/seed.sql is missing or empty — run 'npm run ingest' first." >&2\n  echo "Refusing to reload deficiencies without the matching facility seed." >&2\n  exit 1\nfi\necho "Loading deficiencies first — grades depend on them..."\n`;
-  const loadFooter = (flag: string) =>
-    `echo "Loading facilities and grades..."\nnpx wrangler d1 execute nursinghomegrade ${flag} --file=scripts/seed.sql\necho "Done!"\n`;
-  writeFileSync("scripts/load-local.sh", `${loadHeader}${loadLocal}\n${loadFooter("--local")}`);
-  writeFileSync("scripts/load-remote.sh", `${loadHeader}${loadRemote}\n${loadFooter("--remote")}`);
-
-  console.log(`\nGenerated ${defFiles.length} deficiency files`);
   console.log("Run locally:  bash scripts/load-local.sh");
   console.log("Run remote:   bash scripts/load-remote.sh");
 }
