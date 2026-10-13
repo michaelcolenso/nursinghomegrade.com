@@ -65,6 +65,18 @@ async function main() {
   const { execFileSync, execSync } = await import("child_process");
   const { existsSync, writeFileSync, mkdirSync } = await import("fs");
 
+  // GitHub Actions actions/checkout@v4 defaults to fetch-depth: 1, which makes
+  // `git log -1 --format=%cs -- <path>` return the shallow HEAD date for every
+  // file. Unshallow automatically before computing per-route source lastmods.
+  try {
+    if (execFileSync("git", ["rev-parse", "--is-shallow-repository"], { encoding: "utf8" }).trim() === "true") {
+      console.log("Shallow git clone detected; fetching commit history for source lastmod...");
+      execFileSync("git", ["fetch", "--unshallow", "--filter=blob:none", "origin"], { stdio: "inherit" });
+    }
+  } catch (err) {
+    console.warn("Could not unshallow git repository:", (err as Error).message);
+  }
+
   const args = process.argv.slice(2);
   const useLocal = args.includes("--local") || !args.includes("--remote");
   const d1Flag = useLocal ? "--local" : "--remote";
