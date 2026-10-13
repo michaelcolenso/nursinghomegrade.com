@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   MAX_URLS_PER_FILE,
+  newestDate,
   newestLastmod,
   toSitemapIndex,
   toXml,
@@ -37,6 +38,11 @@ describe("toSitemapIndex", () => {
   it("derives a child lastmod from the newest URL inside it, not the build clock", () => {
     expect(newestLastmod(good)).toBe("2026-08-01");
     expect(newestLastmod([entry("https://nursinghomegrade.com/x")])).toBeUndefined();
+  });
+
+  it("keeps a rendered-code change newer than the underlying data", () => {
+    expect(newestDate("2026-08-01", "2026-08-19")).toBe("2026-08-19");
+    expect(newestDate(undefined, "2026-08-19", "2026-08-06")).toBe("2026-08-19");
   });
 });
 

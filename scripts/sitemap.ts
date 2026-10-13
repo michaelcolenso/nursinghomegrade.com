@@ -9,6 +9,7 @@ import { citySlug } from "../src/states";
 import {
   SITEMAP_BASE,
   escapeXml,
+  newestDate,
   newestLastmod,
   toSitemapIndex,
   toXml,
@@ -61,7 +62,7 @@ function parseWranglerJson<T>(raw: string, what: string): T {
 }
 
 async function main() {
-  const { execSync } = await import("child_process");
+  const { execFileSync, execSync } = await import("child_process");
   const { existsSync, writeFileSync, mkdirSync } = await import("fs");
 
   const args = process.argv.slice(2);
@@ -127,12 +128,87 @@ async function main() {
 
   const now = new Date().toISOString().split("T")[0];
 
+  // A data timestamp alone is not a truthful page lastmod: templates and
+  // render-time logic can change while CMS rows stay untouched. That happened
+  // on 2026-08-19, when facility/state/report HTML changed but the served
+  // sitemaps continued to claim 2026-08-01. Derive a date from each route or
+  // page family's actual source dependencies and combine it with the CMS date.
+  const sourceLastmod = (paths: string[]): string => {
+    const date = execFileSync("git", ["log", "-1", "--format=%cs", "--", ...paths], {
+      encoding: "utf8",
+    }).trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      throw new Error(`Could not determine a source lastmod for: ${paths.join(", ")}`);
+    }
+    return date;
+  };
+  const sharedRenderSources = ["src/templates/layout.ts"];
+  const homeSourceLastmod = sourceLastmod([
+    ...sharedRenderSources,
+    "src/db.ts",
+    "src/handlers/home.ts",
+    "src/templates/home.ts",
+  ]);
+  const aboutSourceLastmod = sourceLastmod([
+    ...sharedRenderSources,
+    "src/handlers/about.ts",
+    "src/templates/about.ts",
+  ]);
+  const privacySourceLastmod = sourceLastmod([
+    ...sharedRenderSources,
+    "src/templates/privacy.ts",
+  ]);
+  const termsSourceLastmod = sourceLastmod([
+    ...sharedRenderSources,
+    "src/templates/terms.ts",
+  ]);
+  const faqSourceLastmod = sourceLastmod([
+    ...sharedRenderSources,
+    "src/templates/faq.ts",
+  ]);
+  const glossarySourceLastmod = sourceLastmod([
+    ...sharedRenderSources,
+    "src/templates/glossary.ts",
+  ]);
+  const staffingRepealSourceLastmod = sourceLastmod([
+    ...sharedRenderSources,
+    "src/handlers/reports.ts",
+    "src/templates/staffing-repeal.ts",
+  ]);
+  const staffingFailuresSourceLastmod = sourceLastmod([
+    ...sharedRenderSources,
+    "src/db.ts",
+    "src/handlers/reports.ts",
+    "src/templates/reports.ts",
+  ]);
+  const stateSourceLastmod = sourceLastmod([
+    ...sharedRenderSources,
+    "src/db.ts",
+    "src/handlers/state.ts",
+    "src/templates/state.ts",
+  ]);
+  const citySourceLastmod = sourceLastmod([
+    ...sharedRenderSources,
+    "src/db.ts",
+    "src/handlers/city.ts",
+    "src/templates/city.ts",
+  ]);
+  const facilitySourceLastmod = sourceLastmod([
+    ...sharedRenderSources,
+    "src/db.ts",
+    "src/handlers/facility.ts",
+    "src/templates/facility.ts",
+    "src/scoring.ts",
+  ]);
+
   // ── lastmod, honestly ────────────────────────────────────────────────
   //
   // With migration 010 applied, all data-driven URLs use the latest CMS source
-  // modification date. This is intentionally coarser than per-row ingest time:
-  // rerunning an unchanged import leaves lastmod untouched, while a new monthly
-  // CMS release advances it. Local databases without 010 retain the old fallback.
+  // modification date combined with the newest committed source change for that
+  // route or family. Rerunning an unchanged import leaves lastmod untouched,
+  // while either a new monthly CMS release or a template/handler change
+  // advances only the affected URLs. Local databases without 010 retain the
+  // facility updated_at fallback.
   const dayOf = (iso: string | null | undefined): string | undefined =>
     iso ? iso.split("T")[0] : undefined;
 
@@ -147,7 +223,7 @@ async function main() {
     if (d > (latestByCity.get(cityKey) ?? "")) latestByCity.set(cityKey, d);
     if (d > latestOverall) latestOverall = d;
   }
-  const siteLastmod = latestOverall || authoritativeLastmod || now;
+  const siteDataLastmod = latestOverall || authoritativeLastmod || now;
 
   // ── URL validity ─────────────────────────────────────────────────────
   //
@@ -181,64 +257,64 @@ async function main() {
   }
 
   const coreEntries: SitemapEntry[] = [
-    { loc: `${BASE}/`, lastmod: siteLastmod, changefreq: "weekly", priority: "1.0" },
+    { loc: `${BASE}/`, lastmod: newestDate(siteDataLastmod, homeSourceLastmod), changefreq: "weekly", priority: "1.0" },
     {
       loc: `${BASE}/about`,
-      lastmod: siteLastmod,
+      lastmod: aboutSourceLastmod,
       changefreq: "monthly",
       priority: "0.5",
     },
     {
       loc: `${BASE}/privacy`,
-      lastmod: siteLastmod,
+      lastmod: privacySourceLastmod,
       changefreq: "yearly",
       priority: "0.3",
     },
     {
       loc: `${BASE}/terms`,
-      lastmod: siteLastmod,
+      lastmod: termsSourceLastmod,
       changefreq: "yearly",
       priority: "0.3",
     },
     {
       loc: `${BASE}/faq`,
-      lastmod: siteLastmod,
+      lastmod: faqSourceLastmod,
       changefreq: "monthly",
       priority: "0.5",
     },
     {
       loc: `${BASE}/glossary`,
-      lastmod: siteLastmod,
+      lastmod: glossarySourceLastmod,
       changefreq: "monthly",
       priority: "0.5",
     },
     {
       loc: `${BASE}/reports/staffing-standard-repeal`,
-      lastmod: siteLastmod,
+      lastmod: staffingRepealSourceLastmod,
       changefreq: "monthly",
       priority: "0.7",
     },
     {
       loc: `${BASE}/reports/staffing-failures`,
-      lastmod: siteLastmod,
+      lastmod: newestDate(siteDataLastmod, staffingFailuresSourceLastmod),
       changefreq: "weekly",
       priority: "0.7",
     },
     ...staffingFailureStateSlugs.map((s) => ({
       loc: `${BASE}/reports/staffing-failures/${escapeXml(s)}`,
-      lastmod: siteLastmod,
+      lastmod: newestDate(stateLastmodBySlug.get(s) ?? siteDataLastmod, staffingFailuresSourceLastmod),
       changefreq: "weekly",
       priority: "0.6" as string,
     })),
     {
       loc: `${BASE}/states`,
-      lastmod: siteLastmod,
+      lastmod: newestDate(siteDataLastmod, stateSourceLastmod),
       changefreq: "weekly",
       priority: "0.9",
     },
     ...stateSlugs.map((s) => ({
       loc: `${BASE}/state/${escapeXml(s)}`,
-      lastmod: stateLastmodBySlug.get(s) ?? siteLastmod,
+      lastmod: newestDate(stateLastmodBySlug.get(s) ?? siteDataLastmod, stateSourceLastmod),
       changefreq: "weekly",
       priority: "0.8" as string,
     })),
@@ -261,7 +337,7 @@ async function main() {
     })
     .filter((u): u is string => u !== null))].map((u) => ({
       loc: escapeXml(u),
-      lastmod: cityLastmodByUrl.get(u) ?? siteLastmod,
+      lastmod: newestDate(cityLastmodByUrl.get(u) ?? siteDataLastmod, citySourceLastmod),
       changefreq: "weekly",
       priority: "0.7" as string,
     }));
@@ -280,7 +356,7 @@ async function main() {
     const list = byState.get(slug) ?? [];
     list.push({
       loc: `${BASE}/facility/${escapeXml(r.cms_id)}-${escapeXml(r.slug)}`,
-      lastmod: authoritativeLastmod ?? dayOf(r.updated_at) ?? siteLastmod,
+      lastmod: newestDate(authoritativeLastmod ?? dayOf(r.updated_at) ?? siteDataLastmod, facilitySourceLastmod),
       changefreq: "monthly",
       priority: "0.6",
     });
