@@ -73,6 +73,26 @@ const sampleOperator: Operator = {
 };
 
 describe("facilityPage", () => {
+  it("reports open inspection findings even with a high composite grade", () => {
+    const html = facilityPage({ ...baseFacility, grade_score: 98, grade_letter: "A", inspection_rating: 1 }, [
+      { ...sampleDeficiency, scope_severity_code: "J", deficiency_corrected: "Deficient, Provider has plan of correction", correction_date: null },
+    ]);
+    const lede = html.match(/<p id="inspection-evidence-summary"[^>]*>([\s\S]*?)<\/p>/)?.[1];
+    expect(lede).toContain("CMS health inspection rating: 1 out of 5 stars");
+    expect(lede).toContain("1 deficiency in the available inspection records");
+    expect(lede).toContain("1 involved actual harm or worse (G–L)");
+    expect(lede).toContain("1 at immediate jeopardy level (J–L)");
+    expect(lede).toContain("1 outstanding");
+    expect(lede).not.toMatch(/excellent|strong|clean inspection/i);
+  });
+
+  it("does not change the inspection summary when only the composite grade changes", () => {
+    const lede = (grade_score: number, grade_letter: string) => facilityPage(
+      { ...baseFacility, grade_score, grade_letter }, [sampleDeficiency],
+    ).match(/<p id="inspection-evidence-summary"[^>]*>([\s\S]*?)<\/p>/)?.[1];
+    expect(lede(98, "A")).toContain("CMS health inspection rating: 3 out of 5 stars");
+    expect(lede(98, "A")).toBe(lede(12, "F"));
+  });
   it("renders basic facility info", () => {
     const html = facilityPage(baseFacility, []);
     expect(html).toContain("Sunrise Care Center");

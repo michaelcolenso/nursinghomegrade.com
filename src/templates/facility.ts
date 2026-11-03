@@ -3,7 +3,7 @@ import { citySlug, getStateInfo } from "../states";
 import { layout, escHtml } from "./layout";
 import { renderTrustModule } from "./trust";
 import { RN_BENCHMARK, BENCHMARK_ROW_NOTE, benchmarkLabel, repealDisclosureHtml } from "../staffing-standard";
-import { scoreToSummary, type ScoreInputKey } from "../scoring";
+import { buildInspectionSummary } from "../inspection-summary";
 import {
   buildContactFacts,
   buildFacilityTitle,
@@ -815,14 +815,8 @@ export function facilityPage(
 
     ${renderReviewsContext(f)}
 
-    <p class="lede" style="max-width:800px;margin-bottom:var(--space-xl);">
-      ${escHtml(scoreToSummary(
-        f.grade_score < 0 ? null : f.grade_score,
-        f.grade_letter === "NR" ? null : f.grade_letter,
-        f.rn_hours_per_resident_day,
-        f.grade_completeness ?? (f.grade_letter === "NR" ? "insufficient" : "complete"),
-        (f.grade_missing_inputs ?? "").split(",").filter(Boolean) as ScoreInputKey[],
-      ))}
+    <p id="inspection-evidence-summary" class="lede" style="max-width:800px;margin-bottom:var(--space-xl);">
+      ${escHtml(buildInspectionSummary(f, deficiencies))}
     </p>
 
     <h3 id="quality">Ratings and Grade Breakdown</h3>
