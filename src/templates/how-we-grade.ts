@@ -32,6 +32,8 @@ export function howWeGradePage(): string {
       </div>
     </div>
 
+    <p>RN staffing points increase in proportion to reported hours: 150% of the benchmark earns all 35 points, with no extra credit above that level. Inspection points decrease linearly from 30 for a verified zero-deficiency survey to zero at 20 deficiencies; 20 or more deficiencies earns zero inspection points. For both star ratings, one star earns zero points and five stars earns full points, with equal steps between stars.</p>
+
     <h2>What happens when CMS data are missing</h2>
     <p>We classify each grade by evidence completeness before publishing it:</p>
     <ul>
@@ -39,7 +41,7 @@ export function howWeGradePage(): string {
       <li><strong>Partial:</strong> current inspection evidence is present, but RN staffing, the CMS quality rating, or the CMS staffing rating is unavailable. The missing component earns no points and we do <strong>not</strong> inflate the remaining components to fill the gap. The displayed score is therefore a conservative lower bound.</li>
       <li><strong>Insufficient / Not rated:</strong> the current inspection evidence needed to tell a real zero-deficiency survey from missing data is unavailable. We withhold the NursingHomeGrade score and letter.</li>
     </ul>
-    <p><strong>Missing evidence can never improve a grade.</strong> That is the core rule.</p>
+    <p><strong>Missing base-score evidence can never improve a grade.</strong> That is the core rule for the four inputs above.</p>
 
     <h2>Safety penalties are applied after the base score</h2>
     <p>The weighted base score is not necessarily the final score. We then apply two penalty terms from the CMS Health Deficiencies file:</p>
@@ -47,7 +49,16 @@ export function howWeGradePage(): string {
       <li><strong>Unresolved findings:</strong> up to 25 points can be deducted for deficiencies that CMS still records as uncorrected. More severe and more recent findings receive larger penalties, and a finding with no correction plan is weighted more heavily than one with a plan awaiting verification.</li>
       <li><strong>Actual harm:</strong> up to another 25 points can be deducted for scope/severity G–L findings. Immediate-jeopardy findings (J–L) carry a larger penalty than G–I findings.</li>
     </ul>
-    <p><strong>No-plan rule:</strong> if CMS records any deficiency with no plan of correction, the facility cannot receive an A even if its numeric score remains 80 or higher. Its letter grade is capped at B.</p>
+    <p>The unresolved-finding penalty applies only when CMS explicitly reports “Deficient, Provider has no plan of correction” or “Deficient, Provider has plan of correction”. Other correction-status values, including missing values, receive no unresolved-finding penalty under the current algorithm; that is not proof that a finding was corrected. The severity bands below refer to standard uppercase CMS scope/severity codes A–L.</p>
+    <p>For each unresolved finding, the deduction is <strong>1.5 × severity weight × correction-plan weight × recency weight</strong>:</p>
+    <ul>
+      <li><strong>Severity weight:</strong> A–C (or missing severity): 1; D–F: 1.5; G–I: 3; J–L: 4.</li>
+      <li><strong>Correction-plan weight:</strong> 2 with no plan of correction, or 1 with a plan awaiting verification. Resolved findings receive no unresolved-finding penalty.</li>
+      <li><strong>Recency weight for both penalties:</strong> 1 for the most recent cycle (or a missing cycle), 0.6 for cycle 2, and 0.35 for cycle 3 or older.</li>
+    </ul>
+    <p>The separate harm deduction is <strong>4 points per G–I finding or 8 points per J–L finding</strong>, multiplied by the same recency weight, even if the finding has since been corrected. An unresolved harm finding can contribute to both penalties.</p>
+    <p>Each penalty is rounded to one decimal place and capped separately at 25 points. We round the base score to a whole number before subtracting both penalties. The final score is rounded to a whole number and kept between 0 and 100.</p>
+    <p><strong>No-plan rule:</strong> if CMS records any deficiency with no plan of correction, the facility cannot receive an A even if its numeric score remains 80 or higher. Its letter grade is capped at B. This cap changes only the letter, not the numeric score; lower letter grades are not raised to B.</p>
     <p>For the exact arithmetic, missing-data behavior, recency weights, severity weights and changelog, see the <a href="/methodology">full methodology</a>.</p>
 
     <h2>What the letter grades mean</h2>
