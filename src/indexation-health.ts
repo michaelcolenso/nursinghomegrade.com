@@ -178,6 +178,61 @@ export function compareSitemapCoverage(
   return problems;
 }
 
+/** Explicit operator acknowledgement; ordinary checks keep their existing limits. */
+export function parseAcceptedCityReduction(args: readonly string[]): number | undefined {
+  const index = args.indexOf("--accept-city-reduction");
+  if (index === -1) return undefined;
+  const count = Number(args[index + 1]);
+  if (!args.includes("--update-baseline") || !isPositiveInteger(count)) {
+    throw new Error("--accept-city-reduction requires --update-baseline and a positive integer expected city count.");
+  }
+  return count;
+}
+
+/**
+ * Rebaseline only a measured city reduction. A class-aware baseline must be
+ * recorded while the old corpus is healthy, before deploying the pruning.
+ */
+export function comparePlannedCityReduction(
+  current: SitemapCoverage,
+  baseline: SitemapBaseline,
+  expectedCityCount: number,
+  threshold = REGRESSION_THRESHOLD,
+): string[] {
+  if (!isPositiveInteger(expectedCityCount)) {
+    return ["Expected city count must be a positive integer."];
+  }
+  if (!baseline.pageClasses) {
+    return ["City reduction requires a baseline with pageClasses; refresh the healthy baseline before rollout."];
+  }
+
+  const problems: string[] = [];
+  for (const name of [...REQUIRED_CLASSES, "unknown"] as const) {
+    if (!isNonNegativeInteger(current.pageClasses[name] ?? (name === "unknown" ? 0 : undefined))) {
+      problems.push(`Current sitemap ${name} URL count is invalid.`);
+    }
+  }
+  if (current.pageClasses.city !== expectedCityCount || expectedCityCount >= baseline.pageClasses.city) {
+    problems.push(`Expected a city reduction to exactly ${expectedCityCount} URLs; found ${current.pageClasses.city}.`);
+  }
+  for (const name of ["core", "facility"] as const) {
+    if (current.pageClasses[name] < baseline.pageClasses[name]) {
+      problems.push(`Cannot accept city reduction while ${name} URLs decreased.`);
+    }
+  }
+  if (current.shardCount < baseline.shardCount) {
+    problems.push("Cannot accept city reduction while sitemap shard count decreased.");
+  }
+  if (problems.length > 0) return problems;
+
+  const removedCities = baseline.pageClasses.city - expectedCityCount;
+  return compareSitemapCoverage(current, {
+    ...baseline,
+    totalUrls: baseline.totalUrls - removedCities,
+    pageClasses: { ...baseline.pageClasses, city: expectedCityCount },
+  }, threshold);
+}
+
 /** Never replace a known-good baseline with a run that already found problems. */
 export function shouldUpdateSitemapBaseline(requested: boolean, problems: readonly string[]): boolean {
   return requested && problems.length === 0;
