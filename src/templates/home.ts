@@ -2,8 +2,10 @@ import type { Facility } from "../types";
 import { layout, escHtml } from "./layout";
 import { RN_BENCHMARK, benchmarkLabel, repealDisclosureHtml } from "../staffing-standard";
 import { scoreToSummary, type ScoreInputKey } from "../scoring";
+import type { DataRelease } from "./data-sources";
+import { dataFreshness } from "./data-freshness";
 
-export function homePage(pctFailing: number): string {
+export function homePage(pctFailing: number, releases: DataRelease[] = []): string {
   const body = `
     <h1 class="display">Find honest nursing home grades</h1>
     <p class="lede">
@@ -12,9 +14,7 @@ export function homePage(pctFailing: number): string {
       facility payments, no conflicts.
     </p>
     ${repealDisclosureHtml()}
-    <p style="color:var(--muted);font-size:0.9rem;margin-bottom:var(--space-m);">
-      Data from CMS Nursing Home Compare. <a href="/data-sources">See release dates</a>.
-    </p>
+    ${dataFreshness(releases)}
 
     <form action="/search" method="GET" class="search-bar">
       <label for="zip-search" class="visually-hidden">ZIP code</label>
@@ -59,11 +59,12 @@ export function homePage(pctFailing: number): string {
   );
 }
 
-export function searchFormPage(): string {
+export function searchFormPage(releases: DataRelease[] = []): string {
   const body = `
     <div class="results-header">
       <h1 style="margin-bottom:0.5rem;">Search nursing homes by ZIP code</h1>
       <p style="color:var(--muted);margin-bottom:1.5rem;">Enter a 5-digit ZIP code to see graded nursing homes within 25 miles.</p>
+      ${dataFreshness(releases)}
       <form action="/search" method="GET" class="search-bar" style="max-width:400px;">
         <input type="text" name="zip" placeholder="Enter ZIP code" maxlength="5" pattern="[0-9]{5}" autocomplete="postal-code" inputmode="numeric" required>
         <button type="submit" class="btn" data-loading-text="Searching…">Search</button>
@@ -86,9 +87,10 @@ export function searchResultsPage(
     minGrade?: string;
     geoState?: string;
     states?: Array<{ state: string; count: number }>;
+    releases?: DataRelease[];
   } = {},
 ): string {
-  const { sort = "grade", minGrade = "", states } = options;
+  const { sort = "grade", minGrade = "", states, releases = [] } = options;
 
   if (facilities.length === 0) {
     const stateList = states
@@ -100,6 +102,7 @@ export function searchResultsPage(
       <div class="results-header">
         <h1 style="margin-bottom:0.5rem;">No facilities found near ${escHtml(zip)}</h1>
         <p style="color:var(--muted);margin-bottom:1.5rem;">We search within 25 miles of the ZIP code. Try another ZIP or check that you entered it correctly.</p>
+        ${dataFreshness(releases)}
 
         <form action="/search" method="GET" class="search-bar" style="max-width:400px;">
           <input type="text" name="zip" placeholder="Enter ZIP code" maxlength="5" pattern="[0-9]{5}" autocomplete="postal-code" inputmode="numeric">
@@ -282,6 +285,7 @@ const body = `
       <div class="results-kicker">Search results</div>
       <h1 class="results-count">${facilities.length} facilit${facilities.length === 1 ? "y" : "ies"} near ${escHtml(zip)}</h1>
       <p class="results-intro">Sorted to surface the strongest options first. Scan grade, staffing, and inspection issues before opening a full facility record.</p>
+      ${dataFreshness(releases)}
       <div style="margin-top:var(--space-s);">
         <button id="map-toggle-btn" onclick="toggleMap()" class="btn" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Show Map View</button>
       </div>

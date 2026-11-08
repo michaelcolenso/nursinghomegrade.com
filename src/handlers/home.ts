@@ -1,7 +1,7 @@
 import type { Env } from "../types";
 import type { Facility } from "../types";
 import { htmlCacheKey, pageCache } from "../cache";
-import { getNationalPctFailing, searchByZipExact, searchNearby, getStatesWithCounts } from "../db";
+import { getNationalPctFailing, searchByZipExact, searchNearby, getStatesWithCounts, getDataReleases } from "../db";
 import { homePage, searchResultsPage, searchFormPage } from "../templates/home";
 import { errorPage } from "../templates/subscribe";
 
@@ -17,8 +17,10 @@ export async function handleHome(request: Request, env: Env): Promise<Response> 
         },
       });
 
-    const pctFailing = await getNationalPctFailing(env);
-    const html = homePage(pctFailing);
+    const [pctFailing, releases] = await Promise.all([
+      getNationalPctFailing(env), getDataReleases(env),
+    ]);
+    const html = homePage(pctFailing, releases);
     await pageCache.put(cacheKey, html, { expirationTtl: 3600 });
     return new Response(html, {
       headers: {
@@ -83,7 +85,7 @@ export async function handleSearch(request: Request, env: Env): Promise<Response
   const url = new URL(request.url);
   const zip = (url.searchParams.get("zip") ?? "").replace(/\D/g, "").slice(0, 5);
   if (zip.length !== 5) {
-    return new Response(searchFormPage(), {
+    return new Response(searchFormPage(await getDataReleases(env)), {
       headers: { "Content-Type": "text/html;charset=UTF-8" },
     });
   }
@@ -93,7 +95,9 @@ export async function handleSearch(request: Request, env: Env): Promise<Response
 
   try {
     let facilities: Array<Facility & { distance?: number }> = [];
-    const geo = await geocodeZip(env, zip);
+    const [geo, releases] = await Promise.all([
+      geocodeZip(env, zip), getDataReleases(env),
+    ]);
 
     if (geo) {
       const candidates = await searchNearby(env, geo.state, 200);
@@ -141,6 +145,7 @@ export async function handleSearch(request: Request, env: Env): Promise<Response
       minGrade,
       geoState: geo?.state,
       states,
+      releases,
     });
     return new Response(html, {
       headers: { "Content-Type": "text/html;charset=UTF-8" },

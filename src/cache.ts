@@ -1,8 +1,6 @@
-// Bumped for the staffing-failures report rework (national page is now a
-// per-state index, state pages are paginated) and the async Google Fonts
-// load in layout.ts. Both changed rendered HTML site-wide, so cache entries
-// must regenerate rather than serve stale for up to 24h.
-const HTML_CACHE_VERSION = "html:v28";
+// Bumped for visible CMS release/load dates on home and search, the worked
+// scoring example, and mobile search sizing. Regenerate earlier HTML entries.
+const HTML_CACHE_VERSION = "html:v29";
 
 export function htmlCacheKey(key: string): string {
   return `${HTML_CACHE_VERSION}:${key}`;

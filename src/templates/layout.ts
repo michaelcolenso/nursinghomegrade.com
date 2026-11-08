@@ -948,7 +948,7 @@ export function layout(
       .facility-header { flex-direction: column-reverse; gap: var(--space-s); }
       .facility-grade-hero { font-size: 6rem; }
       .search-bar { flex-direction: column; }
-      .search-bar input { border-bottom: none; }
+      .search-bar input { width: 100%; min-width: 0; border-bottom: none; }
       .search-bar button { min-height: 44px; border-top: none; }
       .search-bar .geo-btn { min-height: 44px; border-left: 2px solid var(--ink); border-top: none; }
       .cta-box { padding: var(--space-m); }

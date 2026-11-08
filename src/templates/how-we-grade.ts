@@ -59,6 +59,7 @@ export function howWeGradePage(): string {
     <p>The separate harm deduction is <strong>4 points per G–I finding or 8 points per J–L finding</strong>, multiplied by the same recency weight, even if the finding has since been corrected. An unresolved harm finding can contribute to both penalties.</p>
     <p>Each penalty is rounded to one decimal place and capped separately at 25 points. We round the base score to a whole number before subtracting both penalties. The final score is rounded to a whole number and kept between 0 and 100.</p>
     <p><strong>No-plan rule:</strong> if CMS records any deficiency with no plan of correction, the facility cannot receive an A even if its numeric score remains 80 or higher. Its letter grade is capped at B. This cap changes only the letter, not the numeric score; lower letter grades are not raised to B.</p>
+    <p><strong>Worked example:</strong> a facility with a 100-point base score and one severity-A finding in the most recent cycle with no plan of correction loses 3 points for that unresolved finding and 0 harm points. Its final numeric score is 97, but its letter grade is B because of the no-plan rule.</p>
     <p>For the exact arithmetic, missing-data behavior, recency weights, severity weights and changelog, see the <a href="/methodology">full methodology</a>.</p>
 
     <h2>What the letter grades mean</h2>
