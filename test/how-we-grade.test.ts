@@ -90,4 +90,11 @@ describe("how-we-grade scoring contract", () => {
     expect(text).toContain("Its letter grade is capped at B");
     expect(text).toContain("This cap changes only the letter, not the numeric score");
   });
+
+  it("keeps the public worked example in sync with computeGrade", () => {
+    const grade = computeGrade(inputs, [finding("A", 1, true)]);
+    expect(text).toContain(`a facility with a ${grade.baseScore}-point base score`);
+    expect(text).toContain(`loses ${grade.uncorrectedPenalty} points for that unresolved finding and ${grade.harmPenalty} harm points`);
+    expect(text).toContain(`Its final numeric score is ${grade.score}, but its letter grade is ${grade.letter} because of the no-plan rule`);
+  });
 });
