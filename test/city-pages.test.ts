@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { cityDisplayName, citySlug } from "../src/states";
-import { cityPage } from "../src/templates/city";
+import { cityPage, type CityPageData } from "../src/templates/city";
 import { statePage } from "../src/templates/state";
 
 describe("citySlug", () => {
@@ -26,6 +26,7 @@ describe("statePage city links", () => {
       stateName: "California",
       stateSlug: "california",
       facilityCount: 2,
+      totalFacilityCount: 2,
       pctFailing: 50,
       nationalPctFailing: 40,
       gradeDistribution: { A: 1, B: 0, C: 0, D: 0, F: 1 },
@@ -42,6 +43,32 @@ describe("statePage city links", () => {
 });
 
 describe("cityPage", () => {
+  const cityData: CityPageData = {
+    cityName: "Los Angeles",
+    citySlug: "los-angeles",
+    stateName: "California",
+    stateSlug: "california",
+    facilityCount: 3,
+    pctFailing: 50,
+    nationalPctFailing: 40,
+    gradeDistribution: { A: 3 },
+    facilities: [],
+    siblingCities: [],
+  };
+
+  it.each([1, 2])("noindexes a %i-facility city while preserving its canonical and state backlink", (facilityCount) => {
+    const html = cityPage({ ...cityData, facilityCount, noindex: true });
+    expect(html).toContain('<meta name="robots" content="noindex, follow">');
+    expect(html).toContain('<link rel="canonical" href="https://nursinghomegrade.com/state/california/los-angeles">');
+    expect(html).toContain('href="/state/california"');
+  });
+
+  it("keeps a three-facility city indexable", () => {
+    const html = cityPage(cityData);
+    expect(html).not.toContain('content="noindex, follow"');
+    expect(html).toContain('<link rel="canonical" href="https://nursinghomegrade.com/state/california/los-angeles">');
+  });
+
   it("renders the city-level heading, canonical URL, and state backlink", () => {
     const html = cityPage({
       cityName: "Los Angeles",

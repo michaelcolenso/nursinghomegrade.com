@@ -1,5 +1,6 @@
 import type { Env } from "../types";
 import { htmlCacheKey, pageCache } from "../cache";
+import { isIndexableCity } from "../city-indexation";
 import { getStateAbbreviation, getStateInfo } from "../states";
 import {
   getCitySnapshot,
@@ -58,6 +59,7 @@ export async function handleCity(request: Request, env: Env, stateSlug: string, 
       stateName: stateInfo.name,
       stateSlug: stateInfo.slug,
       facilityCount: snapshot.facilityCount,
+      noindex: !isIndexableCity(snapshot.facilityCount),
       pctFailing: snapshot.pctFailing,
       nationalPctFailing,
       gradeDistribution: snapshot.gradeDistribution,

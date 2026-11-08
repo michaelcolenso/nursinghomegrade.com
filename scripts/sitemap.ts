@@ -6,6 +6,7 @@
 
 import { getAllStateSlugs } from "../src/states";
 import { citySlug } from "../src/states";
+import { getIndexableCities } from "../src/city-indexation";
 import {
   SITEMAP_BASE,
   escapeXml,
@@ -94,16 +95,6 @@ async function main() {
     results: Array<{ cms_id: string; slug: string; state: string; city: string; updated_at: string; rn_hours_per_resident_day: number | null }>;
   }>>(result, "facility rows");
   const rows = parsed[0]?.results ?? [];
-
-  // Pull distinct cities by state
-  const cityResult = execSync(
-    `npx wrangler d1 execute nursinghomegrade ${d1Flag} --command "SELECT state, city FROM facilities GROUP BY state, LOWER(city);" --json`,
-    { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
-  );
-  const cityParsed = parseWranglerJson<Array<{
-    results: Array<{ state: string; city: string }>;
-  }>>(cityResult, "city rows");
-  const cityRows = cityParsed[0]?.results ?? [];
 
   // Prefer the CMS dataset modification date over facilities.updated_at. The
   // latter is an ingest timestamp and therefore changes when an identical CMS
@@ -201,6 +192,7 @@ async function main() {
   ]);
   const citySourceLastmod = sourceLastmod([
     ...sharedRenderSources,
+    "src/city-indexation.ts",
     "src/db.ts",
     "src/handlers/city.ts",
     "src/templates/city.ts",
@@ -231,7 +223,7 @@ async function main() {
     const d = authoritativeLastmod ?? dayOf(r.updated_at);
     if (!d) continue;
     if (d > (latestByState.get(r.state) ?? "")) latestByState.set(r.state, d);
-    const cityKey = `${r.state}|${r.city.toLowerCase()}`;
+    const cityKey = `${r.state.toUpperCase()}|${citySlug(r.city)}`;
     if (d > (latestByCity.get(cityKey) ?? "")) latestByCity.set(cityKey, d);
     if (d > latestOverall) latestOverall = d;
   }
@@ -335,24 +327,25 @@ async function main() {
   // City URL -> most recent CMS data change among the facilities it lists.
   const cityLastmodByUrl = new Map<string, string>();
   for (const [key, d] of latestByCity) {
-    const [abbr, cityLower] = key.split("|");
+    const [abbr, slug] = key.split("|");
     const info = STATE_NAMES[(abbr ?? "").toUpperCase()];
     if (!info) continue;
-    cityLastmodByUrl.set(`${BASE}/state/${info.slug}/${citySlug(cityLower ?? "")}`, d);
+    cityLastmodByUrl.set(`${BASE}/state/${info.slug}/${slug}`, d);
   }
 
-  const cityEntries: SitemapEntry[] = [...new Set(cityRows
-    .map((r) => {
-      const info = STATE_NAMES[r.state.toUpperCase()];
-      if (!info) return null;
-      return `${BASE}/state/${info.slug}/${citySlug(r.city)}`;
-    })
-    .filter((u): u is string => u !== null))].map((u) => ({
-      loc: escapeXml(u),
-      lastmod: newestDate(cityLastmodByUrl.get(u) ?? siteDataLastmod, citySourceLastmod),
+  // Reuse the facility rows already loaded above. Count after slug
+  // normalization: "ST. LOUIS" and "ST LOUIS" render as one city page.
+  const cityEntries: SitemapEntry[] = getIndexableCities(rows).flatMap((city) => {
+    const info = STATE_NAMES[city.state];
+    if (!info) return [];
+    const url = `${BASE}/state/${info.slug}/${city.slug}`;
+    return [{
+      loc: escapeXml(url),
+      lastmod: newestDate(cityLastmodByUrl.get(url) ?? siteDataLastmod, citySourceLastmod),
       changefreq: "weekly",
-      priority: "0.7" as string,
-    }));
+      priority: "0.7",
+    }];
+  });
 
   // ── Facility shards, one per state ───────────────────────────────────
   //

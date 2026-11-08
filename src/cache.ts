@@ -1,6 +1,6 @@
-// Bumped for visible CMS release/load dates on home and search, the worked
-// scoring example, and mobile search sizing. Regenerate earlier HTML entries.
-const HTML_CACHE_VERSION = "html:v29";
+// Bumped for thin-city noindex rules. Earlier indexable city HTML must not
+// survive the rollout under an old cache key.
+const HTML_CACHE_VERSION = "html:v30";
 
 export function htmlCacheKey(key: string): string {
   return `${HTML_CACHE_VERSION}:${key}`;

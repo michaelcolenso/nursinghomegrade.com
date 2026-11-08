@@ -8,6 +8,7 @@ export interface CityPageData {
   stateName: string;
   stateSlug: string;
   facilityCount: number;
+  noindex?: boolean;
   pctFailing: number;
   nationalPctFailing: number;
   gradeDistribution: Record<string, number>;
@@ -116,6 +117,7 @@ export function cityPage(data: CityPageData): string {
     stateName,
     stateSlug,
     facilityCount,
+    noindex,
     pctFailing,
     nationalPctFailing,
     gradeDistribution,
@@ -278,6 +280,6 @@ export function cityPage(data: CityPageData): string {
     `Nursing Homes in ${cityName}, ${stateName} — Grades & Ratings`,
     `Find independent grades for ${facilityCount} nursing homes in ${cityName}, ${stateName}. Based on official CMS staffing and inspection data.`,
     body,
-    { canonicalPath: `/state/${stateSlug}/${citySlug}`, jsonLd, extraScripts: extraScripts },
+    { canonicalPath: `/state/${stateSlug}/${citySlug}`, noindex, jsonLd, extraScripts: extraScripts },
   );
 }
