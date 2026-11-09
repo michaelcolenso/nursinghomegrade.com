@@ -34,8 +34,12 @@ for code, label in (("481", "LS antipsychotic"), ("410", "LS falls w/ major inju
 # claims
 for code, label in (("551", "LS hospitalizations /1000 days"), ("521", "SS rehospitalized %")):
     R = json.load(open(B + f"clm_{code}.json"))
-    v = [(f(r["adjusted_score"]), f(r["expected_score"])) for r in R if f(r["adjusted_score"]) is not None and f(r["expected_score"]) is not None]
-    say(f"CLAIMS {code} {label}: n {len(v)} median adj {st.median(a for a,_ in v):.2f}; adj >= 1.5x expected: {pct(sum(a >= 1.5*e for a,e in v), len(v))}")
+    # Outliers are measured against the national median of the risk-adjusted score (what the report states),
+    # not against each home's own expected_score.
+    adj = sorted(f(r["adjusted_score"]) for r in R if f(r["adjusted_score"]) is not None)
+    med = st.median(adj)
+    say(f"CLAIMS {code} {label} ({R[0]['measure_period']}): n {len(adj)} national median adj {med:.2f}; "
+        f"p90 {adj[9*len(adj)//10]:.2f}; adj >= 1.5x national median: {pct(sum(a >= 1.5*med for a in adj), len(adj))}")
 
 # QRP comparative categories
 for m in ("S_005_02_DTC_COMP_PERF", "S_039_01_HAI_COMP_PERF", "S_004_01_PPR_PD_COMP_PERF"):

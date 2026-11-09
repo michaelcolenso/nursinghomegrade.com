@@ -116,8 +116,8 @@ Migration 012 created `facility_mds_quality_measures`, `facility_claims_quality_
 | Long-stay antipsychotic use (481) | median 13.4%; 90th percentile 28.4%; **3,727 homes ≥ 20%**, 1,374 of them still 4–5 QM stars; abuse-flagged homes median 17.2% vs 13.0% |
 | Falls with major injury (410) | median 2.8%; 90th percentile 6.3% |
 | Pressure ulcers, long stay (479) | median 4.1%; 90th percentile 8.1% |
-| Hospitalizations per 1,000 long-stay days (551) | median 1.73; **1,757 homes (15.9%) at 1.5× the median or more** |
-| Short-stay rehospitalization (521) | median 23.4%; 574 homes at 1.5× or more |
+| Hospitalizations per 1,000 long-stay days (551, Apr 2025–Mar 2026) | national median risk-adjusted rate 1.73; **1,757 of 11,042 homes (15.9%) at 1.5× that national median or more** |
+| Short-stay rehospitalization (521, Apr 2025–Mar 2026) | national median risk-adjusted rate 23.4%; 574 of 11,823 homes (4.9%) at 1.5× that national median or more |
 | Weekend staffing | median weekend total nurse hours = 88% of the all-days average; median weekend RN = **69%**; **1,799 homes (12.6%) staff RNs on weekends at under half their average** |
 | Administrator churn | 1,494 homes lost 2+ administrators in the turnover window |
 | Acuity vs staffing | of 2,668 homes whose residents are ≥10% sicker than the national average, **89.8%** staff below CMS's case-mix expected hours (all homes: 53.2%; low-acuity homes: 17.6%). Partly mechanical: expected hours scale with acuity and actual hours don't. Frame it as "staffing doesn't rise with need", not as misconduct. |
