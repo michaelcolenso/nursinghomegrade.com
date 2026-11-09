@@ -1,4 +1,5 @@
 import { layout, escHtml } from "./layout";
+import { breadcrumb, gradePill } from "./components";
 
 interface FacilityRow {
   cms_id: string;
@@ -34,7 +35,7 @@ function rankingStats(facilities: FacilityRow[]): { top: number; median: number;
 
 function renderTable(facilities: FacilityRow[]): string {
   if (facilities.length === 0) {
-    return `<p style="color:var(--muted);">No facilities found.</p>`;
+    return `<p class="muted">No facilities found.</p>`;
   }
 
   const rows = facilities.map((f, i) => {
@@ -46,31 +47,31 @@ function renderTable(facilities: FacilityRow[]): string {
       : "N/A";
 
     return `
-      <tr style="border-bottom:1px solid var(--rule);">
-        <td style="padding:var(--space-s) var(--space-xs);font-weight:800;color:var(--muted);font-size:0.85rem;">${i + 1}</td>
-        <td style="padding:var(--space-s) var(--space-xs);font-weight:700;">
+      <tr>
+        <td class="rank-n">${i + 1}</td>
+        <td class="name">
           <a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}">${escHtml(f.name)}</a>
         </td>
-        <td style="padding:var(--space-s) var(--space-xs);">${escHtml(f.city)}, ${escHtml(f.state)}</td>
-        <td style="padding:var(--space-s) var(--space-xs);font-weight:800;color:var(--grade-${f.grade_letter});">${escHtml(f.grade_letter)}</td>
-        <td style="padding:var(--space-s) var(--space-xs);font-weight:700;">${f.grade_score}</td>
-        <td style="padding:var(--space-s) var(--space-xs);">${escHtml(rnText)}</td>
-        <td style="padding:var(--space-s) var(--space-xs);">${escHtml(defText)}</td>
+        <td>${escHtml(f.city)}, ${escHtml(f.state)}</td>
+        <td>${gradePill(f.grade_letter)}</td>
+        <td class="name">${f.grade_score}</td>
+        <td>${escHtml(rnText)}</td>
+        <td>${escHtml(defText)}</td>
       </tr>`;
   }).join("");
 
   return `
     <div class="table-container">
-      <table style="min-width:700px;">
+      <table class="rank-table">
         <thead>
-          <tr style="border-bottom:2px solid var(--ink);">
-            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">#</th>
-            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Facility</th>
-            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Location</th>
-            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Grade</th>
-            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Score</th>
-            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">RN Hours</th>
-            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Deficiencies</th>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Facility</th>
+            <th scope="col">Location</th>
+            <th scope="col">Grade</th>
+            <th scope="col">Score</th>
+            <th scope="col">RN Hours</th>
+            <th scope="col">Deficiencies</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -78,6 +79,17 @@ function renderTable(facilities: FacilityRow[]): string {
     </div>
   `;
 }
+
+const METHODOLOGY_PANEL = `
+    <div class="panel panel--tint section-gap">
+      <h3>Methodology</h3>
+      <p class="muted">
+        Rankings are determined by NursingHomeGrade Score, a 0–100 composite that weights RN staffing compliance (35%), health inspection deficiencies (30%), CMS quality ratings (20%), and staffing consistency (15%). Data is sourced from the CMS Provider Data Catalog and updated regularly.
+      </p>
+      <p>
+        <a href="/about">Learn more about our methodology →</a>
+      </p>
+    </div>`;
 
 export function bestPage(facilities: FacilityRow[], stateName?: string): string {
   const scope = stateName ? `Best Nursing Homes in ${escHtml(stateName)}` : "Best Nursing Homes in the United States";
@@ -120,34 +132,22 @@ export function bestPage(facilities: FacilityRow[], stateName?: string): string 
   }];
 
   const body = `
-    <nav class="breadcrumb" aria-label="Breadcrumb">
-      <a href="/">Home</a>
-      <span class="breadcrumb-sep">›</span>
-      <span style="color:var(--ink);">Best Facilities</span>
-    </nav>
+    ${breadcrumb([{ label: "Home", href: "/" }, { label: "Best Facilities" }])}
 
     <h1>${escHtml(scope)}</h1>
-    <p class="lede" style="max-width:800px;margin-bottom:var(--space-xl);">
+    <p class="lede">
       ${escHtml(intro)}
     </p>
 
     <h2>Rankings</h2>
     ${renderTable(facilities)}
 
-    <div style="margin-top:var(--space-xl);display:flex;gap:var(--space-m);flex-wrap:wrap;">
+    <div class="btn-row">
       <a class="btn" href="/worst${stateName ? `/${stateName.toLowerCase().replace(/\s+/g, "-")}` : ""}">See lowest-rated →</a>
       <a class="btn-secondary" href="/reports/staffing-failures">Staffing failures report →</a>
     </div>
 
-    <div style="background:var(--bg);border:1px solid var(--rule);padding:var(--space-l);margin-top:var(--space-2xl);">
-      <h3 style="margin-top:0;">Methodology</h3>
-      <p style="font-size:0.95rem;color:var(--muted);margin-bottom:var(--space-s);">
-        Rankings are determined by NursingHomeGrade Score, a 0–100 composite that weights RN staffing compliance (35%), health inspection deficiencies (30%), CMS quality ratings (20%), and staffing consistency (15%). Data is sourced from the CMS Provider Data Catalog and updated regularly.
-      </p>
-      <p style="font-size:0.95rem;color:var(--muted);">
-        <a href="/about">Learn more about our methodology →</a>
-      </p>
-    </div>
+    ${METHODOLOGY_PANEL}
   `;
 
   return layout(
@@ -168,19 +168,15 @@ export function worstPage(facilities: FacilityRow[], stateName?: string): string
     : "The 100 lowest-rated nursing homes nationally. These facilities warrant careful review. A low NursingHomeGrade Score does not mean a facility provides poor care in every respect — but it signals that families should examine inspection records, staffing, and deficiency history closely.";
 
   const body = `
-    <nav class="breadcrumb" aria-label="Breadcrumb">
-      <a href="/">Home</a>
-      <span class="breadcrumb-sep">›</span>
-      <span style="color:var(--ink);">Lowest-Rated Facilities</span>
-    </nav>
+    ${breadcrumb([{ label: "Home", href: "/" }, { label: "Lowest-Rated Facilities" }])}
 
     <h1>${escHtml(scope)}</h1>
-    <p class="lede" style="max-width:800px;margin-bottom:var(--space-xl);">
+    <p class="lede">
       ${escHtml(intro)}
     </p>
 
-    <div style="background:var(--bg);border:2px solid var(--grade-F);padding:var(--space-l);margin-bottom:var(--space-xl);">
-      <p style="margin:0;font-weight:700;color:var(--grade-F);">
+    <div class="callout callout--alarm section-gap">
+      <p>
         ⚠ A low score indicates significant concerns in one or more areas: staffing, inspection violations, or quality measures. Visit each facility page for the full deficiency record and comparison data.
       </p>
     </div>
@@ -188,20 +184,12 @@ export function worstPage(facilities: FacilityRow[], stateName?: string): string
     <h2>Rankings</h2>
     ${renderTable(facilities)}
 
-    <div style="margin-top:var(--space-xl);display:flex;gap:var(--space-m);flex-wrap:wrap;">
+    <div class="btn-row">
       <a class="btn" href="/best${stateName ? `/${stateName.toLowerCase().replace(/\s+/g, "-")}` : ""}">See highest-rated →</a>
       <a class="btn-secondary" href="/reports/staffing-failures">Staffing failures report →</a>
     </div>
 
-    <div style="background:var(--bg);border:1px solid var(--rule);padding:var(--space-l);margin-top:var(--space-2xl);">
-      <h3 style="margin-top:0;">Methodology</h3>
-      <p style="font-size:0.95rem;color:var(--muted);margin-bottom:var(--space-s);">
-        Rankings are determined by NursingHomeGrade Score, a 0–100 composite that weights RN staffing compliance (35%), health inspection deficiencies (30%), CMS quality ratings (20%), and staffing consistency (15%). Data is sourced from the CMS Provider Data Catalog and updated regularly.
-      </p>
-      <p style="font-size:0.95rem;color:var(--muted);">
-        <a href="/about">Learn more about our methodology →</a>
-      </p>
-    </div>
+    ${METHODOLOGY_PANEL}
   `;
 
   return layout(

@@ -3,7 +3,8 @@ import type { Facility } from "../types";
 import { htmlCacheKey, pageCache, staleHtmlResponse, htmlResponseCacheControl } from "../cache";
 import { logPageRenderError } from "../page-errors";
 import { getNationalPctFailing, searchByZipExact, searchNearby, getStatesWithCounts, getDataReleases } from "../db";
-import { homePage, searchResultsPage, searchFormPage } from "../templates/home";
+import { homePage } from "../templates/home";
+import { searchResultsPage, searchFormPage } from "../templates/search";
 import { errorPage } from "../templates/subscribe";
 
 export async function handleHome(request: Request, env: Env): Promise<Response> {

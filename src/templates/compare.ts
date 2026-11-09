@@ -1,4 +1,5 @@
 import { layout } from "./layout";
+import { COMPARE_CHIP_JS } from "./components";
 
 /**
  * @param noindex set when the request carries an `ids` parameter. Those URLs are
@@ -11,16 +12,17 @@ export function comparePage(noindex = false): string {
     <h1 class="display">Comparison</h1>
     <p class="lede">Review your saved facilities side-by-side.</p>
     
-    <div id="compare-container" style="overflow-x: auto; margin-bottom: var(--space-2xl);" aria-live="polite" aria-atomic="false">
+    <div id="compare-container" class="compare-container" aria-live="polite" aria-atomic="false">
       <p>Loading your saved facilities...</p>
     </div>
 
-    <p style="margin-top:var(--space-2xl);"><a href="/">← Return to search</a></p>
+    <p class="section-gap"><a class="link-arrow" href="/">← Return to search</a></p>
   `;
 
   const scripts = `
     <script>
       (function() {
+        ${COMPARE_CHIP_JS}
         const container = document.getElementById('compare-container');
         const storageKey = 'nhg_saved_facilities';
 
@@ -83,36 +85,36 @@ export function comparePage(noindex = false): string {
             }
 
             container.innerHTML = \`
-          <table class="comparison-table" style="width: 100%; border-collapse: collapse; min-width: 600px;">
+          <div class="table-container"><table class="comparison-table compare-table">
             <thead>
-              <tr style="border-bottom: 2px solid var(--ink);">
-                <th style="padding: 1rem; text-align: left;">Facility</th>
-                \${facilities.map(function(f) { return \`<th style="padding: 1rem; text-align: left;"><a href="\${esc(f.report_path)}">\${esc(f.name)}</a><div style="font-size:0.8rem;color:var(--muted);font-weight:600;text-transform:uppercase;">\${esc(f.city)}, \${esc(f.state)} \${esc(f.zip)}</div></th>\`; }).join('')}
+              <tr>
+                <th scope="col">Facility</th>
+                \${facilities.map(function(f) { return \`<th scope="col"><a href="\${esc(f.report_path)}">\${esc(f.name)}</a><div class="compare-sub">\${esc(f.city)}, \${esc(f.state)} \${esc(f.zip)}</div></th>\`; }).join('')}
               </tr>
             </thead>
             <tbody>
-              <tr style="border-bottom: 1px solid var(--rule);">
-                <td style="padding: 1rem; font-weight: 700;">Grade</td>
-                \${facilities.map(function(f) { return f.grade_letter === "NR" || Number(f.grade_score) < 0 ? \`<td style="padding: 1rem;"><strong>Not rated</strong></td>\` : \`<td style="padding: 1rem;"><strong class="grade-\${esc(f.grade_letter)}">\${esc(f.grade_letter)}</strong> (\${esc(f.grade_score)}/100)</td>\`; }).join('')}
-              </tr>
-              <tr style="border-bottom: 1px solid var(--rule);">
-                <td style="padding: 1rem; font-weight: 700;">RN Staffing</td>
-                \${facilities.map(function(f) { return \`<td style="padding: 1rem;">\${esc(formatStaffing(f.rn_hours_per_resident_day))}</td>\`; }).join('')}
-              </tr>
-              <tr style="border-bottom: 1px solid var(--rule);">
-                <td style="padding: 1rem; font-weight: 700;">Deficiencies</td>
-                \${facilities.map(function(f) { return \`<td style="padding: 1rem;">\${f.total_deficiencies === null || f.total_deficiencies === undefined ? 'Not reported' : esc(f.total_deficiencies)}</td>\`; }).join('')}
-              </tr>
-              <tr style="border-bottom: 1px solid var(--rule);">
-                <td style="padding: 1rem; font-weight: 700;">Summary</td>
-                \${facilities.map(function(f) { return \`<td style="padding: 1rem;">\${esc(f.grade_summary)}</td>\`; }).join('')}
+              <tr>
+                <th scope="row">Grade</th>
+                \${facilities.map(function(f) { return \`<td>\${chipHtml(f)}</td>\`; }).join('')}
               </tr>
               <tr>
-                <td style="padding: 1rem;"></td>
-                \${facilities.map(function(f) { return \`<td style="padding: 1rem;"><a href="\${esc(f.report_path)}" class="btn-secondary">View report</a><br><button type="button" data-remove="\${esc(f.cms_id)}" style="color:var(--grade-F); background:none; border:none; font-family:var(--font-ui); font-weight:700; font-size:0.95rem; text-transform:uppercase; letter-spacing:0.1em; cursor:pointer; transition:color 0.2s ease-out; min-height:44px; padding:var(--space-xs) 0;" onmouseover="this.style.color='var(--grade-F)'" onmouseout="this.style.color='var(--grade-F)'">Remove</button></td>\`; }).join('')}
+                <th scope="row">RN Staffing</th>
+                \${facilities.map(function(f) { return \`<td>\${esc(formatStaffing(f.rn_hours_per_resident_day))}</td>\`; }).join('')}
+              </tr>
+              <tr>
+                <th scope="row">Deficiencies</th>
+                \${facilities.map(function(f) { return \`<td>\${f.total_deficiencies === null || f.total_deficiencies === undefined ? 'Not reported' : esc(f.total_deficiencies)}</td>\`; }).join('')}
+              </tr>
+              <tr>
+                <th scope="row">Summary</th>
+                \${facilities.map(function(f) { return \`<td>\${esc(f.grade_summary)}</td>\`; }).join('')}
+              </tr>
+              <tr>
+                <td></td>
+                \${facilities.map(function(f) { return \`<td><a href="\${esc(f.report_path)}" class="btn-secondary">View report</a><br><button type="button" data-remove="\${esc(f.cms_id)}" class="compare-remove">Remove</button></td>\`; }).join('')}
               </tr>
             </tbody>
-          </table>
+          </table></div>
         \`;
 
             container.querySelectorAll('[data-remove]').forEach(function(button) {

@@ -144,8 +144,9 @@ describe("operatorsHubPage", () => {
       tierCounts: { Mega: 1, Large: 0, Mid: 0, Small: 0 },
     });
     expect(html).toContain('aria-label="Score 62 out of 100"');
-    expect(html).toContain("width:62%");
-    expect(html).toContain("var(--grade-C)");
+    // Width and band are carried as a CSS custom property + band class (no inline styles).
+    expect(html).toContain("--pct:62%");
+    expect(html).toContain("scorebar--C");
   });
 
   it("colors low scores in the F band", () => {
@@ -157,8 +158,8 @@ describe("operatorsHubPage", () => {
       tierCounts: { Mega: 18, Large: 520, Mid: 2163, Small: 4675 },
     });
     expect(html).toContain('aria-label="Score 12 out of 100"');
-    expect(html).toContain("width:12%");
-    expect(html).toContain("var(--grade-F)");
+    expect(html).toContain("--pct:12%");
+    expect(html).toContain("scorebar--F");
   });
 });
 

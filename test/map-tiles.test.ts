@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { facilityPage } from "../src/templates/facility";
 import { explorePage } from "../src/templates/explore";
-import { searchResultsPage } from "../src/templates/home";
+import { searchResultsPage } from "../src/templates/search";
 import { TILE_ATTRIBUTION, TILE_MAX_ZOOM, TILE_URL, leafletTileLayerJs } from "../src/templates/map-tiles";
 import type { Facility, FacilityPageData } from "../src/types";
 
