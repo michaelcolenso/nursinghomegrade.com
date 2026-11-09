@@ -1,6 +1,7 @@
 // Start a new generation of stable-page HTML with a separate stale copy.
 // Earlier cache generations must not supply fallback HTML after a rollout.
-const HTML_CACHE_VERSION = "html:v32";
+// v33: design overhaul Phase 1 (new masthead/footer/stylesheet markup).
+const HTML_CACHE_VERSION = "html:v33";
 
 export const HTML_STALE_TTL_SECONDS = 604800;
 

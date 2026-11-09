@@ -17,6 +17,8 @@ import { subscribePage, notFoundPage, errorPage } from "./templates/subscribe";
 import { htmlToMarkdown } from "./markdown";
 import { OG_SVG } from "./og-svg";
 import { OG_PNG_BASE64 } from "./og-png.generated";
+import { SITE_CSS, SITE_CSS_HASH } from "./styles";
+import { handleBrandAsset } from "./brand-assets";
 import { methodologyPage } from "./templates/methodology";
 import { contactPage } from "./templates/contact";
 import { privacyPage } from "./templates/privacy";
@@ -471,6 +473,27 @@ async function route(request: Request, env: Env): Promise<Response> {
         },
       });
     }
+
+    // ── Site stylesheet ────────────────────────────────────────────────
+    // /assets/site.<hash>.css is content-addressed, so the current hash is
+    // immutable. HTML cached before a deploy may still reference an older hash;
+    // serve the current CSS for those with a short TTL so they never render
+    // unstyled (the HTML cache version bump flushes them within the hour).
+    const cssMatch = path.match(/^\/assets\/site\.([a-z0-9]+)\.css$/);
+    if (cssMatch) {
+      const current = cssMatch[1] === SITE_CSS_HASH;
+      return new Response(SITE_CSS, {
+        headers: {
+          "Content-Type": "text/css;charset=UTF-8",
+          "X-Content-Type-Options": "nosniff",
+          "Cache-Control": current ? "public, max-age=31536000, immutable" : "public, max-age=300",
+        },
+      });
+    }
+
+    // ── Favicons, app icons, web manifest ──────────────────────────────
+    const brandAsset = handleBrandAsset(path);
+    if (brandAsset) return brandAsset;
 
     // ── OG image ───────────────────────────────────────────────────────
     // Twitter/X, Facebook, and LinkedIn don't render SVG preview images, so

@@ -31,7 +31,7 @@ afterEach(() => vi.unstubAllGlobals());
 describe("htmlCacheKey", () => {
   it("versions rendered HTML cache keys", () => {
     expect(htmlCacheKey("facility:055258-community-subacute-and-transitional-care-center")).toBe(
-      "html:v32:facility:055258-community-subacute-and-transitional-care-center",
+      "html:v33:facility:055258-community-subacute-and-transitional-care-center",
     );
   });
 });
