@@ -22,7 +22,7 @@ export const TOKENS_CSS = `
       --grade-D-fill: #E4573D; --grade-D-ink: #B4361C;
       --grade-F-fill: #B91C1C; --grade-F-ink: #B91C1C;
       --grade-NR-fill: #C9D2D9; --grade-NR-ink: #60717D;
-      --grade-A-tint: #E7F3EE; --grade-B-tint: #E8F5F2; --grade-C-tint: #FDF4E3;
+      --grade-A-tint: #EFF8F3; --grade-B-tint: #E8F5F2; --grade-C-tint: #FDF4E3;
       --grade-D-tint: #FCECE8; --grade-F-tint: #FBEAEA; --grade-NR-tint: #F0F3F5;
 
       /* Semantic */

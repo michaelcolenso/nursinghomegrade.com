@@ -39,7 +39,7 @@ export function howWeGradePage(): string {
     <ul>
       <li><strong>Complete:</strong> all Grade 1.x score inputs and the current inspection evidence are present.</li>
       <li><strong>Partial:</strong> current inspection evidence is present, but RN staffing, the CMS quality rating, or the CMS staffing rating is unavailable. The missing component earns no points and we do <strong>not</strong> inflate the remaining components to fill the gap. The displayed score is therefore a conservative lower bound.</li>
-      <li><strong>Insufficient / Not rated:</strong> the current inspection evidence needed to tell a real zero-deficiency survey from missing data is unavailable. We withhold the NursingHomeGrade score and letter.</li>
+      <li id="not-rated"><strong>Insufficient / Not rated:</strong> the current inspection evidence needed to tell a real zero-deficiency survey from missing data is unavailable. We withhold the NursingHomeGrade score and letter.</li>
     </ul>
     <p><strong>Missing base-score evidence can never improve a grade.</strong> That is the core rule for the four inputs above.</p>
 

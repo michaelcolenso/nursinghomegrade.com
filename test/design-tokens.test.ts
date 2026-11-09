@@ -72,3 +72,11 @@ describe("design tokens: grade ramp", () => {
     expect(TOKENS_CSS.toLowerCase()).not.toContain("#9f1239");
   });
 });
+
+describe("design tokens: grade ink on its own tint (pills, partial-data tag)", () => {
+  for (const g of ["A", "B", "C", "D", "F", "NR"] as const) {
+    it(`--grade-${g}-ink on --grade-${g}-tint`, () => {
+      expect(ratio(`--grade-${g}-ink`, `--grade-${g}-tint`)).toBeGreaterThanOrEqual(4.5);
+    });
+  }
+});
