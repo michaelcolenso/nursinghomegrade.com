@@ -90,7 +90,7 @@ These go in `src/styles/tokens.ts` as `:root` custom properties.
 --teal-50:  #E8F3F1;   /* tint panels (CTA band, selected rows)   */
 --slate-600:#60717D;   /* muted text                              5.05:1 on white, 4.79 on --bg */
 --line:     #E6EBEF;   /* rules, card borders (board "Light gray") */
---line-strong:#CBD5DC; /* input borders, dividers needing 3:1-ish visibility vs bg */
+--line-strong:#7F8F9B; /* input + secondary-button borders: 3.33:1 on white, 3.15:1 on --bg (WCAG 1.4.11) */
 --bg:       #F7F9FA;   /* page background (board "Off white")     */
 --surface:  #FFFFFF;
 
@@ -220,7 +220,7 @@ Each phase is one PR, branched from the latest `primary`, and each has an accept
 6. Restyle the comparison bar (`#comparison-bar`): navy, 4px teal top border, Inter, `.btn--secondary` reversed. Move its inline styles into CSS but **keep its element IDs**. Remove the stray `'Inter'` inline font reference (`layout.ts:1270`).
 7. Global element restyle: links, h1–h3 (§3.2), `.btn*`, forms, tables (`.table-container`, zebra-free, 1px lines, sticky header cell styling), `.breadcrumb`, focus states, print.
 8. Audit every `var(--accent)` use: action stays (teal); alarm moves to `var(--alarm)`.
-9. Add `scripts/render-preview.ts` (`npm run preview:render`). It renders every page template with fixture data (reuse/extend the fixtures in `test/*.template.test.ts`) to `out/preview/<name>.html` and writes the CSS to `out/preview/assets/…` with relative hrefs rewritten. Then `node docs/design-overhaul/screenshots.cjs file://$PWD/out/preview out/shots/preview`. This is the visual-verification loop for every later phase, and it needs no D1 or network beyond fonts.
+9. Add `scripts/render-preview.ts` (`npm run preview:render`). It renders every page template with fixture data (reuse/extend the fixtures in `test/*.template.test.ts`) to `out/preview/<name>.html` (names must match `ROUTES` in `docs/design-overhaul/screenshots.cjs`, plus `facility.html` (A/complete), `facility-d.html` (D, uncorrected + jeopardy deficiencies) and `facility-nr.html` (NR/withheld)) and writes the CSS to `out/preview/assets/…` with relative hrefs rewritten. Then `node docs/design-overhaul/screenshots.cjs file://$PWD/out/preview out/shots/preview`. This is the visual-verification loop for every later phase, and it needs no D1 or network beyond fonts.
 - **Accept:** the stylesheet route returns 200 with `text/css` and immutable caching. A stale hash returns 200 with `max-age=300`. Favicons and the manifest resolve. `layout()` output contains no `<style>` and no `#9f1239` or "Source Sans". The masthead shows the wordmark at all three breakpoints with no horizontal overflow at 360/390px (the screenshot script flags overflow). Contrast test (§8) passes. All existing tests pass. Screenshots attached to the PR.
 
 ### Phase 2 — Components + listing surfaces
@@ -287,7 +287,7 @@ Moved: brand images → `docs/brand/`, old screenshots → `docs/archive/`. Dele
 
 | Test file | Asserts |
 |---|---|
-| `test/design-tokens.test.ts` | WCAG contrast (implement the relative-luminance formula) ≥ 4.5 for: navy/slate-600/teal-700/every `--grade-*-ink` on `--surface` and `--bg`; white on navy-900/teal-700/grade-F-ink. ≥ 3.0 for teal-600 on white, and `--line-strong` vs `--surface`. Parses values from `src/styles/tokens.ts` so it can't drift. |
+| `test/design-tokens.test.ts` | WCAG contrast (implement the relative-luminance formula) ≥ 4.5 for: navy/slate-600/teal-700/every `--grade-*-ink` on `--surface` and `--bg`; white on navy-900/teal-700/grade-F-ink. ≥ 3.0 for teal-600 on white, and `--line-strong` vs both `--surface` and `--bg` (non-text UI boundary). `--line` is decorative only (cards/rules); never use it as the sole boundary of a control. Parses values from `src/styles/tokens.ts` so it can't drift. |
 | `test/styles-route.test.ts` | Hashed CSS route: 200, `text/css`, immutable. Stale hash: 200, short max-age. `layout()` links `SITE_CSS_HREF`, has no `<style>`, no `#9f1239`, no `Source Sans`. Favicon/manifest routes. |
 | `test/components.test.ts` | `scoreChip` for A–F/NR/partial (descriptor text, `meter--X`, filled segment count, escaping of names), `facilityCard` null metrics → "Not reported", compare-toggle id/aria contract, `gradeDescriptor` mapping. |
 | `test/no-inline-styles.test.ts` | Reads each migrated `src/templates/*.ts` and fails on `style="` not followed by `--`. Starts with an allowlist of un-migrated files that each phase shrinks; empty by Phase 5. |

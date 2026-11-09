@@ -6,7 +6,8 @@
 //   node docs/design-overhaul/screenshots.cjs http://localhost:8787 out/shots/after
 //   node docs/design-overhaul/screenshots.cjs file://$PWD/out/preview out/shots/preview
 //
-// With a file:// base it loads <name>.html files written by
+// With a file:// base it loads <name>.html files (including facility,
+// facility-d and facility-nr fixtures) written by
 // scripts/render-preview.ts (Phase 1) instead of routes.
 // Uses the pre-installed Playwright; do not `playwright install`.
 const { chromium } = require("playwright");
@@ -44,7 +45,11 @@ const ROUTES = [
     ["mobile", { width: 390, height: 844 }],
   ];
   const routes = [...ROUTES];
-  if (!isFile) {
+  if (isFile) {
+    // scripts/render-preview.ts must emit these facility fixtures (A/complete,
+    // D with uncorrected + jeopardy deficiencies, NR/withheld) — see PLAN §6 Phase 4.
+    routes.push(["facility", ""], ["facility-d", ""], ["facility-nr", ""]);
+  } else {
     const probe = await browser.newPage();
     try {
       await probe.goto(base + "/search?zip=10044", { waitUntil: "domcontentloaded", timeout: 45000 });
@@ -56,9 +61,14 @@ const ROUTES = [
     await probe.close();
   }
   for (const [vpName, viewport] of viewports) {
-    const page = await browser.newPage({ viewport, deviceScaleFactor: 1 });
     for (const [name, route] of routes) {
       const url = isFile ? `${base}/${name}.html` : base + route;
+      if (isFile && !fs.existsSync(new URL(url))) {
+        console.log(`${vpName} ${name}: MISSING ${name}.html (render-preview did not emit it)`);
+        continue;
+      }
+      // Fresh page per route so one failed navigation can't poison the next.
+      const page = await browser.newPage({ viewport, deviceScaleFactor: 1 });
       try {
         await page.goto(url, { waitUntil: "networkidle", timeout: 45000 });
         await page.screenshot({ path: path.join(outDir, `${name}-${vpName}.png`), fullPage: false });
@@ -66,10 +76,10 @@ const ROUTES = [
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
         console.log(`${vpName} ${name}: ok${overflow ? "  ⚠ horizontal overflow" : ""}`);
       } catch (e) {
-        console.log(`${vpName} ${name}: FAILED ${e.message}`);
+        console.log(`${vpName} ${name}: FAILED ${e.message.split("\n")[0]}`);
       }
+      await page.close();
     }
-    await page.close();
   }
   await browser.close();
 })();
