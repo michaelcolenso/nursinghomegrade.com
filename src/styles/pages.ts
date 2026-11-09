@@ -111,29 +111,18 @@ export const PAGES_CSS = `
 
     /* Facility */
     .facility-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-l); gap: var(--space-l); padding-bottom: var(--space-m); border-bottom: 1px solid var(--line); }
-    .facility-grade-hero { font-size: clamp(5rem, 14vw, 8rem); line-height: 0.85; font-weight: 700; letter-spacing: -0.02em; }
 
     /* Deficiency & snapshot */
     .snapshot-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-s); margin-bottom: var(--space-xl); }
     .snapshot-card { padding: var(--space-m); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); box-shadow: var(--shadow-1); }
     .snapshot-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--slate-600); font-weight: 600; margin-bottom: var(--space-3xs); }
     .snapshot-value { font-size: 1.25rem; font-weight: 700; line-height: 1.2; font-variant-numeric: tabular-nums; }
-    .deficiency-item { padding: var(--space-m); margin-bottom: var(--space-s); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); }
 
     /* Nearby */
     .nearby-section { margin: var(--space-xl) 0; padding-top: var(--space-l); border-top: 1px solid var(--line); }
     .nearby-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-l); margin-bottom: var(--space-m); }
     .nearby-header h2 { margin-top: 0; margin-bottom: var(--space-2xs); }
     .nearby-header p { margin: 0; color: var(--slate-600); font-size: 1rem; }
-    .nearby-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--space-s); }
-    .nearby-card { display: grid; grid-template-columns: auto 1fr; gap: var(--space-s); padding: var(--space-m); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); box-shadow: var(--shadow-1); }
-    .nearby-grade { font-size: 2.5rem; font-weight: 700; line-height: 0.95; min-width: 2.25rem; }
-    .nearby-name { font-size: 1.125rem; line-height: 1.2; margin-top: 0; margin-bottom: var(--space-2xs); }
-    .nearby-name a { border: 0; }
-    .nearby-meta { margin-bottom: var(--space-s); color: var(--slate-600); font-size: 0.875rem; font-weight: 500; }
-    .nearby-stats { display: flex; flex-wrap: wrap; gap: var(--space-2xs); color: var(--slate-600); font-size: 0.8125rem; }
-    .nearby-stats span { padding: 0.2rem 0.5rem; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--bg); }
-    .nearby-stats strong { color: var(--navy-900); font-size: 0.9375rem; font-variant-numeric: tabular-nums; }
 
     /* Reduced motion */
     @media (prefers-reduced-motion: reduce) {
@@ -152,8 +141,7 @@ export const PAGES_CSS = `
       .state-search { position: static; order: 2; }
       .operator-score { align-items: flex-start; }
       .facility-header { flex-direction: column-reverse; gap: var(--space-s); }
-      .facility-grade-hero { font-size: 5rem; }
-      .search-bar { flex-direction: column; }
+        .search-bar { flex-direction: column; }
       .search-bar input { width: 100%; min-width: 0; border-radius: var(--radius-sm); }
       .search-bar button, .search-bar button:not(.geo-btn) { border-radius: var(--radius-sm); margin-top: var(--space-2xs); }
       .search-bar .geo-btn { border-left: 1px solid var(--line-strong); }
@@ -179,9 +167,7 @@ export const PAGES_CSS = `
       .quality-value-cell div { margin-bottom: var(--space-3xs); }
       .nearby-header { display: block; }
       .nearby-header .btn-secondary { margin-top: var(--space-s); }
-      .nearby-grid { grid-template-columns: 1fr; }
-      .nearby-card { grid-template-columns: 1fr; gap: var(--space-s); }
-      .pull-quote a, main > p a, .card a[href="/about"], footer a { display: inline-flex !important; min-height: 44px; align-items: center; }
+          .pull-quote a, main > p a, .card a[href="/about"], footer a { display: inline-flex !important; min-height: 44px; align-items: center; }
       .city-result-card { padding: var(--space-m) !important; }
       .city-result-grid { grid-template-columns: 1fr !important; gap: var(--space-m) !important; }
       .city-result-metrics { flex-wrap: wrap; gap: var(--space-m) !important; }

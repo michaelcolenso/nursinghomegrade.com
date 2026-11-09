@@ -5,6 +5,7 @@ import { renderTrustModule } from "./trust";
 import { leafletTileLayerJs } from "./map-tiles";
 import { RN_BENCHMARK, BENCHMARK_ROW_NOTE, benchmarkLabel, repealDisclosureHtml } from "../staffing-standard";
 import { buildInspectionSummary } from "../inspection-summary";
+import { scoreToSummary, type ScoreInputKey } from "../scoring";
 import {
   buildContactFacts,
   buildFacilityTitle,
@@ -17,6 +18,8 @@ import {
   telHref,
   type PenaltySummary,
 } from "../facility-profile";
+import { breadcrumb, compareToggle, facilityCard, gradeKey, scoreChip, starRating, statTile } from "./components";
+import { icon } from "./icons";
 
 // Number of same-city facilities shown as rich cards. The related-links block
 // skips these so the same facility isn't linked twice on one page.
@@ -41,12 +44,16 @@ function severityLabel(code: string | null): string {
   return map[code] ?? `Severity ${code}`;
 }
 
-function severityColor(code: string | null): string {
-  if (!code) return "#607D8B";
-  if (code >= "A" && code <= "F") return "#607D8B";
-  if (code >= "G" && code <= "I") return "#b48a3e";
-  if (code >= "J" && code <= "L") return "#9e3a3a";
-  return "#607D8B";
+/** Scope/severity letters grouped the way CMS describes them: A–C no harm, D–F potential, G–I actual harm, J–L immediate jeopardy. */
+type SeverityTier = "low" | "potential" | "harm" | "jeopardy" | "unknown";
+
+function severityTier(code: string | null): SeverityTier {
+  if (!code || code.length !== 1) return "unknown";
+  if (code >= "A" && code <= "C") return "low";
+  if (code >= "D" && code <= "F") return "potential";
+  if (code >= "G" && code <= "I") return "harm";
+  if (code >= "J" && code <= "L") return "jeopardy";
+  return "unknown";
 }
 
 function isUncorrectedDeficiency(d: Deficiency): boolean {
@@ -67,18 +74,20 @@ function formatDate(dateStr: string | null): string {
   }
 }
 
+const TREND_GLYPH: Record<string, string> = {
+  improving: "▲",
+  declining: "▼",
+  stable: "●",
+  volatile: "◆",
+  insufficient_history: "○",
+};
+
 function renderTrajectory(trajectory: Trajectory | null): string {
   if (!trajectory) return "";
 
-  const statusStyles: Record<string, { bg: string; color: string; icon: string }> = {
-    improving: { bg: "#e6f4f1", color: "#12805D", icon: "▲" },
-    declining: { bg: "#fdecea", color: "#B91C1C", icon: "▼" },
-    stable: { bg: "#f0f4f8", color: "#4A6272", icon: "●" },
-    volatile: { bg: "#fff8e6", color: "#b48a3e", icon: "◆" },
-    insufficient_history: { bg: "#f0f4f8", color: "#4A6272", icon: "○" },
-  };
-
-  const style = statusStyles[trajectory.status] ?? { bg: "#f0f4f8", color: "#4A6272", icon: "●" };
+  const known = trajectory.status in TREND_GLYPH;
+  const glyph = (known ? TREND_GLYPH[trajectory.status] : undefined) ?? "●";
+  const tone = known ? trajectory.status : "stable";
   const parts: string[] = [];
   if (trajectory.staffing_change_pct !== null) {
     const sign = trajectory.staffing_change_pct > 0 ? "+" : "";
@@ -92,11 +101,11 @@ function renderTrajectory(trajectory: Trajectory | null): string {
   const detail = parts.length > 0 ? parts.join(" · ") : "Trend data available";
 
   return `
-    <div style="background:${style.bg};border:2px solid ${style.color};padding:var(--space-l);margin-bottom:var(--space-xl);display:flex;align-items:center;gap:var(--space-m);flex-wrap:wrap;">
-      <span style="font-size:1.5rem;font-weight:800;color:${style.color};">${style.icon}</span>
+    <div class="trend trend--${tone}">
+      <span class="trend-icon" aria-hidden="true">${glyph}</span>
       <div>
-        <span style="font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:${style.color};font-size:0.9rem;">${trajectory.status.replace("_", " ")}</span>
-        <p style="margin:0;color:var(--muted);font-size:0.95rem;">${escHtml(detail)} over tracking period</p>
+        <span class="trend-status">${escHtml(trajectory.status.replace("_", " "))}</span>
+        <p>${escHtml(detail)} over tracking period</p>
       </div>
     </div>
   `;
@@ -105,7 +114,7 @@ function renderTrajectory(trajectory: Trajectory | null): string {
 function renderAssessment(assessment: string): string {
   if (!assessment) return "";
   return `
-    <div class="pull-quote" style="margin:var(--space-xl) 0;">
+    <div class="pull-quote">
       <strong>Facility Assessment</strong>
       ${escHtml(assessment)}
     </div>
@@ -115,9 +124,9 @@ function renderAssessment(assessment: string): string {
 function renderOperatorLink(operator: Operator | null): string {
   if (!operator) return "";
   return `
-    <div style="margin-bottom:var(--space-l);">
-      <span style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);">Operator</span>
-      <p style="margin:0;"><a href="/operator/${escHtml(operator.slug)}">${escHtml(operator.normalized_name)}</a> · ${operator.facility_count} facilities</p>
+    <div class="fac-operator">
+      <span class="eyebrow">Operator</span>
+      <p><a href="/operator/${escHtml(operator.slug)}">${escHtml(operator.normalized_name)}</a> · ${operator.facility_count} facilities</p>
     </div>
   `;
 }
@@ -153,17 +162,17 @@ function renderDeficiencyCluster(counts: DeficiencyCounts, dataAvailable: boolea
   // Only when the lookup failed. A facility with zero citations renders zeros,
   // matching "No deficiencies reported for this facility." in the section below.
   if (!dataAvailable) {
-    return `<span style="font-weight:700;font-size:1.5rem;">Not reported</span>`;
+    return `<span class="def-cluster-na">Not reported</span>`;
   }
-  const row = (label: string, value: number, color: string) => `
-    <div style="display:flex;justify-content:flex-end;align-items:baseline;gap:var(--space-2xs);">
-      <span style="font-size:0.85rem;font-weight:400;color:var(--muted);">${label}</span>
-      <span style="font-weight:700;font-size:1.5rem;color:${color};min-width:2.5ch;text-align:right;">${value}</span>
+  const row = (label: string, value: number, tone: "" | "is-alarm" | "is-harm") => `
+    <div class="def-cluster-row">
+      <span class="def-cluster-label">${label}</span>
+      <span class="def-cluster-value ${tone}">${value}</span>
     </div>`;
   return `
-    ${row("Total", counts.total, "var(--ink)")}
-    ${row("Outstanding", counts.outstanding, counts.outstanding > 0 ? "var(--grade-F)" : "var(--ink)")}
-    ${row("Actual harm or worse (G–L)", counts.harm, counts.harm > 0 ? "var(--grade-D)" : "var(--ink)")}
+    ${row("Total", counts.total, "")}
+    ${row("Outstanding", counts.outstanding, counts.outstanding > 0 ? "is-alarm" : "")}
+    ${row("Actual harm or worse (G–L)", counts.harm, counts.harm > 0 ? "is-harm" : "")}
   `;
 }
 
@@ -175,17 +184,17 @@ function renderDeficiencySummary(deficiencies: Deficiency[] | null): string {
   const uncorrectedCount = counts.outstanding;
   const correctedCount = counts.total - uncorrectedCount;
   const alerts: string[] = [];
-  if (jeopardyCount > 0) alerts.push(`<span style="color:var(--grade-F);font-weight:800;">${jeopardyCount} immediate jeopardy</span>`);
-  if (harmCount > 0) alerts.push(`<span style="color:var(--grade-D);font-weight:800;">${harmCount} actual harm</span>`);
+  if (jeopardyCount > 0) alerts.push(`<span class="is-jeopardy">${jeopardyCount} immediate jeopardy</span>`);
+  if (harmCount > 0) alerts.push(`<span class="is-harm">${harmCount} actual harm</span>`);
   const uncorrectedAlert = uncorrectedCount > 0
-    ? ` <span style="color:var(--grade-F);font-weight:800;">— ${uncorrectedCount} still outstanding</span>`
+    ? ` <span class="is-open">— ${uncorrectedCount} still outstanding</span>`
     : "";
   const deficiencyWord = counts.total === 1 ? "deficiency" : "deficiencies";
   const summaryText = alerts.length > 0
     ? `${alerts.join(", ")} issue${(harmCount + jeopardyCount) !== 1 ? "s" : ""} found among ${counts.total} total ${deficiencyWord}. ${correctedCount} corrected.${uncorrectedAlert}`
     : `${counts.total} ${deficiencyWord} found. ${correctedCount} corrected. None involved actual harm.${uncorrectedAlert}`;
-  return `<div style="background:var(--bg);border:2px solid var(--ink);padding:var(--space-l);margin-bottom:var(--space-xl);">
-    <p style="margin:0;font-family:'Playfair Display',Georgia,serif;font-size:clamp(1.1rem,2vw,1.35rem);line-height:1.4;">${summaryText}</p>
+  return `<div class="panel def-summary">
+    <p>${summaryText}</p>
   </div>`;
 }
 
@@ -193,10 +202,10 @@ function renderDeficiencies(deficiencies: Deficiency[] | null): string {
   // null is a failed lookup, not a clean record. Saying "no deficiencies" here
   // would assert a spotless inspection history we were unable to read.
   if (deficiencies === null) {
-    return `<p style="color:var(--muted);margin-bottom:var(--space-l);">Inspection records could not be loaded for this facility. This is not a statement that none exist.</p>`;
+    return `<p class="muted">Inspection records could not be loaded for this facility. This is not a statement that none exist.</p>`;
   }
   if (deficiencies.length === 0) {
-    return `<p style="color:var(--muted);margin-bottom:var(--space-l);">No deficiencies reported for this facility.</p>`;
+    return `<p class="muted">No deficiencies reported for this facility.</p>`;
   }
 
   const byCycle = new Map<number, Deficiency[]>();
@@ -225,36 +234,37 @@ function renderDeficiencies(deficiencies: Deficiency[] | null): string {
 
       const items = sorted
         .map((d) => {
-          const sevColor = severityColor(d.scope_severity_code);
+          const tier = severityTier(d.scope_severity_code);
           const sevLabel = severityLabel(d.scope_severity_code);
           const tag = d.deficiency_tag_number ? `F${d.deficiency_tag_number}` : "";
           const corrected = d.deficiency_corrected ? ` — ${d.deficiency_corrected}` : "";
           const correctionDate = d.correction_date ? `, corrected ${formatDate(d.correction_date)}` : "";
-          const statusLabel = isUncorrectedDeficiency(d)
+          const open = isUncorrectedDeficiency(d);
+          const statusLabel = open
             ? (d.deficiency_corrected === "Deficient, Provider has no plan of correction"
                 ? "Status: Outstanding — No Plan"
                 : "Status: Outstanding — Plan Filed")
             : "Status: Corrected";
 
           return `
-            <div class="deficiency-item" style="border-left: 8px solid ${sevColor}">
-              <div style="display:flex;gap:var(--space-xs);align-items:center;flex-wrap:wrap;margin-bottom:var(--space-2xs);">
-                <span style="display:inline-block;padding:0.15rem 0.5rem;font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:0.02em;background:${sevColor};color:#fff;border-radius:0;">${escHtml(d.scope_severity_code ?? "?")}</span>
-                <span style="font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);">${escHtml(sevLabel)}</span>
-                ${tag ? `<span style="font-size:0.8rem;color:var(--ink);font-weight:800;">${escHtml(tag)}</span>` : ""}
-                <span style="font-size:0.8rem;color:${isUncorrectedDeficiency(d) ? "var(--alarm)" : "var(--muted)"};font-weight:800;text-transform:uppercase;letter-spacing:0.05em;margin-left:auto;">${escHtml(statusLabel)}</span>
+            <article class="def def--${tier}${open ? " def--open" : ""}">
+              <div class="def-head">
+                <span class="sev-pill sev-pill--${tier}">${escHtml(d.scope_severity_code ?? "?")}</span>
+                <span class="def-sev">${escHtml(sevLabel)}</span>
+                ${tag ? `<span class="def-tag">${escHtml(tag)}</span>` : ""}
+                <span class="def-status${open ? " is-open" : ""}">${escHtml(statusLabel)}</span>
               </div>
-              <p style="font-weight:800;font-family:'Playfair Display',Georgia,serif;font-size:1.4rem;line-height:1.2;margin-bottom:var(--space-2xs);">${escHtml(d.deficiency_description ?? "Unknown deficiency")}</p>
-              <p style="font-size:0.95rem;color:var(--muted);margin-bottom:0;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">${escHtml(d.deficiency_category ?? "")}${corrected ? escHtml(corrected + correctionDate) : ""}</p>
-            </div>
+              <p class="def-desc">${escHtml(d.deficiency_description ?? "Unknown deficiency")}</p>
+              <p class="def-meta">${escHtml(d.deficiency_category ?? "")}${corrected ? escHtml(corrected + correctionDate) : ""}</p>
+            </article>
           `;
         })
         .join("");
 
       return `
-        <div style="margin-bottom:var(--space-xl);">
-          <h3 style="margin-bottom:var(--space-s);">${escHtml(cycleLabel)}${escHtml(dateLabel)}</h3>
-          <div class="results-list">${items}</div>
+        <div class="def-cycle">
+          <h3>${escHtml(cycleLabel)}${escHtml(dateLabel)}</h3>
+          <div class="def-list">${items}</div>
         </div>
       `;
     })
@@ -265,30 +275,7 @@ function renderNearbyFacilities(current: FacilityPageData, nearby: Facility[]): 
   if (nearby.length === 0) return "";
 
   const compareIds = [current.cms_id, ...nearby.map((f) => f.cms_id)].slice(0, 5).join(",");
-  const cards = nearby
-    .map((f) => {
-      const rnText =
-        f.rn_hours_per_resident_day !== null
-          ? `${f.rn_hours_per_resident_day.toFixed(2)} hrs`
-          : "Not reported";
-      const deficiencyText = f.total_deficiencies !== null ? `${f.total_deficiencies}` : "Not reported";
-
-      return `
-        <article class="nearby-card">
-          <div class="nearby-grade grade-${f.grade_letter}" aria-label="Grade ${f.grade_letter}">${escHtml(f.grade_letter)}</div>
-          <div class="nearby-body">
-            <h3 class="nearby-name"><a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}">${escHtml(f.name)}</a></h3>
-            <p class="nearby-meta">${escHtml(f.address)}, ${escHtml(f.city)}, ${escHtml(f.state)} ${escHtml(f.zip)}</p>
-            <div class="nearby-stats" aria-label="Nearby facility quality metrics">
-              <span><strong>${f.grade_letter === "NR" || f.grade_score < 0 ? "Not rated" : `${f.grade_score}/100`}</strong> score</span>
-              <span><strong>${escHtml(rnText)}</strong> RN staffing</span>
-              <span><strong>${escHtml(deficiencyText)}</strong> deficiencies</span>
-            </div>
-          </div>
-        </article>
-      `;
-    })
-    .join("");
+  const cards = nearby.map((f) => facilityCard(f, { layout: "tile", headingLevel: 3 })).join("");
 
   return `
     <section class="nearby-section" aria-labelledby="nearby-heading">
@@ -299,7 +286,7 @@ function renderNearbyFacilities(current: FacilityPageData, nearby: Facility[]): 
         </div>
         <a class="btn-secondary" rel="nofollow" href="/compare?ids=${encodeURIComponent(compareIds)}">Compare nearby →</a>
       </div>
-      <div class="nearby-grid">
+      <div class="tile-grid">
         ${cards}
       </div>
     </section>
@@ -328,7 +315,7 @@ function renderRelatedLinks(
   const betterFiltered = betterNearby.filter((f) => !alreadyLinked.has(f.cms_id));
 
   const link = (f: Facility, withCity: boolean) =>
-    `<li><a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}" style="color:var(--ink);text-decoration:none;font-weight:600;font-size:0.95rem;">${escHtml(f.name)}${withCity ? ` — ${escHtml(f.city)}` : ""} (Grade ${escHtml(f.grade_letter)})</a></li>`;
+    `<li><a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}">${escHtml(f.name)}${withCity ? ` — ${escHtml(f.city)}` : ""} (Grade ${escHtml(f.grade_letter)})</a></li>`;
 
   const peerLinks = extraPeers.map((f) => link(f, f.city !== current.city)).join("");
 
@@ -339,8 +326,8 @@ function renderRelatedLinks(
     betterFiltered.length > 0
       ? `
         <div>
-          <h3 style="font-size:1.1rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-s);">Better graded nearby</h3>
-          <ul style="list-style:none;padding:0;margin:0;display:grid;gap:var(--space-xs);">
+          <h3>Better graded nearby</h3>
+          <ul class="list-plain">
             ${betterFiltered.map((f) => link(f, true)).join("")}
           </ul>
         </div>`
@@ -350,32 +337,32 @@ function renderRelatedLinks(
     peerLinks || extraPeers.length > 0
       ? `
         <div>
-          <h3 style="font-size:1.1rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-s);">Near ${escHtml(current.city)}</h3>
-          <ul style="list-style:none;padding:0;margin:0;display:grid;gap:var(--space-xs);">
+          <h3>Near ${escHtml(current.city)}</h3>
+          <ul class="list-plain">
             ${peerLinks}
-            <li><a href="/state/${stateSlug}/${cSlug}" style="color:var(--accent);font-weight:700;">View all ${escHtml(current.city)} facilities →</a></li>
-            <li><a href="/best/${stateSlug}" style="color:var(--accent);font-weight:700;">Highest-rated nursing homes in ${escHtml(stateName)} →</a></li>
+            <li><a class="more" href="/state/${stateSlug}/${cSlug}">View all ${escHtml(current.city)} facilities →</a></li>
+            <li><a class="more" href="/best/${stateSlug}">Highest-rated nursing homes in ${escHtml(stateName)} →</a></li>
           </ul>
         </div>`
       : `
         <div>
-          <h3 style="font-size:1.1rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-s);">Near ${escHtml(current.city)}</h3>
-          <ul style="list-style:none;padding:0;margin:0;display:grid;gap:var(--space-xs);">
-            <li><a href="/state/${stateSlug}/${cSlug}" style="color:var(--accent);font-weight:700;">View all ${escHtml(current.city)} facilities →</a></li>
-            <li><a href="/state/${stateSlug}" style="color:var(--accent);font-weight:700;">View all ${escHtml(stateName)} facilities →</a></li>
-            <li><a href="/best/${stateSlug}" style="color:var(--accent);font-weight:700;">Highest-rated nursing homes in ${escHtml(stateName)} →</a></li>
+          <h3>Near ${escHtml(current.city)}</h3>
+          <ul class="list-plain">
+            <li><a class="more" href="/state/${stateSlug}/${cSlug}">View all ${escHtml(current.city)} facilities →</a></li>
+            <li><a class="more" href="/state/${stateSlug}">View all ${escHtml(stateName)} facilities →</a></li>
+            <li><a class="more" href="/best/${stateSlug}">Highest-rated nursing homes in ${escHtml(stateName)} →</a></li>
           </ul>
         </div>`;
 
   return `
-    <div style="margin-top:var(--space-2xl);padding-top:var(--space-xl);border-top:2px solid var(--ink);">
-      <h2>More Facilities</h2>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:var(--space-l);margin-top:var(--space-m);">
+    <section class="related" aria-labelledby="more-facilities-heading">
+      <h2 id="more-facilities-heading">More Facilities</h2>
+      <div class="related-grid">
         ${peerBlock}
         ${betterBlock}
       </div>
-      <p style="margin-top:var(--space-m);"><a href="/state/${stateSlug}" style="color:var(--accent);font-weight:700;">All ${escHtml(stateName)} facilities →</a></p>
-    </div>
+      <p><a class="more" href="/state/${stateSlug}">All ${escHtml(stateName)} facilities →</a></p>
+    </section>
   `;
 }
 
@@ -387,9 +374,9 @@ function renderRelatedLinks(
 
 function factRow(label: string, value: string): string {
   return `
-    <div>
-      <dt style="font-weight:700;text-transform:uppercase;font-size:0.75rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">${escHtml(label)}</dt>
-      <dd style="margin:0;font-size:1rem;font-weight:600;">${value}</dd>
+    <div class="fact">
+      <dt>${escHtml(label)}</dt>
+      <dd>${value}</dd>
     </div>`;
 }
 
@@ -411,7 +398,7 @@ function renderIdentityFacts(f: FacilityPageData): string {
   }
 
   return `
-    <dl class="facility-facts" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--space-m);margin:0 0 var(--space-l);padding:var(--space-m);border:1px solid var(--rule);background:var(--bg);">
+    <dl class="fact-grid facility-facts">
       ${rows.join("")}
     </dl>`;
 }
@@ -419,9 +406,9 @@ function renderIdentityFacts(f: FacilityPageData): string {
 function renderVerdict(verdict: string): string {
   if (!verdict) return "";
   return `
-    <section aria-labelledby="verdict-heading" style="margin-bottom:var(--space-xl);">
-      <h2 id="verdict-heading" style="font-size:1.1rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-xs);">What the records show</h2>
-      <p class="lede" style="max-width:800px;margin:0;">${escHtml(verdict)}</p>
+    <section aria-labelledby="verdict-heading" class="fac-verdict">
+      <h2 id="verdict-heading" class="h2-eyebrow">What the records show</h2>
+      <p class="lede">${escHtml(verdict)}</p>
     </section>`;
 }
 
@@ -434,7 +421,7 @@ function renderVerdict(verdict: string): string {
 function renderReviewsContext(f: FacilityPageData): string {
   return `
     <h2 id="reviews">Reviews, Ratings and Official Records</h2>
-    <p class="lede" style="font-size:1.125rem;max-width:800px;margin-bottom:var(--space-l);">
+    <p class="lede lede--sm">
       This page reviews ${escHtml(f.name)} using federal government records — CMS star ratings, health-inspection
       findings, staffing data and enforcement actions. NursingHomeGrade does not collect, host or publish resident
       or family testimonials, and no star rating below is a consumer review score.
@@ -450,12 +437,19 @@ function renderStaffingComparison(
   const rows: string[] = [];
 
   if (rn !== null) {
-    rows.push(`<tr><th scope="row" style="text-align:left;padding:var(--space-xs) 0;">This facility</th><td style="text-align:right;font-weight:700;">${rn.toFixed(2)} hrs</td></tr>`);
+    // Bars share one scale (the largest of the values shown) so lengths compare.
+    const values = [rn];
+    if (stateRnMedian !== null && stateRnMedian > 0) values.push(stateRnMedian);
+    if (nationalAvgRn !== null && nationalAvgRn > 0) values.push(nationalAvgRn);
+    const scale = Math.max(...values, 0.01);
+    const bar = (v: number, tone: "self" | "ref") =>
+      `<span class="hbar hbar--${tone}" aria-hidden="true"><span class="hbar-fill" style="--pct:${Math.round((v / scale) * 100)}%"></span></span>`;
+    rows.push(`<tr><th scope="row">This facility</th><td class="hbar-cell">${bar(rn, "self")}</td><td class="num is-strong">${rn.toFixed(2)} hrs</td></tr>`);
     if (stateRnMedian !== null && stateRnMedian > 0) {
-      rows.push(`<tr><th scope="row" style="text-align:left;padding:var(--space-xs) 0;font-weight:400;color:var(--muted);">${escHtml(f.state)} median</th><td style="text-align:right;">${stateRnMedian.toFixed(2)} hrs</td></tr>`);
+      rows.push(`<tr><th scope="row" class="is-ref">${escHtml(f.state)} median</th><td class="hbar-cell">${bar(stateRnMedian, "ref")}</td><td class="num">${stateRnMedian.toFixed(2)} hrs</td></tr>`);
     }
     if (nationalAvgRn !== null && nationalAvgRn > 0) {
-      rows.push(`<tr><th scope="row" style="text-align:left;padding:var(--space-xs) 0;font-weight:400;color:var(--muted);">National average</th><td style="text-align:right;">${nationalAvgRn.toFixed(2)} hrs</td></tr>`);
+      rows.push(`<tr><th scope="row" class="is-ref">National average</th><td class="hbar-cell">${bar(nationalAvgRn, "ref")}</td><td class="num">${nationalAvgRn.toFixed(2)} hrs</td></tr>`);
     }
   }
 
@@ -471,19 +465,19 @@ function renderStaffingComparison(
 
   const period = formatIsoDate(f.cms_processing_date);
   const periodNote = period
-    ? `<p style="font-size:0.85rem;color:var(--muted);margin-top:var(--space-xs);">Staffing figures are the values CMS published in its file processed ${escHtml(period)}, drawn from payroll-based journal reporting.</p>`
-    : `<p style="font-size:0.85rem;color:var(--muted);margin-top:var(--space-xs);">Staffing figures come from CMS payroll-based journal reporting — <a href="/data-sources">see release dates</a>.</p>`;
+    ? `<p class="note">Staffing figures are the values CMS published in its file processed ${escHtml(period)}, drawn from payroll-based journal reporting.</p>`
+    : `<p class="note">Staffing figures come from CMS payroll-based journal reporting — <a href="/data-sources">see release dates</a>.</p>`;
 
   return `
     <h2 id="staffing">Staffing Compared With State and National Levels</h2>
     ${rows.length > 0 ? `
     <div class="table-container">
-      <table style="width:100%;border-collapse:collapse;">
+      <table class="hbar-table">
         <caption class="visually-hidden">Registered nurse hours per resident per day compared with state and national levels</caption>
         <tbody>${rows.join("")}</tbody>
       </table>
     </div>` : ""}
-    ${turnover.length > 0 ? `<p style="margin-top:var(--space-s);">${turnover.join(" · ")}</p>` : ""}
+    ${turnover.length > 0 ? `<p>${turnover.join(" · ")}</p>` : ""}
     ${periodNote}`;
 }
 
@@ -492,7 +486,7 @@ function renderPenalties(f: FacilityPageData, summary: PenaltySummary): string {
 
   if (summary.unknown) {
     return `${heading}
-      <p style="color:var(--muted);margin-bottom:var(--space-xl);">
+      <p class="muted">
         We do not hold federal enforcement records for this facility. That is a gap in our data, not a statement that
         no fine or payment denial exists.
       </p>`;
@@ -504,7 +498,7 @@ function renderPenalties(f: FacilityPageData, summary: PenaltySummary): string {
     if (summary.affirmativelyNone) {
       const asOf = formatIsoDate(f.cms_processing_date);
       return `${heading}
-        <p style="margin-bottom:var(--space-xl);">
+        <p>
           CMS lists no fines and no payment denials for ${escHtml(f.name)} in the enforcement records covering the
           last three years${asOf ? `, as published in the file processed ${escHtml(asOf)}` : ""}.
         </p>`;
@@ -520,7 +514,7 @@ function renderPenalties(f: FacilityPageData, summary: PenaltySummary): string {
     }
     if (parts.length === 0) return "";
     return `${heading}
-      <p style="margin-bottom:var(--space-xl);">
+      <p>
         CMS reports ${escHtml(parts.join(" and "))} for this facility. Dates for the individual actions are not
         present in the records we hold.
       </p>`;
@@ -545,9 +539,9 @@ function renderPenalties(f: FacilityPageData, summary: PenaltySummary): string {
             ? `${p.payment_denial_length_days} days`
             : "Length not published";
       return `<tr>
-        <td style="padding:var(--space-xs) 0;border-bottom:1px solid var(--rule);">${escHtml(date)}</td>
-        <td style="padding:var(--space-xs) 0;border-bottom:1px solid var(--rule);">${escHtml(type)}</td>
-        <td style="padding:var(--space-xs) 0;border-bottom:1px solid var(--rule);text-align:right;font-weight:700;">${escHtml(amount)}</td>
+        <td>${escHtml(date)}</td>
+        <td>${escHtml(type)}</td>
+        <td class="num is-strong">${escHtml(amount)}</td>
       </tr>`;
     })
     .join("");
@@ -555,28 +549,28 @@ function renderPenalties(f: FacilityPageData, summary: PenaltySummary): string {
   const total = formatDollars(summary.fineTotal);
   const totalLine =
     summary.fineCount > 0 && total
-      ? `<p style="margin-top:var(--space-s);">${summary.fineCount} ${summary.fineCount === 1 ? "fine" : "fines"} totalling <strong>${escHtml(total)}</strong>.</p>`
+      ? `<p>${summary.fineCount} ${summary.fineCount === 1 ? "fine" : "fines"} totalling <strong>${escHtml(total)}</strong>.</p>`
       : "";
 
   return `${heading}
-    <p style="margin-bottom:var(--space-m);">
+    <p>
       Penalties CMS has imposed on this facility. A fine is a civil money penalty; a payment denial suspends Medicare
       or Medicaid payment for new admissions.
     </p>
     <div class="table-container">
-      <table style="width:100%;border-collapse:collapse;">
+      <table class="data-table">
         <thead>
           <tr>
-            <th scope="col" style="text-align:left;padding-bottom:var(--space-2xs);border-bottom:2px solid var(--ink);">Date</th>
-            <th scope="col" style="text-align:left;padding-bottom:var(--space-2xs);border-bottom:2px solid var(--ink);">Action</th>
-            <th scope="col" style="text-align:right;padding-bottom:var(--space-2xs);border-bottom:2px solid var(--ink);">Amount or length</th>
+            <th scope="col">Date</th>
+            <th scope="col">Action</th>
+            <th scope="col" class="num">Amount or length</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
     ${totalLine}
-    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:var(--space-xl);">Source: CMS Penalties file (dataset g6vv-u9sr).</p>`;
+    <p class="note">Source: CMS Penalties file (dataset g6vv-u9sr).</p>`;
 }
 
 /**
@@ -613,7 +607,7 @@ function renderInspectionRecords(f: FacilityPageData, deficiencies: Deficiency[]
   if (coverage.length === 0 && !government) return "";
 
   const auditNote = government
-    ? `<p style="margin-bottom:var(--space-m);">
+    ? `<p>
          ${escHtml(f.name)} is a ${escHtml(f.ownership_type ?? "government-owned")} facility. The records on this page are the
          federal health-inspection and enforcement records CMS publishes. We do not hold, and have not reviewed, any
          separate financial or performance audit issued by a county, state or independent auditor — if one exists for this
@@ -624,8 +618,8 @@ function renderInspectionRecords(f: FacilityPageData, deficiencies: Deficiency[]
   return `
     <h2 id="records">${escHtml(heading)}</h2>
     ${auditNote}
-    ${coverage.length > 0 ? `<ul style="margin-bottom:var(--space-m);padding-left:1.2em;">${coverage.map((c) => `<li>${c}</li>`).join("")}</ul>` : ""}
-    <p style="margin-bottom:var(--space-xl);">
+    ${coverage.length > 0 ? `<ul class="bullets">${coverage.map((c) => `<li>${c}</li>`).join("")}</ul>` : ""}
+    <p>
       Source records:
       <a href="https://www.medicare.gov/care-compare/details/nursing-home/${escHtml(f.cms_id)}" rel="nofollow noopener" target="_blank">CMS Care Compare profile for provider ${escHtml(f.cms_id)} ↗</a>
       · <a href="/data-sources">the federal files we load and when</a>.
@@ -668,10 +662,10 @@ function renderOwnershipAndContact(f: FacilityPageData, operator: Operator | nul
 
   return `
     <h2 id="contact">Ownership and Contact Information</h2>
-    <dl style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--space-m);margin:0 0 var(--space-s);padding:var(--space-m);border:2px solid var(--ink);">
+    <dl class="fact-grid fact-grid--wide">
       ${rows.join("")}
     </dl>
-    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:var(--space-xl);">
+    <p class="note">
       The federal nursing-home files publish no email address for certified facilities, so none is listed here. We do not
       guess or construct contact addresses. Contact details above are reproduced from CMS Provider Information; call the
       facility to confirm before relying on them.
@@ -696,12 +690,30 @@ function renderSources(f: FacilityPageData, hasPenaltyDetail: boolean): string {
 
   return `
     <h2 id="sources">Sources and Methodology</h2>
-    <ul style="padding-left:1.2em;margin-bottom:var(--space-s);">${items.join("")}</ul>
-    <p style="margin-bottom:var(--space-xl);">
+    <ul class="bullets">${items.join("")}</ul>
+    <p>
       The NursingHomeGrade score is our own calculation from these federal files — it is not a CMS rating and not a
       consumer review score. <a href="/how-we-grade">See exactly how the score is calculated</a> ·
       <a href="/methodology">full methodology</a> · <a href="/data-sources">source files and load dates</a>.
     </p>`;
+}
+
+/** Sticky in-page navigation. Only links to sections this page actually rendered. */
+function renderSectionNav(sectionsHtml: string): string {
+  const items: Array<[string, string]> = [
+    ["summary", "Summary"],
+    ["quality", "Ratings"],
+    ["staffing", "Staffing"],
+    ["inspections", "Inspections"],
+    ["enforcement", "Enforcement"],
+    ["contact", "Ownership"],
+    ["sources", "Sources"],
+  ];
+  const links = items
+    .filter(([id]) => sectionsHtml.includes(`id="${id}"`))
+    .map(([id, label]) => `<li><a href="#${id}">${label}</a></li>`)
+    .join("");
+  return `<nav class="fac-nav" aria-label="On this page"><ul class="list-plain">${links}</ul></nav>`;
 }
 
 export function facilityPage(
@@ -768,138 +780,189 @@ export function facilityPage(
 
   const deficiencySection = `
     <h2 id="inspections">Inspection Deficiencies</h2>
-    <p class="lede" style="font-size:1.125rem;margin-bottom:var(--space-l);">
+    <p class="lede lede--sm">
       Health inspections identify violations of federal standards. Severity ranges from no actual harm (A–F) to immediate jeopardy (J–L).
     </p>
     ${renderDeficiencySummary(deficiencies)}
     ${renderDeficiencies(deficiencies)}
   `;
 
-  const body = `
-    <nav class="breadcrumb" aria-label="Breadcrumb">
-      <a href="/">Home</a>
-      <span class="breadcrumb-sep">›</span>
-      <a href="${statePath}">${escHtml(stateInfo?.name ?? f.state)}</a>
-      <span class="breadcrumb-sep">›</span>
-      <a href="${cityPath}">${escHtml(f.city)}</a>
-      <span class="breadcrumb-sep">›</span>
-      <span style="color:var(--ink);">${escHtml(f.name)}</span>
-    </nav>
+  // Summary card tiles: the four score inputs, each with the context a reader needs.
+  const rnTile = statTile(
+    "RN staffing",
+    rnHours !== null ? `${rnHours.toFixed(2)} <span class="stat-unit">hrs / resident / day</span>` : `<span class="muted">Not reported</span>`,
+    rnHours !== null ? escHtml(benchmarkLabel(meetsMinimum)) : "",
+  );
+  const defTile = statTile(
+    "Deficiencies (3 cycles)",
+    deficiencyDataAvailable ? String(deficiencyCounts.total) : `<span class="muted">Not reported</span>`,
+    deficiencyDataAvailable ? `${deficiencyCounts.outstanding} outstanding · ${deficiencyCounts.harm} actual harm or worse` : "",
+  );
+  const qualityTile = statTile("CMS quality rating", starRating(f.quality_rating));
+  const staffingTile = statTile("CMS staffing rating", starRating(f.staffing_rating));
 
-    <div class="facility-header">
-      <div>
-        <h1>${escHtml(f.name)}</h1>
-        <p style="color:var(--muted);margin-bottom:var(--space-s);font-size:1.1rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">
-          ${escHtml(f.address)}, ${escHtml(f.city)}, ${escHtml(f.state)} ${escHtml(f.zip)}
-        </p>
-        ${renderOperatorLink(operator)}
-        ${renderIdentityFacts(f)}
-        <div style="display:flex;gap:var(--space-s);flex-wrap:wrap;margin-bottom:var(--space-m);">
-          <button onclick="window.print()" class="btn-secondary" title="Print this report">Print Report</button>
-          <button onclick="toggleSave('${escHtml(f.cms_id)}', '${escHtml(f.name.replace(/'/g, "\\'"))}', '${f.grade_letter}', ${f.grade_score})" id="save-${escHtml(f.cms_id)}" class="compare-toggle" aria-pressed="false" title="Add to compare">
-            <span class="compare-toggle-box" aria-hidden="true"></span>
-            <span class="compare-toggle-label">Compare</span>
-          </button>
-        </div>
-        ${f.latitude && f.longitude ? `
-          <div id="facility-map" style="height:200px; width:100%; max-width:400px; border:2px solid var(--ink); margin-bottom:var(--space-m);"></div>
-        ` : ""}
-      </div>
-      <div class="grade-${f.grade_letter} facility-grade-hero" aria-label="Grade ${f.grade_letter}">
-        ${escHtml(f.grade_letter)}
-      </div>
-    </div>
+  const key = gradeKey(f.grade_letter, f.grade_score);
+  const completeness = f.grade_completeness ?? (key === "NR" ? "insufficient" : "complete");
+  // Computed fresh from the grade inputs (the same text the list cards use), never the
+  // stored grade_summary: a withheld grade must not sit next to a stale positive sentence.
+  const completenessText = scoreToSummary(
+    f.grade_score < 0 ? null : f.grade_score,
+    f.grade_letter === "NR" ? null : f.grade_letter,
+    f.rn_hours_per_resident_day,
+    completeness,
+    (f.grade_missing_inputs ?? "").split(",").filter(Boolean) as ScoreInputKey[],
+  );
+  const completenessNotice =
+    completeness !== "complete" && completenessText
+      ? `<p class="notice notice--${completeness}"><strong>${completeness === "partial" ? "Partial data." : "Grade withheld."}</strong> ${escHtml(completenessText)} <a href="/how-we-grade#not-rated">How we handle missing data</a></p>`
+      : "";
 
-    ${renderTrajectory(trajectory)}
-    ${renderVerdict(verdict)}
-    ${renderAssessment(assessment)}
+  const facilityUrl = `https://nursinghomegrade.com/facility/${f.cms_id}-${f.slug}`;
 
-    ${renderReviewsContext(f)}
+  const summaryBlock = `
+    <section id="summary" class="fac-summary" aria-label="Summary">
+      ${completenessNotice}
+      ${renderVerdict(verdict)}
+      <div class="stat-grid">${rnTile}${defTile}${qualityTile}${staffingTile}</div>
+      ${renderTrajectory(trajectory)}
+      ${renderAssessment(assessment)}
+    </section>`;
 
-    <p id="inspection-evidence-summary" class="lede" style="max-width:800px;margin-bottom:var(--space-xl);">
-      ${escHtml(buildInspectionSummary(f, deficiencies))}
-    </p>
+  const staffingSection = renderStaffingComparison(f, extras.stateRnMedian ?? null, extras.nationalAvgRn ?? null);
+  const recordsSection = renderInspectionRecords(f, deficiencies);
+  const penaltiesSection = renderPenalties(f, penaltySummary);
+  const contactSection = renderOwnershipAndContact(f, operator);
 
+  const ratingsSection = `
     <h3 id="quality">Ratings and Grade Breakdown</h3>
     <div class="table-container quality-breakdown">
       <table class="quality-table">
-        <tr class="quality-row" style="border-bottom:1px solid var(--rule);">
-          <td class="quality-label-cell" style="padding:var(--space-m) 0;">
-            <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">RN Staffing</div>
-            <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Registered nurse time each resident receives daily. ${escHtml(BENCHMARK_ROW_NOTE)}</div>
+        <tr class="quality-row">
+          <td class="quality-label-cell">
+            <div class="quality-label">RN Staffing</div>
+            <div class="quality-desc">Registered nurse time each resident receives daily. ${escHtml(BENCHMARK_ROW_NOTE)}</div>
           </td>
-          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:var(--font-ui);font-size:1.5rem;text-align:right;color:${meetsMinimum ? "var(--accent-positive)" : "var(--grade-F)"}">
+          <td class="quality-value-cell ${meetsMinimum ? "is-ok" : "is-low"}">
             ${escHtml(rnDisplay)}
           </td>
         </tr>
-        <tr class="quality-row" style="border-bottom:1px solid var(--rule);">
-          <td colspan="2" style="padding:0 0 var(--space-s);">${repealDisclosureHtml()}</td>
+        <tr class="quality-row">
+          <td colspan="2" class="quality-note">${repealDisclosureHtml()}</td>
         </tr>
-        <tr class="quality-row" style="border-bottom:1px solid var(--rule);">
-          <td class="quality-label-cell" style="padding:var(--space-m) 0;">
-            <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">Health Deficiencies (last 3 survey cycles)</div>
-            <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Violations found during federal inspections, with how many remain open and how many involved actual harm.</div>
+        <tr class="quality-row">
+          <td class="quality-label-cell">
+            <div class="quality-label">Health Deficiencies (last 3 survey cycles)</div>
+            <div class="quality-desc">Violations found during federal inspections, with how many remain open and how many involved actual harm.</div>
           </td>
-          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-family:var(--font-ui);text-align:right;">
+          <td class="quality-value-cell">
             ${renderDeficiencyCluster(deficiencyCounts, deficiencyDataAvailable)}
           </td>
         </tr>
-        <tr class="quality-row" style="border-bottom:1px solid var(--rule);">
-          <td class="quality-label-cell" style="padding:var(--space-m) 0;">
-            <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">CMS Ratings</div>
-            <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Federal five-star ratings published by CMS. These are regulatory ratings, not consumer review scores.</div>
+        <tr class="quality-row">
+          <td class="quality-label-cell">
+            <div class="quality-label">CMS Ratings</div>
+            <div class="quality-desc">Federal five-star ratings published by CMS. These are regulatory ratings, not consumer review scores.</div>
           </td>
-          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:var(--font-ui);font-size:1.25rem;text-align:right;">
-            ${overallStars ? `<div style="margin-bottom:var(--space-3xs);">Overall: ${overallStars}</div>` : ""}
-            ${inspectionStars ? `<div style="margin-bottom:var(--space-3xs);">Health inspection: ${inspectionStars}</div>` : ""}
-            <div style="margin-bottom:var(--space-3xs);">Quality: ${qualityStars}</div>
+          <td class="quality-value-cell">
+            ${overallStars ? `<div class="quality-stars">Overall: ${overallStars}</div>` : ""}
+            ${inspectionStars ? `<div class="quality-stars">Health inspection: ${inspectionStars}</div>` : ""}
+            <div class="quality-stars">Quality: ${qualityStars}</div>
             <div>Staffing: ${staffingStars}</div>
           </td>
         </tr>
         <tr class="quality-row">
-          <td class="quality-label-cell" style="padding:var(--space-m) 0;">
-            <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">NursingHomeGrade Score</div>
+          <td class="quality-label-cell">
+            <div class="quality-label">NursingHomeGrade Score</div>
           </td>
-          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:var(--font-ui);font-size:2.5rem;text-align:right;">${f.grade_letter === "NR" || f.grade_score < 0 ? "Not rated" : `${f.grade_score}/100`}</td>
+          <td class="quality-value-cell quality-score">${f.grade_letter === "NR" || f.grade_score < 0 ? "Not rated" : `${f.grade_score}/100`}</td>
         </tr>
       </table>
     </div>
-    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:var(--space-xl);">Loaded into NursingHomeGrade on ${new Date(f.updated_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}. This is the load date, not the date CMS published the underlying survey data — <a href="/data-sources">see release dates</a>.</p>
+    <p class="note">Loaded into NursingHomeGrade on ${new Date(f.updated_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}. This is the load date, not the date CMS published the underlying survey data — <a href="/data-sources">see release dates</a>.</p>
 
-    <p style="max-width:800px;margin-bottom:var(--space-xl);">
+    <p>
       CMS scores each facility from one to five stars — one is in the bottom fifth of facilities in its state on health
       inspections, five is in the top tenth. Our own A–F grade is a separate 0–100 score built from staffing hours,
       inspection citations, and the severity and correction status of those citations, weighted as described in our
       <a href="/how-we-grade">grading methodology</a>.
+    </p>`;
+
+  const sourcesSection = renderSources(f, penaltySummary.actions.length > 0);
+
+  const sectionNav = renderSectionNav(
+    [summaryBlock, ratingsSection, staffingSection, deficiencySection, penaltiesSection, contactSection, sourcesSection].join("\n"),
+  );
+
+  const body = `
+    ${breadcrumb([
+      { label: "Home", href: "/" },
+      { label: stateInfo?.name ?? f.state, href: statePath },
+      { label: f.city, href: cityPath },
+      { label: f.name },
+    ])}
+
+    <header class="fac-head">
+      <div class="fac-title">
+        <h1>${escHtml(f.name)}</h1>
+        <p class="fac-address">
+          ${escHtml(f.address)}, ${escHtml(f.city)}, ${escHtml(f.state)} ${escHtml(f.zip)}
+        </p>
+        <p class="print-only print-url">${escHtml(facilityUrl)}</p>
+        ${renderOperatorLink(operator)}
+      </div>
+      <div class="fac-head-chip">${scoreChip(f, { size: "lg" })}</div>
+      <div class="fac-actions">
+        ${compareToggle(f)}
+        <button type="button" onclick="window.print()" class="btn btn--secondary btn--sm" title="Print this report">${icon("printer", { size: 18 })}<span>Print Report</span></button>
+        <button type="button" class="btn btn--secondary btn--sm" data-share hidden title="Share or copy the link to this page">${icon("share-2", { size: 18 })}<span class="share-label">Share</span></button>
+      </div>
+    </header>
+
+    <div class="fac-top">
+      ${renderIdentityFacts(f)}
+      ${f.latitude && f.longitude ? `<div id="facility-map" class="fac-map" role="region" aria-label="Map showing ${escHtml(f.name)}"></div>` : ""}
+    </div>
+
+    ${sectionNav}
+
+    <div class="fac-body">
+    ${summaryBlock}
+
+    ${renderReviewsContext(f)}
+
+    <p id="inspection-evidence-summary" class="lede lede--sm">
+      ${escHtml(buildInspectionSummary(f, deficiencies))}
     </p>
 
-    ${renderStaffingComparison(f, extras.stateRnMedian ?? null, extras.nationalAvgRn ?? null)}
+    ${ratingsSection}
 
-    ${renderInspectionRecords(f, deficiencies)}
+    ${staffingSection}
+
+    ${recordsSection}
 
     ${deficiencySection}
 
-    ${renderPenalties(f, penaltySummary)}
+    ${penaltiesSection}
 
-    ${renderOwnershipAndContact(f, operator)}
+    ${contactSection}
 
     ${renderTrustModule()}
     ${renderNearbyFacilities(f, nearby.slice(0, NEARBY_CARD_COUNT))}
 
-    ${renderSources(f, penaltySummary.actions.length > 0)}
+    ${sourcesSection}
 
     <div class="cta-box">
       <h3>Need help choosing a facility?</h3>
       <p>Get free guidance from senior living advisors. We don't earn a fee for these links, and we never take payment from nursing facilities.</p>
       ${primaryCta}
       ${secondaryCta}
-      <p style="font-size:0.75rem;color:#c8d6e0;margin-top:var(--space-s);opacity:0.8;">↗ Links open independent third-party sites in a new tab.</p>
+      <p class="cta-note">↗ Links open independent third-party sites in a new tab.</p>
     </div>
 
-    <div style="margin-top:var(--space-2xl);">
-      <h3 style="margin-bottom:var(--space-xs);">Get score alerts for this facility</h3>
-      <p style="margin-bottom:var(--space-m);font-size:1rem;color:var(--muted);">We'll email you when ${escHtml(f.name)}'s staffing score changes.</p>
-      <form action="/subscribe" method="POST" class="search-bar" style="margin-bottom:0;">
+    <section class="fac-alerts" aria-labelledby="alerts-heading">
+      <h3 id="alerts-heading">Get score alerts for this facility</h3>
+      <p class="muted">We'll email you when ${escHtml(f.name)}'s staffing score changes.</p>
+      <form action="/subscribe" method="POST" class="search-bar search-bar--flush">
         <input type="hidden" name="cms_id" value="${escHtml(f.cms_id)}">
         <input type="hidden" name="facility_name" value="${escHtml(f.name)}">
         <input type="hidden" name="return_path" value="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}">
@@ -907,22 +970,23 @@ export function facilityPage(
         <input type="email" id="sub-email" name="email" placeholder="your@email.com" required autocomplete="email">
         <button type="submit">Notify me</button>
       </form>
-    </div>
+    </section>
 
     ${renderRelatedLinks(f, nearby, betterNearby, NEARBY_CARD_COUNT)}
+    </div>
   `;
   const canonicalPath = `/facility/${f.cms_id}-${f.slug}`;
   const extraHead = f.latitude && f.longitude ? `
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
   ` : "";
 
-  const extraScripts = f.latitude && f.longitude ? `
+  const mapScripts = f.latitude && f.longitude ? `
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script>
       (function() {
         const map = L.map('facility-map', { zoomControl: false }).setView([${f.latitude}, ${f.longitude}], 14);
         ${leafletTileLayerJs()}.addTo(map);
-        const color = getComputedStyle(document.documentElement).getPropertyValue('--grade-${f.grade_letter}').trim() || '#607D8B';
+        const color = getComputedStyle(document.documentElement).getPropertyValue('--grade-${f.grade_letter}-fill').trim() || '#607D8B';
         L.circleMarker([${f.latitude}, ${f.longitude}], {
           radius: 8,
           fillColor: color,
@@ -934,6 +998,34 @@ export function facilityPage(
       })();
     </script>
   ` : "";
+
+  // Share button: hidden until this script runs, so it never appears dead without JS.
+  // Uses the Web Share API where present, otherwise copies the link. No "null"/
+  // "undefined" literals: the sparse-data tests assert those never appear in the HTML.
+  const shareScript = `
+    <script>
+      (function() {
+        document.querySelectorAll('[data-share]').forEach(function(btn) {
+          btn.hidden = false;
+          btn.addEventListener('click', function() {
+            var url = window.location.href.split('#')[0];
+            var label = btn.querySelector('.share-label');
+            if (navigator.share) {
+              navigator.share({ title: document.title, url: url }).catch(function() {});
+            } else if (navigator.clipboard) {
+              navigator.clipboard.writeText(url).then(function() {
+                if (label) label.textContent = 'Link copied';
+                setTimeout(function() { if (label) label.textContent = 'Share'; }, 2000);
+              }).catch(function() { window.prompt('Copy this link', url); });
+            } else {
+              window.prompt('Copy this link', url);
+            }
+          });
+        });
+      })();
+    </script>
+  `;
+  const extraScripts = mapScripts + shareScript;
 
   const nursingHomeSchema: Record<string, unknown> = {
     "@context": "https://schema.org",

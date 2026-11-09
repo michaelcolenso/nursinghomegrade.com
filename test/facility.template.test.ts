@@ -130,7 +130,8 @@ describe("facilityPage", () => {
     expect(html).toContain('href="/facility/015002-birmingham-skilled-nursing"');
     expect(html).toContain('href="/compare?ids=015001%2C015002"');
     expect(html).toContain("0.72 hrs");
-    expect(html).toContain("3</strong> deficiencies");
+    // Nearby facilities now render through facilityCard: the label and value are a <dt>/<dd> pair.
+    expect(html).toContain("<dt>Deficiencies</dt><dd>3</dd>");
   });
 
   it("uses live route shapes for breadcrumb links and structured data", () => {

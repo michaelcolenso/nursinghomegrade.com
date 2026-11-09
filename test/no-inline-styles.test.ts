@@ -7,9 +7,9 @@ import { join } from "node:path";
 // UNMIGRATED shrinks with each phase of docs/design-overhaul/PLAN.md; it must be
 // empty by Phase 5. Never add a file to it.
 const UNMIGRATED = new Set([
-  "about.ts", "ask.ts", "contact.ts", "data-sources.ts", "facility.ts", "faq.ts", "glossary.ts",
+  "about.ts", "ask.ts", "contact.ts", "data-sources.ts", "faq.ts", "glossary.ts",
   "how-we-grade.ts", "methodology.ts", "privacy.ts", "reports.ts", "staffing-repeal.ts",
-  "state-report.ts", "subscribe.ts", "terms.ts", "trust.ts",
+  "state-report.ts", "subscribe.ts", "terms.ts",
 ]);
 
 const dir = "src/templates";
