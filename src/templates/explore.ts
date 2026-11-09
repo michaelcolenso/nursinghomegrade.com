@@ -14,7 +14,7 @@ export function explorePage(): string {
         background: var(--bg);
       }
       .map-tooltip {
-        font-family: 'Source Sans 3', system-ui, sans-serif;
+        font-family: var(--font-ui);
         padding: 0.5rem;
         border: 2px solid var(--ink);
         border-radius: 0;

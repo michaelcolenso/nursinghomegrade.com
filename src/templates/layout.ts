@@ -1,4 +1,6 @@
 import { SITE_CSS_HREF } from "../styles";
+import { wordmark } from "./components";
+import { icon } from "./icons";
 
 export interface LayoutOptions {
   canonicalPath?: string;
@@ -69,67 +71,57 @@ export function layout(
   ${ogTags}
   ${jsonLdTags}
   ${extraHead || ""}
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 48'%3E%3Crect width='60' height='48' rx='3' fill='%230B1D33'/%3E%3Crect x='8' y='8' width='10' height='28' fill='%23E6EBEF' rx='1'/%3E%3Crect x='28' y='8' width='10' height='28' fill='%23E6EBEF' rx='1'/%3E%3Cline x1='8' y1='36' x2='38' y2='8' stroke='%2316897A' stroke-width='3.5' stroke-linecap='round'/%3E%3Cline x1='14' y1='36' x2='44' y2='8' stroke='%2316897A' stroke-width='3.5' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <meta name="theme-color" content="#0B1D33">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Source+Sans+3:wght@400;500;600;700;800&display=swap" onload="this.rel='stylesheet'">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" onload="this.rel='stylesheet'">
   <noscript>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Source+Sans+3:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
   </noscript>
   <link rel="stylesheet" href="${SITE_CSS_HREF}">
 </head>
 <body>
   <a href="#main-content" class="skip-link">Skip to main content</a>
-  <header>
+  <header class="site-header">
     <div class="container">
       <div class="masthead">
-        <a href="/" class="masthead-lockup" aria-label="NursingHomeGrade home">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 48" width="36" height="29" aria-hidden="true" class="masthead-icon">
-            <rect width="60" height="48" rx="3" fill="#0B1D33"/>
-            <rect x="8" y="8" width="10" height="28" fill="#E6EBEF" rx="1"/>
-            <rect x="28" y="8" width="10" height="28" fill="#E6EBEF" rx="1"/>
-            <line x1="8" y1="36" x2="38" y2="8" stroke="#16897A" stroke-width="3.5" stroke-linecap="round"/>
-            <line x1="14" y1="36" x2="44" y2="8" stroke="#16897A" stroke-width="3.5" stroke-linecap="round"/>
-          </svg>
-          <span class="masthead-name">NursingHomeGrade</span>
+        <a href="/" class="brand" aria-label="NursingHomeGrade.com — home">
+          ${wordmark()}
         </a>
         <nav class="masthead-nav" aria-label="Main navigation">
-          <button class="masthead-toggle" aria-label="Toggle menu" aria-expanded="false">
+          <button class="masthead-toggle" type="button" aria-label="Toggle menu" aria-expanded="false" aria-controls="masthead-panel">
             <span class="masthead-toggle-bar"></span>
             <span class="masthead-toggle-bar"></span>
             <span class="masthead-toggle-bar"></span>
           </button>
-          <div class="masthead-nav-links">
+          <div class="masthead-panel" id="masthead-panel">
             <a href="/explore" class="masthead-nav-link">Find Facilities</a>
-            <a href="/states" class="masthead-nav-link">Ratings</a>
-            <a href="/compare" class="masthead-nav-link">Compare</a>
+            <a href="/states" class="masthead-nav-link">States</a>
             <a href="/best" class="masthead-nav-link">Best</a>
             <a href="/worst" class="masthead-nav-link">Worst</a>
-            <a href="/about" class="masthead-nav-link">About</a>
+            <a href="/compare" class="masthead-nav-link">Compare</a>
+            <a href="/how-we-grade" class="masthead-nav-link">How We Grade</a>
+            <a href="/search" class="masthead-search-btn">Search</a>
           </div>
-          <a href="/search" class="masthead-search-btn">Search</a>
         </nav>
       </div>
     </div>
   </header>
-  <main id="main-content" class="container" style="padding-top: var(--space-xl); padding-bottom: var(--space-xl);">
+  <main id="main-content" class="container site-main">
     ${body}
   </main>
   <footer>
     <div class="container">
       <div class="footer-upper">
         <div class="footer-brand">
-          <a href="/" class="footer-lockup" aria-label="NursingHomeGrade home">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 48" width="32" height="26" aria-hidden="true">
-              <rect width="60" height="48" rx="3" fill="#0B1D33"/>
-              <rect x="8" y="8" width="10" height="28" fill="#E6EBEF" rx="1"/>
-              <rect x="28" y="8" width="10" height="28" fill="#E6EBEF" rx="1"/>
-              <line x1="8" y1="36" x2="38" y2="8" stroke="#16897A" stroke-width="3.5" stroke-linecap="round"/>
-              <line x1="14" y1="36" x2="44" y2="8" stroke="#16897A" stroke-width="3.5" stroke-linecap="round"/>
-            </svg>
-            <span class="footer-wordmark">NursingHomeGrade</span>
+          <a href="/" class="footer-lockup" aria-label="NursingHomeGrade.com — home">
+            ${wordmark()}
           </a>
-          <p class="footer-tagline">Independent ratings of nursing homes<br>using official CMS data. No facility<br>payments. No conflicts of interest.</p>
+          <p class="footer-tagline">Independent ratings of nursing homes using official CMS data. No facility payments. No conflicts of interest.</p>
         </div>
 
         <nav class="footer-col" aria-label="Explore">
@@ -161,24 +153,19 @@ export function layout(
           <a href="/glossary" class="footer-link">Glossary</a>
         </nav>
 
-        <div class="footer-col">
+        <div class="footer-col footer-newsletter">
           <div class="footer-col-head">Stay Informed</div>
           <p class="footer-newsletter-desc">Get updates on ratings, data releases, and important news.</p>
           <form action="/subscribe" method="POST" class="footer-newsletter-form">
             <input type="hidden" name="facility_name" value="newsletter">
-            <input type="email" name="email" placeholder="Enter your email" required autocomplete="email" class="footer-newsletter-input">
+            <label for="footer-email" class="visually-hidden">Email address</label>
+            <input type="email" id="footer-email" name="email" placeholder="Enter your email" required autocomplete="email" class="footer-newsletter-input">
             <button type="submit" class="footer-newsletter-btn">Subscribe</button>
           </form>
           <div class="footer-social">
-            <a href="https://twitter.com/nursinghomegrade" rel="noopener" aria-label="Twitter/X" class="footer-social-link">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L2.1 2.25h6.944l4.262 5.638 4.938-5.638zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-            </a>
-            <a href="https://linkedin.com/company/nursinghomegrade" rel="noopener" aria-label="LinkedIn" class="footer-social-link">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-            </a>
-            <a href="mailto:info@nursinghomegrade.com" aria-label="Email" class="footer-social-link">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
-            </a>
+            <a href="https://twitter.com/nursinghomegrade" rel="noopener" aria-label="Twitter/X" class="footer-social-link">${icon("twitter-x", { size: 18 })}</a>
+            <a href="https://linkedin.com/company/nursinghomegrade" rel="noopener" aria-label="LinkedIn" class="footer-social-link">${icon("linkedin", { size: 18 })}</a>
+            <a href="mailto:info@nursinghomegrade.com" aria-label="Email" class="footer-social-link">${icon("mail", { size: 18 })}</a>
           </div>
         </div>
       </div>
@@ -214,6 +201,13 @@ export function layout(
         toggle.addEventListener('click', function() {
           var open = nav.classList.toggle('is-open');
           toggle.setAttribute('aria-expanded', open);
+        });
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape' && nav.classList.contains('is-open')) {
+            nav.classList.remove('is-open');
+            toggle.setAttribute('aria-expanded', 'false');
+            toggle.focus();
+          }
         });
         // Close menu when clicking a nav link
         nav.querySelectorAll('.masthead-nav-link').forEach(function(link) {
@@ -291,12 +285,12 @@ export function layout(
     })();
   </script>
   ${extraScripts || ""}
-  <div id="comparison-bar" style="display:none; position:fixed; bottom:0; left:0; width:100%; background:var(--ink); color:#fff; padding:var(--space-s) var(--space-m); justify-content:space-between; align-items:center; z-index:1000; border-top: 4px solid var(--accent); box-shadow: 0 -4px 12px rgba(0,0,0,0.15);">
-    <div style="display:flex; align-items:center; gap:var(--space-s);">
-      <div id="comparison-count" style="font-weight:700;"></div>
-      <button id="comparison-clear" style="background:none; border:none; color:rgba(255,255,255,0.6); font-family:'Inter',system-ui,sans-serif; font-size:0.8rem; cursor:pointer; padding:0; text-decoration:underline;">Clear all</button>
+  <div id="comparison-bar">
+    <div class="comparison-bar-info">
+      <div id="comparison-count"></div>
+      <button id="comparison-clear" type="button">Clear all</button>
     </div>
-    <a href="/compare" class="btn" style="background:#fff; color:var(--ink); border:none;">Compare <span id="compare-btn-count"></span> →</a>
+    <a href="/compare" class="btn">Compare <span id="compare-btn-count"></span> →</a>
   </div>
   <script>
     (function() {

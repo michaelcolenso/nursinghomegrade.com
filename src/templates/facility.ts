@@ -242,7 +242,7 @@ function renderDeficiencies(deficiencies: Deficiency[] | null): string {
                 <span style="display:inline-block;padding:0.15rem 0.5rem;font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:0.02em;background:${sevColor};color:#fff;border-radius:0;">${escHtml(d.scope_severity_code ?? "?")}</span>
                 <span style="font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);">${escHtml(sevLabel)}</span>
                 ${tag ? `<span style="font-size:0.8rem;color:var(--ink);font-weight:800;">${escHtml(tag)}</span>` : ""}
-                <span style="font-size:0.8rem;color:var(--accent);font-weight:800;text-transform:uppercase;letter-spacing:0.05em;margin-left:auto;">${escHtml(statusLabel)}</span>
+                <span style="font-size:0.8rem;color:${isUncorrectedDeficiency(d) ? "var(--alarm)" : "var(--muted)"};font-weight:800;text-transform:uppercase;letter-spacing:0.05em;margin-left:auto;">${escHtml(statusLabel)}</span>
               </div>
               <p style="font-weight:800;font-family:'Playfair Display',Georgia,serif;font-size:1.4rem;line-height:1.2;margin-bottom:var(--space-2xs);">${escHtml(d.deficiency_description ?? "Unknown deficiency")}</p>
               <p style="font-size:0.95rem;color:var(--muted);margin-bottom:0;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">${escHtml(d.deficiency_category ?? "")}${corrected ? escHtml(corrected + correctionDate) : ""}</p>
@@ -828,7 +828,7 @@ export function facilityPage(
             <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">RN Staffing</div>
             <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Registered nurse time each resident receives daily. ${escHtml(BENCHMARK_ROW_NOTE)}</div>
           </td>
-          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Source Sans 3',system-ui,sans-serif;font-size:1.5rem;text-align:right;color:${meetsMinimum ? "var(--accent-positive)" : "var(--grade-F)"}">
+          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:var(--font-ui);font-size:1.5rem;text-align:right;color:${meetsMinimum ? "var(--accent-positive)" : "var(--grade-F)"}">
             ${escHtml(rnDisplay)}
           </td>
         </tr>
@@ -840,7 +840,7 @@ export function facilityPage(
             <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">Health Deficiencies (last 3 survey cycles)</div>
             <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Violations found during federal inspections, with how many remain open and how many involved actual harm.</div>
           </td>
-          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-family:'Source Sans 3',system-ui,sans-serif;text-align:right;">
+          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-family:var(--font-ui);text-align:right;">
             ${renderDeficiencyCluster(deficiencyCounts, deficiencyDataAvailable)}
           </td>
         </tr>
@@ -849,7 +849,7 @@ export function facilityPage(
             <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">CMS Ratings</div>
             <div style="font-size:0.95rem;color:var(--muted);font-weight:400;line-height:1.4;">Federal five-star ratings published by CMS. These are regulatory ratings, not consumer review scores.</div>
           </td>
-          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Source Sans 3',system-ui,sans-serif;font-size:1.25rem;text-align:right;">
+          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:var(--font-ui);font-size:1.25rem;text-align:right;">
             ${overallStars ? `<div style="margin-bottom:var(--space-3xs);">Overall: ${overallStars}</div>` : ""}
             ${inspectionStars ? `<div style="margin-bottom:var(--space-3xs);">Health inspection: ${inspectionStars}</div>` : ""}
             <div style="margin-bottom:var(--space-3xs);">Quality: ${qualityStars}</div>
@@ -860,7 +860,7 @@ export function facilityPage(
           <td class="quality-label-cell" style="padding:var(--space-m) 0;">
             <div style="font-weight:700;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em;color:var(--muted);margin-bottom:var(--space-3xs);">NursingHomeGrade Score</div>
           </td>
-          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:'Source Sans 3',system-ui,sans-serif;font-size:2.5rem;text-align:right;">${f.grade_letter === "NR" || f.grade_score < 0 ? "Not rated" : `${f.grade_score}/100`}</td>
+          <td class="quality-value-cell" style="padding:var(--space-m) 0;font-weight:700;font-family:var(--font-ui);font-size:2.5rem;text-align:right;">${f.grade_letter === "NR" || f.grade_score < 0 ? "Not rated" : `${f.grade_score}/100`}</td>
         </tr>
       </table>
     </div>

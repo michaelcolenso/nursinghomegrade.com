@@ -172,7 +172,7 @@ export function cityPage(data: CityPageData): string {
     <div style="display: flex; gap: var(--space-l); flex-wrap: wrap; align-items: flex-end; margin-bottom: var(--space-l); padding: var(--space-m); background: var(--bg); border: 2px solid var(--ink);">
       <label style="font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; display: grid; gap: var(--space-3xs);">
         Sort by
-        <select id="city-sort" style="padding: var(--space-2xs) var(--space-xs); border: 2px solid var(--ink); border-radius: 0; font-size: 1rem; background: #fff; font-family: 'Source Sans 3', system-ui, sans-serif; font-weight: 700; min-height: 44px;">
+        <select id="city-sort" style="padding: var(--space-2xs) var(--space-xs); border: 2px solid var(--ink); border-radius: 0; font-size: 1rem; background: #fff; font-family: var(--font-ui); font-weight: 700; min-height: 44px;">
           <option value="grade">Best grade first</option>
           <option value="name">Name A–Z</option>
         </select>
@@ -222,7 +222,7 @@ export function cityPage(data: CityPageData): string {
       <h2 style="color: #fff; margin-bottom: var(--space-m);">Don't see a facility?</h2>
       <p style="font-size: 1.1rem; opacity: 0.7; max-width: 600px; margin: 0 auto var(--space-xl);">Search by ZIP code to find all facilities within 25 miles of ${escHtml(cityName)}.</p>
       <form action="/search" method="GET" class="city-zip-form" style="display: flex; gap: var(--space-xs); max-width: 500px; margin: 0 auto;">
-        <input type="text" name="zip" placeholder="ZIP code" pattern="[0-9]{5}" title="Enter a 5-digit ZIP code" maxlength="5" required autocomplete="postal-code" inputmode="numeric" style="flex: 1; padding: var(--space-s); border-radius: 0; border: none; background: #fff; color: var(--ink); font-family: 'Source Sans 3', system-ui, sans-serif; font-size: 1rem;">
+        <input type="text" name="zip" placeholder="ZIP code" pattern="[0-9]{5}" title="Enter a 5-digit ZIP code" maxlength="5" required autocomplete="postal-code" inputmode="numeric" style="flex: 1; padding: var(--space-s); border-radius: 0; border: none; background: #fff; color: var(--ink); font-family: var(--font-ui); font-size: 1rem;">
         <button type="submit" class="btn-on-dark">Find Near Me</button>
       </form>
     </div>
