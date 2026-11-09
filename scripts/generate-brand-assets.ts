@@ -46,11 +46,11 @@ function layoutText(font: OTFont, text: string, x0: number, y0: number, size: nu
     parts.push({ d: p.toPathData(2), box: p.getBoundingBox() });
     x += font.getAdvanceWidth(ch, size) + tracking;
     const next = chars[i + 1];
-    if (next) x += font.getKerningValue(font.charToGlyph(ch), font.charToGlyph(next)) * scale;
+    if (next) x += (font.getKerningValue(font.charToGlyph(ch), font.charToGlyph(next)) || 0) * scale;
   });
-  if (parts.some((p) => p.d.includes("NaN") || p.d.length === 0)) {
-    throw new Error(`Bad glyph path while laying out "${text}": ${parts.map((p, i) => (p.d.includes("NaN") || !p.d ? chars[i] + "@" + p.d.slice(0, 20) : "")).filter(Boolean).join(" ")}`);
-  }
+  // Whitespace legitimately has no outline; every other glyph must produce a finite path.
+  const bad = parts.map((p, i) => (p.d.includes("NaN") || (!p.d && (chars[i] ?? "").trim() !== "") ? (chars[i] ?? "") + "@" + p.d.slice(0, 20) : "")).filter(Boolean);
+  if (bad.length) throw new Error(`Bad glyph path while laying out "${text}": ${bad.join(" ")}`);
   return { parts, advance: x - x0 };
 }
 
@@ -87,6 +87,28 @@ function buildWordmark() {
     viewBox: `${r(x1)} ${r(y1)} ${r(w)} ${r(h)}`,
     aspect: r(w / h),
     inner: (ink: string) => `<path fill="${ink}" d="${mainD}"/><path fill="${TEAL}" d="${comD}"/>`,
+  };
+}
+
+// ── OG tagline ────────────────────────────────────────────────────────────
+// Outlined Inter Medium, two lines, for the social-share image (src/og-svg.ts).
+// Outlines, not <text>: sharp cannot resolve webfonts, and a fallback serif would
+// silently change the brand.
+function buildOgTagline() {
+  const inter = loadFont("Inter-Medium.ttf");
+  const SIZE = 100;
+  const LINE_HEIGHT = 135;
+  const lines = ["Independent nursing home grades", "from official CMS data"];
+  const laid = lines.map((t, i) => layoutText(inter, t, 0, i * LINE_HEIGHT, SIZE));
+  const all = laid.flatMap((l) => l.parts).filter((p) => p.d); // spaces have no outline (and a 0,0,0,0 box)
+  const x1 = Math.min(...all.map((p) => p.box.x1));
+  const y1 = Math.min(...all.map((p) => p.box.y1));
+  const x2 = Math.max(...all.map((p) => p.box.x2));
+  const y2 = Math.max(...all.map((p) => p.box.y2));
+  return {
+    viewBox: `${r(x1)} ${r(y1)} ${r(x2 - x1)} ${r(y2 - y1)}`,
+    aspect: r((x2 - x1) / (y2 - y1)),
+    inner: `<path fill="#D3DEE7" d="${all.map((p) => p.d).join("")}"/>`,
   };
 }
 
@@ -156,6 +178,7 @@ async function png(svg: string, px: number, nativeSize: number): Promise<string>
 
 async function main() {
   const wm = buildWordmark();
+  const tag = buildOgTagline();
   const roundedApp = appIcon({ rounded: true });
   const squareApp = appIcon({ rounded: false });
 
@@ -166,6 +189,9 @@ export const WORDMARK_VIEWBOX = ${JSON.stringify(wm.viewBox)};
 export const WORDMARK_ASPECT = ${wm.aspect};
 export const WORDMARK_SVG_INNER = ${JSON.stringify(wm.inner(NAVY))};
 export const WORDMARK_SVG_INNER_REVERSED = ${JSON.stringify(wm.inner(WHITE))};
+export const OG_TAGLINE_VIEWBOX = ${JSON.stringify(tag.viewBox)};
+export const OG_TAGLINE_ASPECT = ${tag.aspect};
+export const OG_TAGLINE_SVG_INNER = ${JSON.stringify(tag.inner)};
 export const ICON_SVG = ${JSON.stringify(ICON_SVG)};
 export const APP_ICON_SVG = ${JSON.stringify(roundedApp)};
 export const FAVICON_SVG = ${JSON.stringify(FAVICON_SVG)};

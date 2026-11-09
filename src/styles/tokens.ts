@@ -29,24 +29,6 @@ export const TOKENS_CSS = `
       --alarm: var(--grade-F-ink);  /* replaces burgundy wherever it meant "bad" */
       --focus: #0F6E62;             /* 2px outline, 2px offset */
 
-      /* Legacy aliases (Phase 1 only; deleted in Phase 6). Un-migrated templates still use these. */
-      --ink: var(--navy-900);
-      --muted: var(--slate-600);
-      --rule: var(--line);
-      --accent: var(--teal-700);
-      --accent-hover: var(--teal-800);
-      --accent-positive: var(--teal-700);
-      --grade-A: var(--grade-A-ink);
-      --grade-B: var(--grade-B-ink);
-      --grade-C: var(--grade-C-ink);
-      --grade-D: var(--grade-D-ink);
-      --grade-F: var(--grade-F-ink);
-
-      /* Severity colours */
-      --sev-low: var(--slate-600);
-      --sev-med: var(--grade-C-ink);
-      --sev-high: var(--grade-F-ink);
-
       /* Type */
       --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
       --font-ui: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;

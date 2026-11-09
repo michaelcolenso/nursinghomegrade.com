@@ -16,7 +16,6 @@ export const PAGES_CSS = `
       border: 1px solid var(--line);
       border-radius: var(--radius-md);
     }
-    .results-controls label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--slate-600); display: grid; gap: var(--space-3xs); }
     .results-controls select {
       min-height: 44px;
       padding: 0 var(--space-xs);
@@ -41,27 +40,6 @@ export const PAGES_CSS = `
       transition: box-shadow 0.15s ease-out;
       display: grid;
     }
-    .result-item:hover { box-shadow: var(--shadow-2); }
-    .result-item-A { border-left-color: var(--grade-A-fill); }
-    .result-item-B { border-left-color: var(--grade-B-fill); }
-    .result-item-C { border-left-color: var(--grade-C-fill); }
-    .result-item-D { border-left-color: var(--grade-D-fill); }
-    .result-item-F { border-left-color: var(--grade-F-fill); }
-    .result-main { display: grid; grid-template-columns: 96px 1fr; gap: var(--space-l); align-items: start; }
-    .result-grade { text-align: center; }
-    .result-grade-letter { font-size: 4rem; font-weight: 700; line-height: 0.9; display: block; margin-bottom: var(--space-2xs); }
-    .result-grade-score { font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--slate-600); font-variant-numeric: tabular-nums; }
-    .result-rank { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--teal-700); display: block; margin-bottom: var(--space-2xs); }
-    .result-name { font-family: var(--font-display); font-size: 1.625rem; font-weight: 700; color: var(--navy-900); text-decoration: none; line-height: 1.15; margin-bottom: var(--space-3xs); display: block; }
-    .result-name:visited { color: var(--navy-900); }
-    .result-name:hover { color: var(--teal-700); }
-    .result-meta { font-size: 0.875rem; font-weight: 500; color: var(--slate-600); margin-bottom: var(--space-s); }
-    .result-distance { font-weight: 600; color: var(--teal-700); font-size: 0.875rem; }
-    .result-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--space-xs); margin-bottom: var(--space-s); }
-    .result-stat { padding: var(--space-xs) var(--space-s); background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm); }
-    .result-stat-label { font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--slate-600); display: block; margin-bottom: var(--space-3xs); }
-    .result-stat-value { font-size: 1.125rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-    .result-summary { font-size: 1rem; line-height: 1.5; color: var(--navy-900); }
 
     #map-toggle-btn { margin-top: var(--space-s); }
     #results-map { display: none; width: 100%; height: 400px; margin-bottom: var(--space-l); border: 1px solid var(--line-strong); border-radius: var(--radius-md); }
@@ -147,16 +125,6 @@ export const PAGES_CSS = `
       .search-bar .geo-btn { border-left: 1px solid var(--line-strong); }
       .search-bar:has(.geo-btn) button:not(.geo-btn) { border-radius: var(--radius-sm); }
       .cta-box { padding: var(--space-m); }
-      .results-controls { gap: var(--space-s); padding: var(--space-s); }
-      .results-controls label { width: 100%; }
-      .results-controls select { width: 100%; }
-      .result-item { padding: var(--space-s) var(--space-m); }
-      .result-main { grid-template-columns: 1fr; gap: var(--space-s); }
-      .result-grade { text-align: left; display: flex; align-items: baseline; gap: var(--space-s); }
-      .result-grade-letter { font-size: 3.5rem; margin-bottom: 0; }
-      .result-rank { margin-bottom: 0; }
-      .result-info > div:first-child { flex-direction: column; gap: var(--space-s); }
-      .result-info button { min-height: 44px; padding: 0.55rem 0.8rem !important; align-self: flex-start; }
       .quality-breakdown { overflow-x: visible; }
       .quality-table { min-width: 0; width: 100%; }
       .quality-table tbody, .quality-table tr, .quality-table td { display: block; width: 100%; }
@@ -169,11 +137,8 @@ export const PAGES_CSS = `
       .nearby-header .btn-secondary { margin-top: var(--space-s); }
           .pull-quote a, main > p a, .card a[href="/about"], footer a { display: inline-flex !important; min-height: 44px; align-items: center; }
       .city-result-card { padding: var(--space-m) !important; }
-      .city-result-grid { grid-template-columns: 1fr !important; gap: var(--space-m) !important; }
-      .city-result-metrics { flex-wrap: wrap; gap: var(--space-m) !important; }
       .city-result-card a:not(.btn) { min-height: 44px; display: flex !important; align-items: center; }
       .city-result-card .grade-badge { width: 72px; }
-      .city-zip-cta { padding: var(--space-l) var(--space-m) !important; text-align: left !important; }
       .city-zip-form { flex-direction: column; }
       .city-zip-form input, .city-zip-form button { width: 100%; min-height: 44px; }
       .comparison-table { min-width: 560px !important; }

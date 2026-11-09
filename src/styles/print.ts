@@ -11,7 +11,7 @@ export const PRINT_CSS = `
       h1 { font-size: 2.25rem; margin-top: 1rem; }
       .display { font-size: 3rem; }
       .fac-head { grid-template-columns: 1fr auto; grid-template-areas: "title chip"; }
-      .fac-summary, .def, .fact-grid, .stat-tile, .quality-row, .result-item, .metric-row, .snapshot-card, .fcard { break-inside: avoid; border-color: #000; box-shadow: none; }
+      .fac-summary, .def, .fact-grid, .stat-tile, .quality-row, .metric-row, .snapshot-card, .fcard { break-inside: avoid; border-color: #000; box-shadow: none; }
       .fac-summary { padding: 0; border: 0; }
       h2, h3 { break-after: avoid; }
       a { text-decoration: none; color: #000; }

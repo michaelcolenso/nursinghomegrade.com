@@ -8,7 +8,6 @@ export const EDITORIAL_CSS = `
     .muted-lg { margin-bottom: var(--space-l); color: var(--slate-600); }
     .text-alarm { color: var(--alarm); }
     .text-ok { color: var(--grade-A-ink); }
-    .text-muted { color: var(--slate-600); }
     .sev-text--jeopardy { color: var(--grade-F-ink); }
     .sev-text--harm { color: var(--grade-D-ink); }
     .sev-text--low { color: var(--slate-600); }
