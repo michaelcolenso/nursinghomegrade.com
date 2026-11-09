@@ -12,6 +12,8 @@ export interface LayoutOptions {
   jsonLd?: object[];
   extraHead?: string;
   extraScripts?: string;
+  /** Render <main> without the centred container so the page can supply full-width bands (each band brings its own .container). */
+  bare?: boolean;
 }
 
 export function layout(
@@ -20,7 +22,7 @@ export function layout(
   body: string,
   options: LayoutOptions = {},
 ): string {
-  const { canonicalPath, noindex, ogType = "website", ogImage, jsonLd, extraHead, extraScripts } = options;
+  const { canonicalPath, noindex, ogType = "website", ogImage, jsonLd, extraHead, extraScripts, bare } = options;
   const canonicalUrl = canonicalPath
     ? `https://nursinghomegrade.com${canonicalPath}`
     : undefined;
@@ -113,7 +115,7 @@ export function layout(
       </div>
     </div>
   </header>
-  <main id="main-content" class="container site-main">
+  <main id="main-content" class="${bare ? "site-main site-main--bare" : "container site-main"}">
     ${body}
   </main>
   <footer>

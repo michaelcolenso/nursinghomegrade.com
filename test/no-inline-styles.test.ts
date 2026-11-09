@@ -8,7 +8,7 @@ import { join } from "node:path";
 // empty by Phase 5. Never add a file to it.
 const UNMIGRATED = new Set([
   "about.ts", "ask.ts", "contact.ts", "data-sources.ts", "facility.ts", "faq.ts", "glossary.ts",
-  "home.ts", "how-we-grade.ts", "methodology.ts", "privacy.ts", "reports.ts", "staffing-repeal.ts",
+  "how-we-grade.ts", "methodology.ts", "privacy.ts", "reports.ts", "staffing-repeal.ts",
   "state-report.ts", "subscribe.ts", "terms.ts", "trust.ts",
 ]);
 

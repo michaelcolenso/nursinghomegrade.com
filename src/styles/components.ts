@@ -170,7 +170,7 @@ export const COMPONENTS_CSS = `
     .grade-badge-score { font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-top: 0.15rem; }
 
     /* Tables */
-    .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: var(--space-l); max-width: 100%; }
+    .table-container { position: relative; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: var(--space-l); max-width: 100%; }
     table { width: 100%; border-collapse: collapse; min-width: 600px; }
 
     /* CTA box (dark) */

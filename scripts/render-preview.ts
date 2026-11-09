@@ -113,8 +113,19 @@ const ops: Operator[] = [
 ] as Operator[];
 const hub = { mega: [ops[0] as Operator], large: [ops[1] as Operator], mid: [ops[2] as Operator], small: [] as Operator[], tierCounts: { Mega: 18, Large: 520, Mid: 2163, Small: 4675 } };
 
+const homeStats = {
+  avgScore: 61.4,
+  totalFacilities: 14712,
+  distribution: {
+    gradeCounts: { A: 1650, B: 3120, C: 4410, D: 3090, F: 1840, NR: 602 },
+    scoreBuckets: [120, 260, 510, 930, 1480, 1960, 2450, 2840, 2380, 1180],
+    computedAt: "2026-10-12 00:00:00",
+  },
+};
+
 const pages: Record<string, string> = {
-  home: homePage(62, releases),
+  home: homePage(62, releases, { stats: homeStats, topRated: list.slice(0, 4) as Facility[] }),
+  "home-no-dist": homePage(62, releases, { stats: { ...homeStats, distribution: null }, topRated: [] }),
   search: searchResultsPage("10044", list as Array<Facility & { distance?: number }>, { releases, states: [{ state: "NY", count: 6 }] }),
   "search-empty": searchFormPage(releases),
   state: statePage({
