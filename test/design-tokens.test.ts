@@ -80,3 +80,12 @@ describe("design tokens: grade ink on its own tint (pills, partial-data tag)", (
     });
   }
 });
+
+describe("design tokens: legacy aliases are gone", () => {
+  it("defines no pre-overhaul alias (--ink, --muted, --rule, --accent*, --sev-*, bare --grade-X)", () => {
+    for (const legacy of ["--ink", "--muted", "--rule", "--accent", "--accent-hover", "--accent-positive", "--sev-low", "--sev-med", "--sev-high"]) {
+      expect(TOKENS_CSS, legacy).not.toMatch(new RegExp(`${legacy}\\s*:`));
+    }
+    expect(TOKENS_CSS).not.toMatch(/--grade-[A-F]\s*:/);
+  });
+});
