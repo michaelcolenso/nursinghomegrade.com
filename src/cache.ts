@@ -1,7 +1,7 @@
 // Start a new generation of stable-page HTML with a separate stale copy.
 // Earlier cache generations must not supply fallback HTML after a rollout.
-// v35: design overhaul Phase 3 (homepage rebuild).
-const HTML_CACHE_VERSION = "html:v35";
+// v36: design overhaul Phase 4 (facility page rebuild).
+const HTML_CACHE_VERSION = "html:v36";
 
 export const HTML_STALE_TTL_SECONDS = 604800;
 
