@@ -1,6 +1,6 @@
 // Bumped for thin-city noindex rules. Earlier indexable city HTML must not
 // survive the rollout under an old cache key.
-const HTML_CACHE_VERSION = "html:v31";
+const HTML_CACHE_VERSION = "html:v32";
 
 export function htmlCacheKey(key: string): string {
   return `${HTML_CACHE_VERSION}:${key}`;
