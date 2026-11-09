@@ -18,6 +18,7 @@ import { htmlToMarkdown } from "./markdown";
 import { OG_SVG } from "./og-svg";
 import { OG_PNG_BASE64 } from "./og-png.generated";
 import { SITE_CSS, SITE_CSS_HASH } from "./styles";
+import { handleBrandAsset } from "./brand-assets";
 import { methodologyPage } from "./templates/methodology";
 import { contactPage } from "./templates/contact";
 import { privacyPage } from "./templates/privacy";
@@ -480,6 +481,10 @@ async function route(request: Request, env: Env): Promise<Response> {
         },
       });
     }
+
+    // ── Favicons, app icons, web manifest ──────────────────────────────
+    const brandAsset = handleBrandAsset(path);
+    if (brandAsset) return brandAsset;
 
     // ── OG image ───────────────────────────────────────────────────────
     // Twitter/X, Facebook, and LinkedIn don't render SVG preview images, so
