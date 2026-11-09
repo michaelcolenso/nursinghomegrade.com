@@ -2,7 +2,7 @@ import type { Env } from "../types";
 import type { Facility } from "../types";
 import { htmlCacheKey, pageCache, staleHtmlResponse, htmlResponseCacheControl } from "../cache";
 import { logPageRenderError } from "../page-errors";
-import { getNationalPctFailing, searchByZipExact, searchNearby, getStatesWithCounts, getDataReleases } from "../db";
+import { getNationalPctFailing, searchByZipExact, searchNearby, getStatesWithCounts, getDataReleases, getHomeStats, getTopRatedFacilities } from "../db";
 import { homePage } from "../templates/home";
 import { searchResultsPage, searchFormPage } from "../templates/search";
 import { errorPage } from "../templates/subscribe";
@@ -19,10 +19,23 @@ export async function handleHome(request: Request, env: Env): Promise<Response> 
         },
       });
 
-    const [pctFailing, releases] = await Promise.all([
-      getNationalPctFailing(env), getDataReleases(env),
+    // The overview card and top-rated tiles are additive: if either fails on its own
+    // the homepage still renders without it. A failure of the core queries keeps the
+    // existing behaviour (rethrown below: stale copy, else 503), logged once.
+    const [pct, releasesResult, statsResult, topResult] = await Promise.allSettled([
+      getNationalPctFailing(env),
+      getDataReleases(env),
+      getHomeStats(env),
+      getTopRatedFacilities(env, 4),
     ]);
-    const html = homePage(pctFailing, releases);
+    if (pct.status === "rejected") throw pct.reason;
+    if (releasesResult.status === "rejected") throw releasesResult.reason;
+    if (statsResult.status === "rejected") logPageRenderError("/ (home stats)", statsResult.reason);
+    if (topResult.status === "rejected") logPageRenderError("/ (top rated)", topResult.reason);
+    const html = homePage(pct.value, releasesResult.value, {
+      stats: statsResult.status === "fulfilled" ? statsResult.value : null,
+      topRated: topResult.status === "fulfilled" ? topResult.value : [],
+    });
     await pageCache.putWithStale(cacheKey, html, { expirationTtl: 3600 });
     return new Response(html, {
       headers: {

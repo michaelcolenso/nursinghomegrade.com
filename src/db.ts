@@ -597,6 +597,56 @@ export async function getNationalAverages(env: Env): Promise<{
   };
 }
 
+export type HomeGradeKey = "A" | "B" | "C" | "D" | "F" | "NR";
+
+export interface HomeStats {
+  /** Mean NursingHomeGrade score over rated facilities (site_stats.avg_grade). */
+  avgScore: number;
+  totalFacilities: number;
+  /** Null when the distribution table is missing or empty: the page then shows the average and total only. */
+  distribution: {
+    gradeCounts: Record<HomeGradeKey, number>;
+    /** Ten 10-point score buckets, lowest first; 100 is folded into the last. Rated facilities only. */
+    scoreBuckets: number[];
+    computedAt: string;
+  } | null;
+}
+
+/**
+ * National figures for the homepage overview card, all precomputed by the
+ * ingest. Never throws for a missing site_grade_distribution table (migration
+ * 014 may not be applied remotely yet): the distribution is simply null.
+ * Returns null when there is no national row to show at all.
+ */
+export async function getHomeStats(env: Env): Promise<HomeStats | null> {
+  const site = await env.DB.prepare("SELECT avg_grade, total_facilities FROM site_stats WHERE id = 1").first<{
+    avg_grade: number;
+    total_facilities: number;
+  }>();
+  if (!site || !(site.total_facilities > 0)) return null;
+
+  let distribution: HomeStats["distribution"] = null;
+  try {
+    const rows = await env.DB.prepare("SELECT bucket, n, computed_at FROM site_grade_distribution").all<{
+      bucket: string;
+      n: number;
+      computed_at: string;
+    }>();
+    const byBucket = new Map((rows.results ?? []).map((r) => [r.bucket, r]));
+    const letters: HomeGradeKey[] = ["A", "B", "C", "D", "F", "NR"];
+    const gradeCounts = Object.fromEntries(letters.map((l) => [l, byBucket.get(l)?.n ?? 0])) as Record<HomeGradeKey, number>;
+    const scoreBuckets = Array.from({ length: 10 }, (_, i) => byBucket.get(`s${i}0`)?.n ?? 0);
+    const rated = scoreBuckets.reduce((a, b) => a + b, 0);
+    if (rated > 0) {
+      distribution = { gradeCounts, scoreBuckets, computedAt: [...byBucket.values()][0]?.computed_at ?? "" };
+    }
+  } catch {
+    distribution = null;
+  }
+
+  return { avgScore: site.avg_grade, totalFacilities: site.total_facilities, distribution };
+}
+
 export async function getFacilitySnapshots(env: Env, cmsId: string): Promise<FacilitySnapshot[]> {
   const results = await env.DB.prepare(
     "SELECT * FROM facility_snapshots WHERE cms_id = ? ORDER BY snapshot_date ASC"

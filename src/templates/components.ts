@@ -4,6 +4,7 @@ import { WORDMARK_SVG_INNER, WORDMARK_SVG_INNER_REVERSED, WORDMARK_VIEWBOX } fro
 import { RN_BENCHMARK, benchmarkLabel } from "../staffing-standard";
 import { scoreToGrade, scoreToSummary, type ScoreInputKey } from "../scoring";
 import { escHtml } from "./escape";
+import { icon, type IconName } from "./icons";
 
 export type GradeKey = "A" | "B" | "C" | "D" | "F" | "NR";
 
@@ -305,4 +306,56 @@ export function operatorCard(
     </div>
     <div class="fcard-chip">${scoreBar(score, { size: "lg" })}</div>
   </article>`;
+}
+
+// ── Page sections ────────────────────────────────────────────────────────
+
+export interface SectionOptions {
+  id?: string;
+  eyebrow?: string;
+  /** Pre-escaped or plain heading text. Rendered as <h2>. */
+  title?: string;
+  intro?: string;
+  /** Right-aligned content on the heading row (e.g. a "View all" link). */
+  action?: string;
+  body: string;
+  tone?: "plain" | "tint" | "dark";
+  /** Extra class names for the section element. */
+  className?: string;
+}
+
+/** A full-width band with its own container. Use inside a `bare` layout; owns the vertical rhythm. */
+export function section(o: SectionOptions): string {
+  const { id, eyebrow, title, intro, action, body, tone = "plain", className = "" } = o;
+  const head =
+    title || eyebrow || intro
+      ? `<div class="section-head">
+        <div class="section-head-text">
+          ${eyebrow ? `<p class="eyebrow">${escHtml(eyebrow)}</p>` : ""}
+          ${title ? `<h2 class="section-title">${title}</h2>` : ""}
+          ${intro ? `<p class="section-intro">${intro}</p>` : ""}
+        </div>
+        ${action ? `<div class="section-action">${action}</div>` : ""}
+      </div>`
+      : "";
+  return `<section${id ? ` id="${escHtml(id)}"` : ""} class="section section--${tone}${className ? ` ${escHtml(className)}` : ""}">
+    <div class="container">
+      ${head}
+      ${body}
+    </div>
+  </section>`;
+}
+
+const PILLARS: Array<{ icon: IconName; title: string; text: string }> = [
+  { icon: "shield-check", title: "Independent", text: "No facility payments." },
+  { icon: "clipboard-list", title: "Transparent", text: "Public data. Clear methodology." },
+  { icon: "bar-chart-3", title: "Data-driven", text: "Official CMS data, updated with each release." },
+  { icon: "users", title: "For families", text: "Better information. Better decisions." },
+];
+
+/** The brand's four commitments, as on the design board's bottom strip. */
+export function trustPillars(): string {
+  return `<ul class="pillars list-plain">${PILLARS.map(
+    (p) => `<li class="pillar"><span class="pillar-icon">${icon(p.icon, { size: 22 })}</span><span class="pillar-text"><strong>${p.title}</strong><span>${p.text}</span></span></li>`,
+  ).join("")}</ul>`;
 }

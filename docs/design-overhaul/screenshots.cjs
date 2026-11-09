@@ -52,7 +52,7 @@ const ROUTES = [
   if (isFile) {
     // scripts/render-preview.ts must emit these facility fixtures (A/complete,
     // D with uncorrected + jeopardy deficiencies, NR/withheld) — see PLAN §6 Phase 4.
-    routes.push(["facility", ""], ["facility-d", ""], ["facility-nr", ""], ["operator", ""]);
+    routes.push(["facility", ""], ["facility-d", ""], ["facility-nr", ""], ["operator", ""], ["home-no-dist", ""]);
   } else {
     const probe = await browser.newPage();
     try {

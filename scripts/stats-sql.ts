@@ -59,3 +59,44 @@ SELECT f.state, f.pct_failing, m.rn_median, datetime('now')
   JOIN medians m ON m.state = f.state
  WHERE true
 ON CONFLICT(state) DO UPDATE SET pct_failing=excluded.pct_failing, rn_median=excluded.rn_median, computed_at=excluded.computed_at;`;
+
+/**
+ * National grade distribution behind the homepage histogram. One row per bucket:
+ *   'A'..'F'      rated facilities per letter
+ *   'NR'          facilities whose grade is withheld (NR, or a negative score)
+ *   's00'..'s90'  rated facilities per 10-point score bucket (100 folds into s90)
+ * "Rated" matches site_stats.avg_grade: grade_letter != 'NR' AND grade_score >= 0.
+ *
+ * Starts with CREATE TABLE IF NOT EXISTS so the production data refresh creates
+ * the table itself if migration 014 was never applied remotely. Migration 014
+ * contains the same statements for databases that apply it directly.
+ */
+export const SITE_GRADE_DISTRIBUTION_REFRESH_SQL = `CREATE TABLE IF NOT EXISTS site_grade_distribution (
+  bucket TEXT PRIMARY KEY,
+  n INTEGER NOT NULL,
+  computed_at TEXT NOT NULL
+);
+
+DELETE FROM site_grade_distribution;
+
+WITH rated AS (
+  SELECT grade_letter, grade_score
+    FROM facilities
+   WHERE grade_letter != 'NR' AND grade_score >= 0
+),
+buckets(bucket) AS (
+  VALUES ('A'),('B'),('C'),('D'),('F'),('NR'),
+         ('s00'),('s10'),('s20'),('s30'),('s40'),('s50'),('s60'),('s70'),('s80'),('s90')
+)
+INSERT INTO site_grade_distribution (bucket, n, computed_at)
+SELECT b.bucket,
+       CASE
+         WHEN b.bucket IN ('A','B','C','D','F')
+           THEN (SELECT COUNT(*) FROM rated WHERE grade_letter = b.bucket)
+         WHEN b.bucket = 'NR'
+           THEN (SELECT COUNT(*) FROM facilities) - (SELECT COUNT(*) FROM rated)
+         ELSE (SELECT COUNT(*) FROM rated
+                WHERE MIN(CAST(grade_score / 10 AS INTEGER), 9) = CAST(substr(b.bucket, 2, 1) AS INTEGER))
+       END,
+       datetime('now')
+  FROM buckets b;`;
