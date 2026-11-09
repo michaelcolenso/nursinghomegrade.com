@@ -7,6 +7,7 @@ The NursingHomeGrade wordmark and the "NHG" lettering in the icon are **outlined
 |---|---|---|---|
 | Playfair Display (SemiBold 600, Regular 400) | Wordmark | https://github.com/google/fonts/tree/main/ofl/playfairdisplay | SIL Open Font License 1.1 |
 | Inter (ExtraBold 800, opsz 32) | "NHG" lettering in the icon | https://github.com/google/fonts/tree/main/ofl/inter | SIL Open Font License 1.1 |
+| Inter (Medium 500, opsz 28) | Tagline in the social-share image (`src/og-svg.ts`) | https://github.com/google/fonts/tree/main/ofl/inter | SIL Open Font License 1.1 |
 
 The OFL permits using, embedding and modifying the fonts, including converting glyphs to outlines in a logo, provided
 the fonts themselves are not sold on their own. The font binaries are **not** committed (`data/` is gitignored); fetch them

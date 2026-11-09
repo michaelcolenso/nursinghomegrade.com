@@ -27,6 +27,7 @@ INSTANCES = [
     ("PlayfairDisplay[wght].ttf", "PlayfairDisplay-SemiBold.ttf", {"wght": 600}),
     ("PlayfairDisplay[wght].ttf", "PlayfairDisplay-Regular.ttf", {"wght": 400}),
     ("Inter[opsz,wght].ttf", "Inter-ExtraBold.ttf", {"wght": 800, "opsz": 32}),
+    ("Inter[opsz,wght].ttf", "Inter-Medium.ttf", {"wght": 500, "opsz": 28}),
 ]
 
 for name, url in SOURCES.items():
