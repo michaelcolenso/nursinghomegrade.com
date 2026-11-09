@@ -1,4 +1,5 @@
 import { layout } from "./layout";
+import { breadcrumb } from "./components";
 
 interface FaqEntry {
   question: string;
@@ -64,15 +65,11 @@ export function faqPage(): string {
   ];
 
   const body = `
-    <nav class="breadcrumb" aria-label="Breadcrumb">
-      <a href="/">Home</a>
-      <span class="breadcrumb-sep">›</span>
-      <span style="color:var(--ink);">FAQ</span>
-    </nav>
+    ${breadcrumb([{ label: "Home", href: "/" }, { label: "FAQ" }])}
 
     <h1>Frequently Asked Questions</h1>
 
-    <div style="max-width:800px;">
+    <div class="prose">
       ${FAQ_ENTRIES.map(
         (entry) => `
         <h2>${entry.question}</h2>
@@ -81,7 +78,7 @@ export function faqPage(): string {
       ).join("")}
     </div>
 
-    <p style="margin-top:2rem;"><a href="/">← Back to home</a></p>
+    <p class="back-link"><a class="link-arrow" href="/">← Back to home</a></p>
   `;
 
   return layout(

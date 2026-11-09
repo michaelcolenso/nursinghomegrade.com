@@ -38,6 +38,13 @@ const ROUTES = [
   ["about", "/about"],
   ["faq", "/faq"],
   ["report-staffing", "/reports/staffing-failures"],
+  ["report-repeal", "/reports/staffing-standard-repeal"],
+  ["data-sources", "/data-sources"],
+  ["contact", "/contact"],
+  ["privacy", "/privacy"],
+  ["terms", "/terms"],
+  ["glossary", "/glossary"],
+  ["ask", "/ask"],
   ["not-found", "/this-page-does-not-exist"],
 ];
 
@@ -52,7 +59,7 @@ const ROUTES = [
   if (isFile) {
     // scripts/render-preview.ts must emit these facility fixtures (A/complete,
     // D with uncorrected + jeopardy deficiencies, NR/withheld) — see PLAN §6 Phase 4.
-    routes.push(["facility", ""], ["facility-d", ""], ["facility-nr", ""], ["operator", ""], ["home-no-dist", ""]);
+    routes.push(["facility", ""], ["facility-d", ""], ["facility-nr", ""], ["operator", ""], ["home-no-dist", ""], ["report-state-staffing", ""], ["report-high-deficiency", ""], ["report-chains", ""], ["report-uncorrected", ""], ["state-report", ""], ["ask-answer", ""], ["subscribed", ""], ["error", ""]);
   } else {
     const probe = await browser.newPage();
     try {

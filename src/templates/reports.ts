@@ -1,6 +1,7 @@
 import type { Operator } from "../types";
 import type { UncorrectedRow } from "../db";
 import { layout, escHtml } from "./layout";
+import { breadcrumb, gradePill } from "./components";
 import { repealDisclosureHtml } from "../staffing-standard";
 
 interface FacilityRow {
@@ -22,25 +23,25 @@ export interface StaffingFailureStateRow {
 }
 
 function renderReportTable(rows: FacilityRow[], columns: { key: keyof FacilityRow; label: string }[]): string {
-  const header = columns.map((c) => `<th style="text-align:left;padding:var(--space-s) 0;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">${escHtml(c.label)}</th>`).join("");
+  const header = columns.map((c) => `<th>${escHtml(c.label)}</th>`).join("");
   const body = rows.map((row) => {
     const cells = columns.map((c) => {
       const val = row[c.key];
       if (c.key === "name") {
-        return `<td style="padding:var(--space-s) 0;font-weight:700;"><a href="/facility/${escHtml(row.cms_id)}-${escHtml(row.slug)}">${escHtml(String(val))}</a></td>`;
+        return `<td class="strong"><a href="/facility/${escHtml(row.cms_id)}-${escHtml(row.slug)}">${escHtml(String(val))}</a></td>`;
       }
       if (c.key === "grade_letter") {
-        return `<td style="padding:var(--space-s) 0;font-weight:800;color:var(--grade-${String(val)});">${escHtml(String(val))}</td>`;
+        return `<td>${gradePill(String(val))}</td>`;
       }
-      return `<td style="padding:var(--space-s) 0;">${escHtml(String(val ?? "N/A"))}</td>`;
+      return `<td>${escHtml(String(val ?? "N/A"))}</td>`;
     }).join("");
-    return `<tr style="border-bottom:1px solid var(--rule);">${cells}</tr>`;
+    return `<tr>${cells}</tr>`;
   }).join("");
 
   return `
     <div class="table-container">
-      <table style="min-width:600px;">
-        <thead><tr style="border-bottom:2px solid var(--ink);">${header}</tr></thead>
+      <table class="report-table">
+        <thead><tr>${header}</tr></thead>
         <tbody>${body}</tbody>
       </table>
     </div>
@@ -49,13 +50,13 @@ function renderReportTable(rows: FacilityRow[], columns: { key: keyof FacilityRo
 
 function reportMethodology(datasetDate: string): string {
   return `
-    <div style="background:var(--bg);border:1px solid var(--rule);padding:var(--space-l);margin-top:var(--space-2xl);">
-      <h3 style="margin-top:0;">Methodology</h3>
-      <p style="font-size:0.95rem;color:var(--muted);margin-bottom:var(--space-s);">
+    <div class="panel panel--tint panel-methodology">
+      <h3>Methodology</h3>
+      <p>
         Data sourced from the CMS Provider Data Catalog. Facilities are ranked using the most recent available data.
         Grades are computed from RN staffing hours, health deficiencies, and CMS quality ratings.
       </p>
-      <p style="font-size:0.95rem;color:var(--muted);margin-bottom:var(--space-s);">
+      <p>
         <strong>Dataset date:</strong> ${escHtml(datasetDate)}<br>
         <strong>Source files:</strong> CMS Provider Info (4pq5-n9py), CMS Deficiencies (r5ix-sfxw), CMS Ownership (y2hd-n93e)
       </p>
@@ -69,9 +70,9 @@ function renderStaffingPagination(basePath: string, page: number, totalPages: nu
   const link = (href: string, rel: string, label: string) =>
     href ? `<a class="btn-secondary" rel="${rel}" href="${escHtml(href)}">${label}</a>` : "";
   return `
-    <nav class="pagination" aria-label="Pagination" style="display:flex;align-items:center;gap:var(--space-s);margin:var(--space-l) 0;">
+    <nav class="pagination" aria-label="Pagination">
       ${link(prevHref, "prev", "← Previous")}
-      <span style="font-size:0.9rem;color:var(--muted);">Page ${page} of ${totalPages}</span>
+      <span class="page-of">Page ${page} of ${totalPages}</span>
       ${link(nextHref, "next", "Next →")}
     </nav>
   `;
@@ -81,38 +82,34 @@ export function staffingFailuresPage(states: StaffingFailureStateRow[], total: n
   const rows = states
     .map(
       (state) => `
-        <tr style="border-bottom:1px solid var(--rule);">
-          <td style="padding:var(--space-s) 0;font-weight:700;">
+        <tr>
+          <td class="strong">
             <a href="/reports/staffing-failures/${escHtml(state.slug)}">${escHtml(state.stateName)}</a>
           </td>
-          <td style="padding:var(--space-s) 0;">${state.count.toLocaleString("en-US")} facilities</td>
+          <td>${state.count.toLocaleString("en-US")} facilities</td>
         </tr>
       `,
     )
     .join("");
 
   const body = `
-    <nav class="breadcrumb" aria-label="Breadcrumb">
-      <a href="/">Home</a>
-      <span class="breadcrumb-sep">›</span>
-      <span style="color:var(--ink);">Staffing Failures Report</span>
-    </nav>
+    ${breadcrumb([{ label: "Home", href: "/" }, { label: "Staffing Failures Report" }])}
 
     <h1>Facilities Below the 2024 RN Staffing Benchmark</h1>
-    <p class="lede" style="max-width:800px;margin-bottom:var(--space-xl);">
+    <p class="lede">
       <strong>${total.toLocaleString("en-US")} facilities</strong> across ${states.length} states report RN staffing below
       0.55 hours per resident per day — the level the 2024 federal rule would have required.
     </p>
     ${repealDisclosureHtml()}
 
     <h2>Facilities Below the 0.55 Hour Benchmark, by State</h2>
-    <p style="margin-bottom:var(--space-s);">Select a state to see its facilities, staffing hours, and grades.</p>
+    <p>Select a state to see its facilities, staffing hours, and grades.</p>
     <div class="table-container">
-      <table style="min-width:600px;">
+      <table class="report-table">
         <thead>
-          <tr style="border-bottom:2px solid var(--ink);">
-            <th style="text-align:left;padding:var(--space-s) 0;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">State</th>
-            <th style="text-align:left;padding:var(--space-s) 0;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Facilities Below Benchmark</th>
+          <tr>
+            <th>State</th>
+            <th>Facilities Below Benchmark</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -121,7 +118,7 @@ export function staffingFailuresPage(states: StaffingFailureStateRow[], total: n
 
     ${reportMethodology(new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }))}
 
-    <div class="cta-box" style="margin-top:var(--space-2xl);">
+    <div class="cta-box">
       <h3>Related Reports</h3>
       <p>Explore other facility quality reports built from official CMS inspection data.</p>
       <a class="btn" href="/reports/uncorrected-deficiencies">Uncorrected Deficiencies →</a>
@@ -140,14 +137,10 @@ export function staffingFailuresPage(states: StaffingFailureStateRow[], total: n
 
 export function highDeficiencyPage(facilities: FacilityRow[]): string {
   const body = `
-    <nav class="breadcrumb" aria-label="Breadcrumb">
-      <a href="/">Home</a>
-      <span class="breadcrumb-sep">›</span>
-      <span style="color:var(--ink);">High Deficiency Report</span>
-    </nav>
+    ${breadcrumb([{ label: "Home", href: "/" }, { label: "High Deficiency Report" }])}
 
     <h1>High Deficiency Facilities</h1>
-    <p class="lede" style="max-width:800px;margin-bottom:var(--space-xl);">
+    <p class="lede">
       Facilities with the highest number of health inspection deficiencies in the most recent cycle.
     </p>
 
@@ -162,7 +155,7 @@ export function highDeficiencyPage(facilities: FacilityRow[]): string {
 
     ${reportMethodology(new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }))}
 
-    <div class="cta-box" style="margin-top:var(--space-2xl);">
+    <div class="cta-box">
       <h3>Related Reports</h3>
       <p>Explore other facility quality reports built from official CMS inspection data.</p>
       <a class="btn" href="/reports/uncorrected-deficiencies">Uncorrected Deficiencies →</a>
@@ -189,16 +182,10 @@ export function staffingFailuresStatePage(
   const canonicalPath = page > 1 ? `${basePath}?page=${page}` : basePath;
   const pagination = totalPages > 1 ? renderStaffingPagination(basePath, page, totalPages) : "";
   const body = `
-    <nav class="breadcrumb" aria-label="Breadcrumb">
-      <a href="/">Home</a>
-      <span class="breadcrumb-sep">›</span>
-      <a href="/reports/staffing-failures">Staffing Failures</a>
-      <span class="breadcrumb-sep">›</span>
-      <span style="color:var(--ink);">${escHtml(stateName)}</span>
-    </nav>
+    ${breadcrumb([{ label: "Home", href: "/" }, { label: "Staffing Failures", href: "/reports/staffing-failures" }, { label: stateName }])}
 
     <h1>${escHtml(scope)}</h1>
-    <p class="lede" style="max-width:800px;margin-bottom:var(--space-xl);">
+    <p class="lede">
       <strong>${total.toLocaleString("en-US")} facilities</strong> in ${escHtml(stateName)} fall below 0.55 RN hours per resident per day, the repealed 2024 federal benchmark.
     </p>
 
@@ -213,7 +200,7 @@ export function staffingFailuresStatePage(
 
     ${reportMethodology(new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }))}
 
-    <div class="cta-box" style="margin-top:var(--space-2xl);">
+    <div class="cta-box">
       <h3>Related Reports</h3>
       <p>Explore other facility quality reports built from official CMS inspection data.</p>
       <a class="btn" href="/reports/uncorrected-deficiencies">Uncorrected Deficiencies →</a>
@@ -244,42 +231,38 @@ export function chainsReportPage(
         : `${diffStr} vs national`;
 
       return `
-        <tr style="border-bottom:1px solid var(--rule);">
-          <td style="padding:var(--space-s) var(--space-xs);font-weight:800;color:var(--muted);font-size:0.85rem;">${i + 1}</td>
-          <td style="padding:var(--space-s) var(--space-xs);font-weight:700;">
+        <tr>
+          <td class="dim">${i + 1}</td>
+          <td class="strong">
             <a href="/operator/${escHtml(op.slug)}">${escHtml(op.normalized_name)}</a>
           </td>
-          <td style="padding:var(--space-s) var(--space-xs);">${op.facility_count}</td>
-          <td style="padding:var(--space-s) var(--space-xs);font-weight:700;font-family:'Playfair Display',Georgia,serif;font-size:1.15rem;">${avg}</td>
-          <td style="padding:var(--space-s) var(--space-xs);color:${kind === "best" ? "var(--grade-A)" : "var(--grade-F)"};font-weight:700;">${escHtml(diffLabel)}</td>
+          <td>${op.facility_count}</td>
+          <td class="strong">${avg}</td>
+          <td class="strong ${kind === "best" ? "text-ok" : "text-alarm"}">${escHtml(diffLabel)}</td>
         </tr>
       `;
     }).join("");
   };
 
   const body = `
-    <nav class="breadcrumb" aria-label="Breadcrumb">
-      <a href="/">Home</a>
-      <span class="breadcrumb-sep">›</span>
-      <span style="color:var(--ink);">Chain Comparison Report</span>
-    </nav>
+    ${breadcrumb([{ label: "Home", href: "/" }, { label: "Chain Comparison Report" }])}
 
     <h1>Nursing Home Chain Comparison</h1>
-    <p class="lede" style="max-width:800px;margin-bottom:var(--space-xl);">
+    <p class="lede">
       How the largest nursing home operators compare. Rankings based on average NursingHomeGrade Score across all facilities in each chain (3+ facilities required).
       National average: ${nationalAvg.avgGrade}/100.
     </p>
 
     <h2>Best Operators</h2>
     <div class="table-container">
-      <table style="min-width:600px;">
+      <table class="report-table">
         <thead>
-          <tr style="border-bottom:2px solid var(--ink);">
-            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">#</th>
-            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Operator</th>
-            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Facilities</th>
-            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Avg Grade</th>
-            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Vs National</th>
+          <tr>
+            <th>#</th>
+            <th>Operator</th>
+            <th>Facilities</th>
+            <th>Avg Grade</th>
+            <th>Vs National</th>
           </tr>
         </thead>
         <tbody>${renderChainList(bestChains, "best")}</tbody>
@@ -288,14 +271,14 @@ export function chainsReportPage(
 
     <h2>Worst Operators</h2>
     <div class="table-container">
-      <table style="min-width:600px;">
+      <table class="report-table">
         <thead>
-          <tr style="border-bottom:2px solid var(--ink);">
-            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">#</th>
-            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Operator</th>
-            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Facilities</th>
-            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Avg Grade</th>
-            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Vs National</th>
+          <tr>
+            <th>#</th>
+            <th>Operator</th>
+            <th>Facilities</th>
+            <th>Avg Grade</th>
+            <th>Vs National</th>
           </tr>
         </thead>
         <tbody>${renderChainList(worstChains, "worst")}</tbody>
@@ -304,7 +287,7 @@ export function chainsReportPage(
 
     ${reportMethodology(new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }))}
 
-    <div class="cta-box" style="margin-top:var(--space-2xl);">
+    <div class="cta-box">
       <h3>Explore operators further</h3>
       <p>Browse all nursing home operators with detailed facility lists, grade distributions, and performance comparisons.</p>
       <a class="btn" href="/operators">All Operators →</a>
@@ -342,48 +325,44 @@ function severityLabel(code: string | null): string {
 
 export function uncorrectedDeficienciesPage(facilities: UncorrectedRow[]): string {
   const rows = facilities.map((row) => {
-    const sevClass = row.worst_severity && row.worst_severity >= "J" ? "var(--grade-F)"
-      : row.worst_severity && row.worst_severity >= "G" ? "var(--grade-D)"
-      : "var(--muted)";
+    const sevClass = row.worst_severity && row.worst_severity >= "J" ? "sev-text--jeopardy"
+      : row.worst_severity && row.worst_severity >= "G" ? "sev-text--harm"
+      : "sev-text--low";
 
     return `
-      <tr style="border-bottom:1px solid var(--rule);">
-        <td style="padding:var(--space-s) var(--space-xs);font-weight:700;">
+      <tr>
+        <td class="strong">
           <a href="/facility/${escHtml(row.cms_id)}-${escHtml(row.slug)}">${escHtml(row.name)}</a>
         </td>
-        <td style="padding:var(--space-s) var(--space-xs);">${escHtml(row.city)}, ${escHtml(row.state)}</td>
-        <td style="padding:var(--space-s) var(--space-xs);font-weight:800;color:${sevClass};font-size:1.1rem;">${row.uncorrected_count}</td>
-        <td style="padding:var(--space-s) var(--space-xs);font-weight:700;color:${sevClass};">
+        <td>${escHtml(row.city)}, ${escHtml(row.state)}</td>
+        <td class="strong ${sevClass}">${row.uncorrected_count}</td>
+        <td class="strong ${sevClass}">
           ${escHtml(row.worst_severity ?? "?")} — ${escHtml(severityLabel(row.worst_severity))}
         </td>
-        <td style="padding:var(--space-s) var(--space-xs);font-weight:800;color:var(--grade-${row.grade_letter});">${escHtml(row.grade_letter)}</td>
+        <td>${gradePill(row.grade_letter)}</td>
       </tr>
     `;
   }).join("");
 
   const body = `
-    <nav class="breadcrumb" aria-label="Breadcrumb">
-      <a href="/">Home</a>
-      <span class="breadcrumb-sep">›</span>
-      <span style="color:var(--ink);">Uncorrected Deficiencies</span>
-    </nav>
+    ${breadcrumb([{ label: "Home", href: "/" }, { label: "Uncorrected Deficiencies" }])}
 
     <h1>Uncorrected Deficiency Report</h1>
-    <p class="lede" style="max-width:800px;margin-bottom:var(--space-xl);">
-      Facilities with health inspection deficiencies that have <strong style="color:var(--grade-F);">not yet been corrected</strong>.
+    <p class="lede">
+      Facilities with health inspection deficiencies that have <strong class="text-alarm">not yet been corrected</strong>.
       Sorted by severity: immediate jeopardy first, then actual harm, then all others.
     </p>
 
     <h2>Facilities With Outstanding Deficiencies</h2>
     <div class="table-container">
-      <table style="min-width:600px;">
+      <table class="report-table">
         <thead>
-          <tr style="border-bottom:2px solid var(--ink);">
-            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Facility</th>
-            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Location</th>
-            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Uncorrected</th>
-            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Worst Severity</th>
-            <th style="text-align:left;padding:var(--space-s) var(--space-xs);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Grade</th>
+          <tr>
+            <th>Facility</th>
+            <th>Location</th>
+            <th>Uncorrected</th>
+            <th>Worst Severity</th>
+            <th>Grade</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -392,7 +371,7 @@ export function uncorrectedDeficienciesPage(facilities: UncorrectedRow[]): strin
 
     ${reportMethodology(new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }))}
 
-    <div class="cta-box" style="margin-top:var(--space-2xl);">
+    <div class="cta-box">
       <h3>Explore more reports</h3>
       <p>Browse other facility quality reports built from official CMS inspection data.</p>
       <a class="btn" href="/reports/staffing-failures">Staffing Failures →</a>

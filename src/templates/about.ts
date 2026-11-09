@@ -86,7 +86,7 @@ export function aboutPage(): string {
       that's publicly available, organized and scored in a way that's actually useful.
     </p>
 
-    <p style="background:#fff;border-left:4px solid var(--ink);padding:var(--space-m);margin:var(--space-l) 0;">
+    <p class="aside-note">
       <strong>This is not medical, legal, or placement advice.</strong> NursingHomeGrade publishes
       independent analysis of public CMS data to help you research nursing homes. It is not a
       substitute for professional advice, and no grade should be the sole basis for a care decision.
@@ -94,22 +94,22 @@ export function aboutPage(): string {
 
     <h2>How we grade facilities</h2>
     <p>The NursingHomeGrade Score (0–100) is a weighted composite of four CMS data points:</p>
-    <div class="results-list" style="margin: var(--space-l) 0;">
-      <div class="result-stat" style="background:#fff;border-top:4px solid var(--ink);padding:var(--space-m);">
-        <span class="result-stat-label">Staffing compliance (35%)</span>
-        <span class="result-stat-value">RN hours vs the repealed 2024 benchmark of 0.55</span>
+    <div class="info-cards">
+      <div class="info-card">
+        <span class="info-card-label">Staffing compliance (35%)</span>
+        <span class="info-card-text">RN hours vs the repealed 2024 benchmark of 0.55</span>
       </div>
-      <div class="result-stat" style="background:#fff;border-top:4px solid var(--ink);padding:var(--space-m);">
-        <span class="result-stat-label">Inspection clean rate (30%)</span>
-        <span class="result-stat-value">Health inspection deficiencies & severity</span>
+      <div class="info-card">
+        <span class="info-card-label">Inspection clean rate (30%)</span>
+        <span class="info-card-text">Health inspection deficiencies & severity</span>
       </div>
-      <div class="result-stat" style="background:#fff;border-top:4px solid var(--ink);padding:var(--space-m);">
-        <span class="result-stat-label">Quality measures (20%)</span>
-        <span class="result-stat-value">CMS quality star rating</span>
+      <div class="info-card">
+        <span class="info-card-label">Quality measures (20%)</span>
+        <span class="info-card-text">CMS quality star rating</span>
       </div>
-      <div class="result-stat" style="background:#fff;border-top:4px solid var(--ink);padding:var(--space-m);">
-        <span class="result-stat-label">Staffing consistency (15%)</span>
-        <span class="result-stat-value">CMS staffing star rating</span>
+      <div class="info-card">
+        <span class="info-card-label">Staffing consistency (15%)</span>
+        <span class="info-card-text">CMS staffing star rating</span>
       </div>
     </div>
 
@@ -136,7 +136,7 @@ export function aboutPage(): string {
       <a href="mailto:info@nursinghomegrade.com">info@nursinghomegrade.com</a>.
     </p>
 
-    <p style="margin-top:2rem;"><a href="/">← Back to home</a></p>
+    <p class="back-link"><a class="link-arrow" href="/">← Back to home</a></p>
   `;
   return layout(
     "About NursingHomeGrade — No Commissions, No Conflicts",

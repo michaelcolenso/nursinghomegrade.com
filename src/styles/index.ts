@@ -5,10 +5,11 @@ import { COMPONENTS_CSS } from "./components";
 import { PAGES_CSS } from "./pages";
 import { HOME_CSS } from "./home";
 import { FACILITY_CSS } from "./facility";
+import { EDITORIAL_CSS } from "./editorial";
 import { PRINT_CSS } from "./print";
 
-/** The full site stylesheet. Order matters (cascade): tokens, base, layout, components, pages, home, facility, print. */
-export const SITE_CSS = [TOKENS_CSS, BASE_CSS, LAYOUT_CSS, COMPONENTS_CSS, PAGES_CSS, HOME_CSS, FACILITY_CSS, PRINT_CSS].join("\n");
+/** The full site stylesheet. Order matters (cascade): tokens, base, layout, components, pages, home, facility, editorial, print. */
+export const SITE_CSS = [TOKENS_CSS, BASE_CSS, LAYOUT_CSS, COMPONENTS_CSS, PAGES_CSS, HOME_CSS, FACILITY_CSS, EDITORIAL_CSS, PRINT_CSS].join("\n");
 
 // Sync FNV-1a (32-bit) over the CSS text. Workers has no sync crypto digest and
 // no bundler to hash assets for us; this only needs to change when the CSS does.

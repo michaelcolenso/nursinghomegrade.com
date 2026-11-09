@@ -1,4 +1,5 @@
 import { layout } from "./layout";
+import { breadcrumb } from "./components";
 
 const LAST_UPDATED = "August 14, 2026";
 
@@ -13,16 +14,12 @@ export function privacyPage(): string {
   ];
 
   const body = `
-    <nav class="breadcrumb" aria-label="Breadcrumb">
-      <a href="/">Home</a>
-      <span class="breadcrumb-sep">›</span>
-      <span style="color:var(--ink);">Privacy Policy</span>
-    </nav>
+    ${breadcrumb([{ label: "Home", href: "/" }, { label: "Privacy Policy" }])}
 
     <h1>Privacy Policy</h1>
-    <p style="color:var(--muted);margin-bottom:var(--space-l);">Last updated: ${LAST_UPDATED}</p>
+    <p class="muted-lg">Last updated: ${LAST_UPDATED}</p>
 
-    <p class="lede" style="max-width:800px;">
+    <p class="lede">
       NursingHomeGrade ("we," "us") publishes nursing home quality grades computed from public CMS
       data. This policy covers the personal information we collect directly from you.
     </p>
@@ -64,7 +61,7 @@ export function privacyPage(): string {
     <h2 id="changes">Changes</h2>
     <p>We'll update the date at the top of this page if this policy changes.</p>
 
-    <p style="margin-top:2rem;"><a href="/">← Back to home</a></p>
+    <p class="back-link"><a class="link-arrow" href="/">← Back to home</a></p>
   `;
 
   return layout(

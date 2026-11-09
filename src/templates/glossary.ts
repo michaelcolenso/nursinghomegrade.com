@@ -1,4 +1,5 @@
 import { layout } from "./layout";
+import { breadcrumb } from "./components";
 
 interface GlossaryEntry {
   term: string;
@@ -51,24 +52,20 @@ export function glossaryPage(): string {
   ];
 
   const body = `
-    <nav class="breadcrumb" aria-label="Breadcrumb">
-      <a href="/">Home</a>
-      <span class="breadcrumb-sep">›</span>
-      <span style="color:var(--ink);">Glossary</span>
-    </nav>
+    ${breadcrumb([{ label: "Home", href: "/" }, { label: "Glossary" }])}
 
     <h1>Glossary</h1>
 
-    <dl style="max-width:800px;">
+    <dl class="glossary prose">
       ${GLOSSARY_ENTRIES.map(
         (entry) => `
-        <dt style="font-weight:700;margin-top:var(--space-m);">${entry.term}</dt>
-        <dd style="margin-left:0;color:var(--ink);">${entry.definition}</dd>
+        <dt>${entry.term}</dt>
+        <dd>${entry.definition}</dd>
       `,
       ).join("")}
     </dl>
 
-    <p style="margin-top:2rem;"><a href="/">← Back to home</a></p>
+    <p class="back-link"><a class="link-arrow" href="/">← Back to home</a></p>
   `;
 
   return layout(

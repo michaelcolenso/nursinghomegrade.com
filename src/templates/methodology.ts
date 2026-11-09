@@ -1,4 +1,5 @@
 import { layout } from "./layout";
+import { breadcrumb } from "./components";
 import { RN_BENCHMARK, REPEAL_REPORT_PATH, repealDisclosureHtml } from "../staffing-standard";
 
 // Authoritative statement of how a grade is produced. /how-we-grade is the
@@ -22,14 +23,10 @@ export function methodologyPage(): string {
   ];
 
   const body = `
-    <nav class="breadcrumb" aria-label="Breadcrumb">
-      <a href="/">Home</a>
-      <span class="breadcrumb-sep">›</span>
-      <span style="color:var(--ink);">Methodology</span>
-    </nav>
+    ${breadcrumb([{ label: "Home", href: "/" }, { label: "Methodology" }])}
 
     <h1>Methodology</h1>
-    <p class="lede" style="max-width:800px;">
+    <p class="lede">
       Every grade on this site is computed from public CMS data by the formula below. No human
       adjusts an individual facility's score, and no facility can pay to change one. If you can
       obtain the same CMS files, you can reproduce every number we publish.
@@ -38,25 +35,25 @@ export function methodologyPage(): string {
     <h2 id="base">The base score</h2>
     <p>Each facility starts with a 0–100 composite of four CMS measures, weighted as follows:</p>
     <div class="table-container">
-      <table class="quality-table">
+      <table class="report-table">
         <thead>
-          <tr><th style="text-align:left;">Component</th><th style="text-align:right;">Weight</th><th style="text-align:left;">How it is scored</th></tr>
+          <tr><th>Component</th><th class="num">Weight</th><th>How it is scored</th></tr>
         </thead>
         <tbody>
           <tr>
-            <td>Staffing compliance</td><td style="text-align:right;">35%</td>
+            <td>Staffing compliance</td><td class="num">35%</td>
             <td>Reported RN hours per resident per day divided by ${RN_BENCHMARK}, capped at 150% of the benchmark. A facility at or above ${RN_BENCHMARK} scores at least 0.67 on this component; one at 0.825 or higher scores the full 1.0.</td>
           </tr>
           <tr>
-            <td>Inspection clean rate</td><td style="text-align:right;">30%</td>
+            <td>Inspection clean rate</td><td class="num">30%</td>
             <td>1.0 at a verified zero-deficiency current survey, falling linearly to 0.0 at 20 or more deficiencies. A missing inspection is never treated as zero.</td>
           </tr>
           <tr>
-            <td>Quality measures</td><td style="text-align:right;">20%</td>
+            <td>Quality measures</td><td class="num">20%</td>
             <td>CMS quality star rating, normalized from 1–5 stars to 0.0–1.0.</td>
           </tr>
           <tr>
-            <td>Staffing consistency</td><td style="text-align:right;">15%</td>
+            <td>Staffing consistency</td><td class="num">15%</td>
             <td>CMS staffing star rating, normalized from 1–5 stars to 0.0–1.0.</td>
           </tr>
         </tbody>
@@ -71,8 +68,8 @@ export function methodologyPage(): string {
       three evidence-completeness states before the grade is published.
     </p>
     <div class="table-container">
-      <table class="quality-table">
-        <thead><tr><th style="text-align:left;">State</th><th style="text-align:left;">Meaning</th><th style="text-align:left;">Grade behavior</th></tr></thead>
+      <table class="report-table">
+        <thead><tr><th>State</th><th>Meaning</th><th>Grade behavior</th></tr></thead>
         <tbody>
           <tr><td><strong>Complete</strong></td><td>All four Grade 1.x score inputs and current inspection evidence are present.</td><td>Normal score and letter grade.</td></tr>
           <tr><td><strong>Partial</strong></td><td>Current inspection evidence is present, but RN staffing, the CMS quality rating, or the CMS staffing rating is unavailable.</td><td>A conservative lower-bound score is shown. Missing components earn zero points and the remaining weights are <em>not</em> renormalized upward.</td></tr>
@@ -96,7 +93,7 @@ export function methodologyPage(): string {
 
     <h3>Uncorrected findings (up to 25 points)</h3>
     <p>Each deficiency the facility has not resolved costs:</p>
-    <p style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:0.9rem;background:#fff;border:2px solid var(--ink);padding:var(--space-m);overflow-x:auto;">
+    <p class="formula">
       1.5 &times; severity weight &times; plan weight &times; recency weight
     </p>
     <ul>
@@ -122,8 +119,8 @@ export function methodologyPage(): string {
 
     <h2 id="bands">Grade bands</h2>
     <div class="table-container">
-      <table class="quality-table">
-        <thead><tr><th style="text-align:left;">Grade</th><th style="text-align:left;">Score</th></tr></thead>
+      <table class="report-table">
+        <thead><tr><th>Grade</th><th>Score</th></tr></thead>
         <tbody>
           <tr><td>A</td><td>80–100</td></tr>
           <tr><td>B</td><td>65–79</td></tr>
@@ -162,15 +159,15 @@ export function methodologyPage(): string {
 
     <h2 id="changelog">Grade changelog</h2>
     <div class="table-container">
-      <table class="quality-table">
-        <thead><tr><th style="text-align:left;">Date</th><th style="text-align:left;">Change</th></tr></thead>
+      <table class="report-table">
+        <thead><tr><th>Date</th><th>Change</th></tr></thead>
         <tbody>
           <tr>
-            <td style="white-space:nowrap;">2026-09-05</td>
+            <td class="nowrap">2026-09-05</td>
             <td>Added explicit complete/partial/insufficient grading semantics. Missing inspection evidence now withholds the grade instead of receiving clean-inspection credit; other missing components produce a labelled lower-bound partial score without weight renormalization.</td>
           </tr>
           <tr>
-            <td style="white-space:nowrap;">2026-07-27</td>
+            <td class="nowrap">2026-07-27</td>
             <td>
               Added the uncorrected-findings and actual-harm penalty terms and the no-plan rule.
               Of 14,703 facilities, 3,858 (26%) moved down at least one letter grade and 10,845 were
@@ -189,7 +186,7 @@ export function methodologyPage(): string {
       different problems with different fixes — the contact page explains both.
     </p>
 
-    <div class="cta-box" style="margin-top:var(--space-2xl);">
+    <div class="cta-box">
       <h3>Related</h3>
       <p>The plain-language version, the underlying files, and the staffing benchmark.</p>
       <a class="btn" href="/how-we-grade">How we grade →</a>
