@@ -1,4 +1,5 @@
 import { layout, escHtml } from "./layout";
+import { breadcrumb } from "./components";
 
 // Names every CMS file behind the site, its release cadence, its URL, and the
 // release date of the copy currently in production. Release dates come from
@@ -79,7 +80,7 @@ export function dataSourcesPage(releases: DataRelease[]): string {
           <td>${formatDate(r.ingested_at)}</td>
         </tr>
         <tr>
-          <td colspan="4" style="padding-top:0;color:var(--muted);font-size:0.9rem;">
+          <td colspan="4" class="row-note">
             ${notes ? escHtml(notes.used_for) : ""}
           </td>
         </tr>`;
@@ -89,13 +90,13 @@ export function dataSourcesPage(releases: DataRelease[]): string {
   const table = rows
     ? `
     <div class="table-container">
-      <table class="quality-table">
+      <table class="report-table">
         <thead>
           <tr>
-            <th style="text-align:left;">CMS file</th>
-            <th style="text-align:left;">Cadence</th>
-            <th style="text-align:left;">CMS public release</th>
-            <th style="text-align:left;">Imported by NursingHomeGrade</th>
+            <th>CMS file</th>
+            <th>Cadence</th>
+            <th>CMS public release</th>
+            <th>Imported by NursingHomeGrade</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -104,14 +105,10 @@ export function dataSourcesPage(releases: DataRelease[]): string {
     : "";
 
   const body = `
-    <nav class="breadcrumb" aria-label="Breadcrumb">
-      <a href="/">Home</a>
-      <span class="breadcrumb-sep">›</span>
-      <span style="color:var(--ink);">Data Sources</span>
-    </nav>
+    ${breadcrumb([{ label: "Home", href: "/" }, { label: "Data Sources" }])}
 
     <h1>Data sources</h1>
-    <p class="lede" style="max-width:800px;">
+    <p class="lede">
       Every figure on this site comes from a public CMS file. We apply no editorial adjustments to
       the underlying records. The table also identifies Grade 2.0 shadow sources that we ingest for
       research and validation but do not yet use to change the public Grade 1.x score.
@@ -155,7 +152,7 @@ export function dataSourcesPage(releases: DataRelease[]): string {
       <a href="/contact">tell us</a>.
     </p>
 
-    <div class="cta-box" style="margin-top:var(--space-2xl);">
+    <div class="cta-box">
       <h3>Related</h3>
       <p>How the numbers become a grade, and how to report an error.</p>
       <a class="btn" href="/methodology">Methodology →</a>

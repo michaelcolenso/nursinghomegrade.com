@@ -1,4 +1,5 @@
 import { layout } from "./layout";
+import { breadcrumb } from "./components";
 
 const LAST_UPDATED = "August 14, 2026";
 
@@ -13,17 +14,13 @@ export function termsPage(): string {
   ];
 
   const body = `
-    <nav class="breadcrumb" aria-label="Breadcrumb">
-      <a href="/">Home</a>
-      <span class="breadcrumb-sep">›</span>
-      <span style="color:var(--ink);">Terms of Use</span>
-    </nav>
+    ${breadcrumb([{ label: "Home", href: "/" }, { label: "Terms of Use" }])}
 
     <h1>Terms of Use</h1>
-    <p style="color:var(--muted);margin-bottom:var(--space-l);">Last updated: ${LAST_UPDATED}</p>
+    <p class="muted-lg">Last updated: ${LAST_UPDATED}</p>
 
     <h2 id="what-this-site-is">What this site is</h2>
-    <p class="lede" style="max-width:800px;">
+    <p class="lede">
       NursingHomeGrade publishes independent A–F quality grades for U.S. nursing homes, computed from
       public CMS inspection, staffing, and quality-measure data using the methodology described on our
       <a href="/methodology">Methodology page</a>.
@@ -57,7 +54,7 @@ export function termsPage(): string {
       placement, ranking, or removal from this site.
     </p>
 
-    <p style="margin-top:2rem;"><a href="/">← Back to home</a></p>
+    <p class="back-link"><a class="link-arrow" href="/">← Back to home</a></p>
   `;
 
   return layout(

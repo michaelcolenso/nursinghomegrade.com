@@ -1,4 +1,5 @@
 import { layout, escHtml } from "./layout";
+import { breadcrumb } from "./components";
 import { getStateInfo } from "../states";
 import type { BenchmarkShortfall } from "../db";
 import { RN_BENCHMARK, REPEAL_EFFECTIVE_DATE, REPEAL_REPORT_PATH } from "../staffing-standard";
@@ -20,9 +21,9 @@ function renderStateTable(shortfall: BenchmarkShortfall): string {
       return `
         <tr>
           <td>${href ? `<a href="${href}">${escHtml(name)}</a>` : escHtml(name)}</td>
-          <td style="text-align:right;">${row.below.toLocaleString()}</td>
-          <td style="text-align:right;">${row.reported.toLocaleString()}</td>
-          <td style="text-align:right;">${pct}%</td>
+          <td class="num">${row.below.toLocaleString()}</td>
+          <td class="num">${row.reported.toLocaleString()}</td>
+          <td class="num">${pct}%</td>
         </tr>`;
     })
     .join("");
@@ -31,13 +32,13 @@ function renderStateTable(shortfall: BenchmarkShortfall): string {
 
   return `
     <div class="table-container">
-      <table class="quality-table">
+      <table class="report-table">
         <thead>
           <tr>
-            <th style="text-align:left;">State</th>
-            <th style="text-align:right;">Below ${RN_BENCHMARK} hrs</th>
-            <th style="text-align:right;">Facilities reporting</th>
-            <th style="text-align:right;">Share</th>
+            <th>State</th>
+            <th class="num">Below ${RN_BENCHMARK} hrs</th>
+            <th class="num">Facilities reporting</th>
+            <th class="num">Share</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -58,7 +59,7 @@ export function staffingStandardRepealPage(shortfall: BenchmarkShortfall): strin
       requested. Facilities that do not report RN staffing hours are excluded from both the count and
       the denominator.
     </p>
-    <p class="lede" style="margin-bottom:var(--space-l);">
+    <p class="lede">
       <strong>${belowNational.toLocaleString()}</strong> of
       <strong>${reportedNational.toLocaleString()}</strong> reporting nursing facilities nationally
       ${nationalPct ? `(${nationalPct}%)` : ""} staff below ${RN_BENCHMARK} RN hours per resident per
@@ -68,15 +69,11 @@ export function staffingStandardRepealPage(shortfall: BenchmarkShortfall): strin
       : "";
 
   const body = `
-    <nav class="breadcrumb" aria-label="Breadcrumb">
-      <a href="/">Home</a>
-      <span class="breadcrumb-sep">›</span>
-      <span style="color:var(--ink);">The Repealed Staffing Standard</span>
-    </nav>
+    ${breadcrumb([{ label: "Home", href: "/" }, { label: "The Repealed Staffing Standard" }])}
 
     <h1>The federal nursing home staffing standard was repealed</h1>
 
-    <p class="lede" style="max-width:800px;">
+    <p class="lede">
       In 2024 the federal government set a minimum staffing level for nursing homes for the first
       time. Courts vacated it, Congress blocked it, and CMS repealed it effective
       ${REPEAL_EFFECTIVE_DATE}. NursingHomeGrade still grades facilities against it. This page
@@ -186,7 +183,7 @@ export function staffingStandardRepealPage(shortfall: BenchmarkShortfall): strin
       requirement honestly wherever we cite it, and we grade against the benchmark.
     </p>
 
-    <p style="font-size:0.9rem;color:var(--muted);max-width:70ch;">
+    <p class="section-note">
       Sources: Federal Register, "Medicare and Medicaid Programs; Repeal of Minimum Staffing Standards
       for Long-Term Care Facilities" (published December 3, 2025);
       <em>American Health Care Association v. Becerra</em>, U.S. District Court for the Northern
@@ -197,7 +194,7 @@ export function staffingStandardRepealPage(shortfall: BenchmarkShortfall): strin
 
     ${liveFigures}
 
-    <div class="cta-box" style="margin-top:var(--space-2xl);">
+    <div class="cta-box">
       <h3>Related</h3>
       <p>See which facilities staff below the benchmark, and how we build the grades.</p>
       <a class="btn" href="/reports/staffing-failures">Facilities below the benchmark →</a>

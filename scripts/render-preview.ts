@@ -24,7 +24,16 @@ import { howWeGradePage } from "../src/templates/how-we-grade";
 import { methodologyPage } from "../src/templates/methodology";
 import { aboutPage } from "../src/templates/about";
 import { faqPage } from "../src/templates/faq";
-import { staffingFailuresPage } from "../src/templates/reports";
+import { staffingFailuresPage, staffingFailuresStatePage, highDeficiencyPage, chainsReportPage, uncorrectedDeficienciesPage } from "../src/templates/reports";
+import { dataSourcesPage } from "../src/templates/data-sources";
+import { contactPage } from "../src/templates/contact";
+import { privacyPage } from "../src/templates/privacy";
+import { termsPage } from "../src/templates/terms";
+import { glossaryPage } from "../src/templates/glossary";
+import { askFormPage, askResultsPage } from "../src/templates/ask";
+import { staffingStandardRepealPage } from "../src/templates/staffing-repeal";
+import { stateReportPage } from "../src/templates/state-report";
+import { subscribePage, errorPage } from "../src/templates/subscribe";
 import { notFoundPage } from "../src/templates/subscribe";
 import { facilityPage } from "../src/templates/facility";
 import type { DataRelease } from "../src/templates/data-sources";
@@ -155,6 +164,26 @@ const pages: Record<string, string> = {
   about: aboutPage(),
   faq: faqPage(),
   "report-staffing": staffingFailuresPage([{ stateName: "Ohio", slug: "ohio", count: 480 }, { stateName: "Texas", slug: "texas", count: 610 }], 1090),
+  "data-sources": dataSourcesPage(releases),
+  contact: contactPage(),
+  privacy: privacyPage(),
+  terms: termsPage(),
+  glossary: glossaryPage(),
+  ask: askFormPage(),
+  "ask-answer": askResultsPage("What does scope and severity mean?", "Scope and severity describe how widespread a deficiency is and how much harm it caused.\n\nLetters A–L run from no harm to immediate jeopardy.", [{ text: "x", item: { key: "https://nursinghomegrade.com/glossary", metadata: { title: "Glossary" } } }]),
+  "report-repeal": staffingStandardRepealPage({ belowNational: 4321, reportedNational: 9876, byState: [{ state: "OH", below: 480, reported: 900 }, { state: "TX", below: 610, reported: 1100 }] }),
+  "report-state-staffing": staffingFailuresStatePage("Ohio", rows, { total: 480, page: 1, totalPages: 3 }),
+  "report-high-deficiency": highDeficiencyPage(rows),
+  "report-chains": chainsReportPage([ops[0] as Operator], [ops[2] as Operator], { avgGrade: 62, avgRnHours: 0.55, avgDeficiencies: 8 }),
+  "report-uncorrected": uncorrectedDeficienciesPage(rows.map((r, i) => ({ ...r, uncorrected_count: 6 - i, worst_severity: ["K", "H", "E", "B", null][i] ?? null }))),
+  "state-report": stateReportPage({
+    stateName: "New York", stateAbbr: "NY", stateSlug: "new-york", facilityCount: 612, avgGrade: 64.2, avgRnHours: 0.52, avgDeficiencies: 9.1,
+    pctFailing: 58, nationalPctFailing: 62, nationalAvg: { avgGrade: 61.4, avgRnHours: 0.55, avgDeficiencies: 8.4, totalFacilities: 14712 },
+    gradeDistribution: { A: 120, B: 190, C: 160, D: 90, F: 52 }, deficiencyCats: [{ deficiency_category: "Quality of Care Deficiencies", count: 1840 }, { deficiency_category: "Infection Control Deficiencies", count: 1210 }],
+    stateRank: 18, totalStates: 51, datasetDate: "2026-10-08",
+  }),
+  subscribed: subscribePage("Pinecrest Care Center", "/facility/335001-pinecrest"),
+  error: errorPage("Service unavailable", "We're experiencing a temporary issue.", "Please try again in a moment."),
   "not-found": notFoundPage("/this-page-does-not-exist"),
   facility: facilityPage(baseFacility, [defs[2] as Deficiency], [list[1] as Facility, list[2] as Facility], [list[0] as Facility], trajectory, "", "", operator),
   "facility-d": facilityPage(fac(9, "D", 41, { cms_id: "335009", total_deficiencies: 12 }), defs, [list[2] as Facility], [list[0] as Facility, list[1] as Facility], { ...trajectory, status: "declining", grade_change: -9, rn_hours_trend: "down" }, "", "", null),

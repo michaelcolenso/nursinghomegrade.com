@@ -13,22 +13,22 @@ export function howWeGradePage(): string {
 
     <h2>How the A–F grade is calculated</h2>
     <p>Each sufficiently documented facility starts with a 0–100 base score built from four CMS measures:</p>
-    <div class="results-list" style="margin: var(--space-l) 0;">
-      <div class="result-stat" style="background:#fff;border-top:4px solid var(--ink);padding:var(--space-m);">
-        <span class="result-stat-label">RN Staffing (35%)</span>
-        <span class="result-stat-value">Reported RN hours per resident per day compared with the 2024 benchmark of ${RN_BENCHMARK} hours. The federal rule that created this benchmark was repealed in February 2026; we retain the value as a disclosed grading benchmark, not as a current legal minimum.</span>
+    <div class="info-cards">
+      <div class="info-card">
+        <span class="info-card-label">RN Staffing (35%)</span>
+        <span class="info-card-text">Reported RN hours per resident per day compared with the 2024 benchmark of ${RN_BENCHMARK} hours. The federal rule that created this benchmark was repealed in February 2026; we retain the value as a disclosed grading benchmark, not as a current legal minimum.</span>
       </div>
-      <div class="result-stat" style="background:#fff;border-top:4px solid var(--ink);padding:var(--space-m);">
-        <span class="result-stat-label">Inspection Record (30%)</span>
-        <span class="result-stat-value">Number of health deficiencies CMS records for the most recent rating cycle. A <em>verified</em> zero-deficiency survey receives full base-score credit; missing inspection evidence never does.</span>
+      <div class="info-card">
+        <span class="info-card-label">Inspection Record (30%)</span>
+        <span class="info-card-text">Number of health deficiencies CMS records for the most recent rating cycle. A <em>verified</em> zero-deficiency survey receives full base-score credit; missing inspection evidence never does.</span>
       </div>
-      <div class="result-stat" style="background:#fff;border-top:4px solid var(--ink);padding:var(--space-m);">
-        <span class="result-stat-label">Quality Measures (20%)</span>
-        <span class="result-stat-value">CMS quality-measure star rating, normalized from one to five stars.</span>
+      <div class="info-card">
+        <span class="info-card-label">Quality Measures (20%)</span>
+        <span class="info-card-text">CMS quality-measure star rating, normalized from one to five stars.</span>
       </div>
-      <div class="result-stat" style="background:#fff;border-top:4px solid var(--ink);padding:var(--space-m);">
-        <span class="result-stat-label">Staffing Rating (15%)</span>
-        <span class="result-stat-value">CMS staffing star rating, normalized from one to five stars.</span>
+      <div class="info-card">
+        <span class="info-card-label">Staffing Rating (15%)</span>
+        <span class="info-card-text">CMS staffing star rating, normalized from one to five stars.</span>
       </div>
     </div>
 
@@ -64,13 +64,13 @@ export function howWeGradePage(): string {
 
     <h2>What the letter grades mean</h2>
     <p>The letter is a band applied to the <strong>final score after applicable penalties</strong>. It is a composite result, not a promise that every individual metric is equally strong.</p>
-    <div class="results-list" style="margin: var(--space-l) 0; display: grid; gap: var(--space-s);">
-      <div style="background:#fff;border-left:4px solid #2e7d32;padding:var(--space-s) var(--space-m);display:flex;align-items:center;gap:var(--space-s);"><span style="font-weight:800;font-size:1.3rem;color:#2e7d32;min-width:2rem;">A</span><span style="font-size:0.9rem;">Final score 80–100, with no active no-plan cap.</span></div>
-      <div style="background:#fff;border-left:4px solid #558b2f;padding:var(--space-s) var(--space-m);display:flex;align-items:center;gap:var(--space-s);"><span style="font-weight:800;font-size:1.3rem;color:#558b2f;min-width:2rem;">B</span><span style="font-size:0.9rem;">Final score 65–79, or a score of 80+ capped because CMS records a deficiency with no plan of correction.</span></div>
-      <div style="background:#fff;border-left:4px solid #f9a825;padding:var(--space-s) var(--space-m);display:flex;align-items:center;gap:var(--space-s);"><span style="font-weight:800;font-size:1.3rem;color:#f9a825;min-width:2rem;">C</span><span style="font-size:0.9rem;">Final score 50–64 after applicable penalties.</span></div>
-      <div style="background:#fff;border-left:4px solid #ef6c00;padding:var(--space-s) var(--space-m);display:flex;align-items:center;gap:var(--space-s);"><span style="font-weight:800;font-size:1.3rem;color:#ef6c00;min-width:2rem;">D</span><span style="font-size:0.9rem;">Final score 35–49 after applicable penalties.</span></div>
-      <div style="background:#fff;border-left:4px solid #c62828;padding:var(--space-s) var(--space-m);display:flex;align-items:center;gap:var(--space-s);"><span style="font-weight:800;font-size:1.3rem;color:#c62828;min-width:2rem;">F</span><span style="font-size:0.9rem;">Final score 0–34 after applicable penalties.</span></div>
-      <div style="background:#fff;border-left:4px solid #607D8B;padding:var(--space-s) var(--space-m);display:flex;align-items:center;gap:var(--space-s);"><span style="font-weight:800;font-size:1.3rem;color:#607D8B;min-width:2rem;">NR</span><span style="font-size:0.9rem;">Not rated because critical current inspection evidence is insufficient.</span></div>
+    <div class="grade-legend">
+      <div class="grade-legend-item grade-legend-item--A"><span class="grade-legend-letter grade-A">A</span><span class="grade-legend-text">Final score 80–100, with no active no-plan cap.</span></div>
+      <div class="grade-legend-item grade-legend-item--B"><span class="grade-legend-letter grade-B">B</span><span class="grade-legend-text">Final score 65–79, or a score of 80+ capped because CMS records a deficiency with no plan of correction.</span></div>
+      <div class="grade-legend-item grade-legend-item--C"><span class="grade-legend-letter grade-C">C</span><span class="grade-legend-text">Final score 50–64 after applicable penalties.</span></div>
+      <div class="grade-legend-item grade-legend-item--D"><span class="grade-legend-letter grade-D">D</span><span class="grade-legend-text">Final score 35–49 after applicable penalties.</span></div>
+      <div class="grade-legend-item grade-legend-item--F"><span class="grade-legend-letter grade-F">F</span><span class="grade-legend-text">Final score 0–34 after applicable penalties.</span></div>
+      <div class="grade-legend-item grade-legend-item--NR"><span class="grade-legend-letter grade-NR">NR</span><span class="grade-legend-text">Not rated because critical current inspection evidence is insufficient.</span></div>
     </div>
 
     <h2>Where the data comes from</h2>
@@ -81,7 +81,7 @@ export function howWeGradePage(): string {
 
     <h2>Start searching</h2>
     <p>Search by ZIP code or browse our <a href="/states">state directory</a> to compare nursing home evidence in your area.</p>
-    <p style="margin-top:2rem;"><a href="/explore" class="btn">Search nursing home ratings →</a></p>
+    <p class="btn-row"><a href="/explore" class="btn">Search nursing home ratings →</a></p>
   `;
 
   return layout(

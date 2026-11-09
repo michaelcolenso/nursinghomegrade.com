@@ -1,4 +1,5 @@
 import { layout } from "./layout";
+import { breadcrumb } from "./components";
 
 // Corrections policy and dispute route. This exists specifically because the
 // Phase 2 grade change lowers roughly a quarter of all letter grades, and a
@@ -22,14 +23,10 @@ export function contactPage(): string {
   ];
 
   const body = `
-    <nav class="breadcrumb" aria-label="Breadcrumb">
-      <a href="/">Home</a>
-      <span class="breadcrumb-sep">›</span>
-      <span style="color:var(--ink);">Contact &amp; Corrections</span>
-    </nav>
+    ${breadcrumb([{ label: "Home", href: "/" }, { label: "Contact & Corrections" }])}
 
     <h1>Contact and corrections</h1>
-    <p class="lede" style="max-width:800px;">
+    <p class="lede">
       We publish numbers about facilities where people live. Getting one wrong has consequences, so
       we would rather hear about an error than not.
     </p>
@@ -84,7 +81,7 @@ export function contactPage(): string {
       terms and grade band cutoffs.
     </p>
 
-    <div class="cta-box" style="margin-top:var(--space-2xl);">
+    <div class="cta-box">
       <h3>Before you write</h3>
       <p>These pages answer most questions about how a grade was produced.</p>
       <a class="btn" href="/methodology">Methodology →</a>
