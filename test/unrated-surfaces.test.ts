@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { searchResultsPage } from "../src/templates/home";
+import { searchResultsPage } from "../src/templates/search";
 import { cityPage } from "../src/templates/city";
 import { statePage } from "../src/templates/state";
 import { comparePage } from "../src/templates/compare";

@@ -1,6 +1,8 @@
 import { SITE_CSS_HREF } from "../styles";
 import { wordmark } from "./components";
 import { icon } from "./icons";
+export { escHtml } from "./escape";
+import { escHtml } from "./escape";
 
 export interface LayoutOptions {
   canonicalPath?: string;
@@ -302,7 +304,7 @@ export function layout(
         var data = JSON.parse(localStorage.getItem('nhg_saved_facilities') || '[]');
         if (data.length > 0 && window.location.pathname !== '/compare') {
           bar.style.display = 'flex';
-          count.textContent = data.length + ' facility' + (data.length !== 1 ? 'ies' : 'y') + ' selected';
+          count.textContent = data.length + (data.length === 1 ? ' facility' : ' facilities') + ' selected';
           if (btnCount) btnCount.textContent = '(' + data.length + ')';
         } else {
           bar.style.display = 'none';
@@ -429,13 +431,4 @@ export function layout(
   </script>
 </body>
 </html>`;
-}
-
-export function escHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
 }

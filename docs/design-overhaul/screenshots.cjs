@@ -24,6 +24,10 @@ const ROUTES = [
   ["search", "/search?zip=10044"],
   ["search-empty", "/search"],
   ["state", "/state/new-york"],
+  ["city", "/state/new-york/new-york"],
+  ["operators", "/operators"],
+  ["operators-best", "/operators/best"],
+  ["operators-worst", "/operators/worst"],
   ["states", "/states"],
   ["best", "/best"],
   ["worst", "/worst"],
@@ -48,7 +52,7 @@ const ROUTES = [
   if (isFile) {
     // scripts/render-preview.ts must emit these facility fixtures (A/complete,
     // D with uncorrected + jeopardy deficiencies, NR/withheld) — see PLAN §6 Phase 4.
-    routes.push(["facility", ""], ["facility-d", ""], ["facility-nr", ""]);
+    routes.push(["facility", ""], ["facility-d", ""], ["facility-nr", ""], ["operator", ""]);
   } else {
     const probe = await browser.newPage();
     try {

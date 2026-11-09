@@ -6,40 +6,6 @@ export function explorePage(): string {
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
-    <style>
-      #explore-map { 
-        height: calc(100vh - 200px); 
-        width: 100%; 
-        border: 2px solid var(--ink);
-        background: var(--bg);
-      }
-      .map-tooltip {
-        font-family: var(--font-ui);
-        padding: 0.5rem;
-        border: 2px solid var(--ink);
-        border-radius: 0;
-        box-shadow: 4px 4px 0 var(--ink);
-      }
-      .map-grade-dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        border: 2px solid var(--ink);
-        display: inline-block;
-      }
-      .cluster-icon {
-        background: rgba(11, 29, 51, 0.12);
-        color: var(--ink);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 800;
-        font-size: 0.75rem;
-        border: 1px solid var(--ink);
-        backdrop-filter: blur(2px);
-      }
-    </style>
   `;
 
   const extraScripts = `
@@ -91,7 +57,7 @@ export function explorePage(): string {
             .then(data => {
               markers.clearLayers();
               data.forEach(f => {
-                const color = getComputedStyle(document.documentElement).getPropertyValue('--grade-' + f.g).trim() || '#607D8B';
+                const color = getComputedStyle(document.documentElement).getPropertyValue('--grade-' + f.g + '-fill').trim() || '#607D8B';
                 const marker = L.circleMarker([f.lt, f.lg], {
                   radius: 6,
                   fillColor: color,
@@ -103,9 +69,9 @@ export function explorePage(): string {
                 
                 marker.bindPopup(\`
                   <div class="map-tooltip">
-                    <div style="font-weight:800;text-transform:uppercase;font-size:0.7rem;letter-spacing:0.1em;color:var(--muted);margin-bottom:0.25rem;">\${f.g === "NR" || Number(f.s) < 0 ? "Not rated" : "Grade " + f.g + " (" + f.s + "/100)"}</div>
-                    <a href="/facility/\${f.id}-\${f.sl}" style="font-family:'Playfair Display', Georgia, serif;font-weight:800;font-size:1.1rem;color:var(--ink);text-decoration:none;display:block;line-height:1.2;margin-bottom:0.5rem;">\${f.n}</a>
-                    <a href="/facility/\${f.id}-\${f.sl}" class="btn" style="padding:0.4rem 0.8rem;font-size:0.75rem;display:inline-block;">View Report →</a>
+                    <div class="map-tooltip-grade">\${f.g === "NR" || Number(f.s) < 0 ? "Not rated" : "Grade " + f.g + " (" + f.s + "/100)"}</div>
+                    <a href="/facility/\${f.id}-\${f.sl}" class="map-tooltip-name">\${f.n}</a>
+                    <a href="/facility/\${f.id}-\${f.sl}" class="btn btn--sm">View Report →</a>
                   </div>
                 \`, { closeButton: false, minWidth: 200 });
                 
@@ -134,9 +100,7 @@ export function explorePage(): string {
 
     <h2>Browse Nursing Homes by State</h2>
     <p>Select a state to view nursing home ratings, staffing data, and inspection records for every CMS-certified facility.</p>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:var(--space-xs);margin-bottom:var(--space-l)">
-      <a href="/states" style="font-size:0.8rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em">All States →</a>
-    </div>
+    <p><a class="link-arrow" href="/states">All States →</a></p>
 
     <h2>How We Grade Nursing Homes</h2>
     <p>Every facility receives an A–F grade based on staffing levels, health inspection results, and quality measure performance — all from official CMS data. <a href="/methodology">Learn about our methodology →</a></p>
@@ -146,28 +110,9 @@ export function explorePage(): string {
 
     <div id="explore-map"></div>
 
-    <div style="margin-top: var(--space-l); display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-s);">
-      <div style="display:flex; align-items:center; gap:0.5rem;">
-        <span class="map-grade-dot" style="background:var(--grade-A)"></span>
-        <span style="font-size:0.8rem; font-weight:700; text-transform:uppercase;">Grade A</span>
-      </div>
-      <div style="display:flex; align-items:center; gap:0.5rem;">
-        <span class="map-grade-dot" style="background:var(--grade-B)"></span>
-        <span style="font-size:0.8rem; font-weight:700; text-transform:uppercase;">Grade B</span>
-      </div>
-      <div style="display:flex; align-items:center; gap:0.5rem;">
-        <span class="map-grade-dot" style="background:var(--grade-C)"></span>
-        <span style="font-size:0.8rem; font-weight:700; text-transform:uppercase;">Grade C</span>
-      </div>
-      <div style="display:flex; align-items:center; gap:0.5rem;">
-        <span class="map-grade-dot" style="background:var(--grade-D)"></span>
-        <span style="font-size:0.8rem; font-weight:700; text-transform:uppercase;">Grade D</span>
-      </div>
-      <div style="display:flex; align-items:center; gap:0.5rem;">
-        <span class="map-grade-dot" style="background:var(--grade-F)"></span>
-        <span style="font-size:0.8rem; font-weight:700; text-transform:uppercase;">Grade F</span>
-      </div>
-    </div>
+    <ul class="map-legend list-plain">
+      ${(["A", "B", "C", "D", "F"] as const).map((g) => `<li><span class="map-grade-dot map-grade-dot--${g}" aria-hidden="true"></span><span class="map-legend-label">Grade ${g}</span></li>`).join("")}
+    </ul>
   `;
 
   return layout(

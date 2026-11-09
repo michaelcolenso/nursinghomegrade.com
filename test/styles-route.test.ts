@@ -69,6 +69,9 @@ describe("layout() brand and chrome", () => {
     expect(html).toContain('aria-expanded="false"');
     expect(html).toContain('id="comparison-bar"');
     for (const id of ["comparison-count", "comparison-clear", "compare-btn-count"]) expect(html).toContain(`id="${id}"`);
+    // Regression: the bar used to say "2 facilityies selected".
+    expect(html).toContain("(data.length === 1 ? ' facility' : ' facilities')");
+    expect(html).not.toContain("'ies' : 'y'");
     expect(html).toContain("masthead-nav-link");
   });
 

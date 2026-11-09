@@ -22,9 +22,9 @@ export function dataFreshness(releases: DataRelease[]): string {
     ["health_deficiencies", "Health inspections"],
   ] as const;
   return `
-    <aside aria-label="Data freshness" style="border:1px solid var(--ink);padding:var(--space-s);margin:var(--space-m) 0;font-size:0.875rem;">
-      <p style="margin:0 0 var(--space-xs);"><strong>Data freshness</strong> · <a href="/data-sources">Source dates and reporting periods</a></p>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--space-s);">
+    <aside class="freshness" aria-label="Data freshness">
+      <p class="freshness-head"><strong>Data freshness</strong> · <a href="/data-sources">Source dates and reporting periods</a></p>
+      <div class="freshness-grid">
         ${sources.map(([key, label]) => {
           const release = releases.find((r) => r.source_key === key);
           return `<div><strong>${label}</strong><br>
