@@ -1,4 +1,5 @@
 import { layout } from "./layout";
+import { leafletTileLayerJs } from "./map-tiles";
 
 export function explorePage(): string {
   const extraHead = `
@@ -48,11 +49,7 @@ export function explorePage(): string {
       (function() {
         const map = L.map('explore-map').setView([39.8283, -98.5795], 4);
         
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-          subdomains: 'abcd',
-          maxZoom: 20
-        }).addTo(map);
+        ${leafletTileLayerJs()}.addTo(map);
 
         const markers = L.markerClusterGroup({
           maxClusterRadius: 15,

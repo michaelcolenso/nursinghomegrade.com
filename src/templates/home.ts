@@ -4,6 +4,7 @@ import { RN_BENCHMARK, benchmarkLabel, repealDisclosureHtml } from "../staffing-
 import { scoreToSummary, type ScoreInputKey } from "../scoring";
 import type { DataRelease } from "./data-sources";
 import { dataFreshness } from "./data-freshness";
+import { leafletTileLayerJs } from "./map-tiles";
 
 export function homePage(pctFailing: number, releases: DataRelease[] = []): string {
   const body = `
@@ -247,10 +248,7 @@ const extraScripts = `
           btn.textContent = 'Show List View';
           if (!map) {
             map = L.map('results-map');
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-              subdomains: 'abcd',
-              maxZoom: 20
-            }).addTo(map);
+            ${leafletTileLayerJs()}.addTo(map);
 
             const group = L.featureGroup();
             facilities.forEach(f => {

@@ -2,6 +2,7 @@ import type { FacilityPageData, Deficiency, Facility, Trajectory, Operator, Faci
 import { citySlug, getStateInfo } from "../states";
 import { layout, escHtml } from "./layout";
 import { renderTrustModule } from "./trust";
+import { leafletTileLayerJs } from "./map-tiles";
 import { RN_BENCHMARK, BENCHMARK_ROW_NOTE, benchmarkLabel, repealDisclosureHtml } from "../staffing-standard";
 import { buildInspectionSummary } from "../inspection-summary";
 import {
@@ -920,10 +921,7 @@ export function facilityPage(
     <script>
       (function() {
         const map = L.map('facility-map', { zoomControl: false }).setView([${f.latitude}, ${f.longitude}], 14);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-          subdomains: 'abcd',
-          maxZoom: 20
-        }).addTo(map);
+        ${leafletTileLayerJs()}.addTo(map);
         const color = getComputedStyle(document.documentElement).getPropertyValue('--grade-${f.grade_letter}').trim() || '#607D8B';
         L.circleMarker([${f.latitude}, ${f.longitude}], {
           radius: 8,
