@@ -67,12 +67,21 @@ async function wrapResponse(
   ) {
     const html = await original.clone().text();
     const md = htmlToMarkdown(html);
-    const headers = new Headers();
+    const headers = new Headers(original.headers);
+    // The negotiated body has different bytes; retain resilience headers but
+    // discard representation metadata belonging to the original HTML.
+    headers.delete("Content-Length");
+    headers.delete("Content-Encoding");
+    headers.delete("ETag");
     headers.set("Content-Type", "text/markdown;charset=UTF-8");
     headers.set("x-markdown-tokens", String(md.split(/\s+/).length));
     headers.set("Link", AGENT_LINKS);
     headers.set("Vary", "Accept");
     headers.set("Cache-Control", original.headers.get("Cache-Control") ?? "public, max-age=3600");
+    if (original.status >= 500) {
+      if (!headers.has("Retry-After")) headers.set("Retry-After", "120");
+      headers.set("Cache-Control", "no-store");
+    }
     addBaseSecurityHeaders(headers);
     return new Response(md, { status: original.status, headers });
   }

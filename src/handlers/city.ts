@@ -1,5 +1,6 @@
 import type { Env } from "../types";
-import { htmlCacheKey, pageCache } from "../cache";
+import { htmlCacheKey, pageCache, staleHtmlResponse, htmlResponseCacheControl } from "../cache";
+import { logPageRenderError } from "../page-errors";
 import { isIndexableCity } from "../city-indexation";
 import { getStateAbbreviation, getStateInfo } from "../states";
 import {
@@ -12,6 +13,7 @@ import { cityPage } from "../templates/city";
 import { notFoundPage, errorPage } from "../templates/subscribe";
 
 export async function handleCity(request: Request, env: Env, stateSlug: string, citySlugParam: string): Promise<Response> {
+  const cacheKey = htmlCacheKey(`city:${stateSlug}:${citySlugParam}`);
   try {
     const stateAbbr = getStateAbbreviation(stateSlug);
     if (!stateAbbr) {
@@ -25,13 +27,12 @@ export async function handleCity(request: Request, env: Env, stateSlug: string, 
       return new Response(html, { status: 404, headers: { "Content-Type": "text/html;charset=UTF-8" } });
     }
 
-    const cacheKey = htmlCacheKey(`city:${stateSlug}:${citySlugParam}`);
     const cached = await pageCache.get(cacheKey);
     if (cached)
       return new Response(cached, {
         headers: {
           "Content-Type": "text/html;charset=UTF-8",
-          "Cache-Control": "public, max-age=86400",
+          "Cache-Control": htmlResponseCacheControl(),
         },
       });
 
@@ -68,15 +69,17 @@ export async function handleCity(request: Request, env: Env, stateSlug: string, 
       siblingCities: allCities,
     });
 
-    await pageCache.put(cacheKey, html, { expirationTtl: 86400 });
+    await pageCache.putWithStale(cacheKey, html, { expirationTtl: 86400 });
     return new Response(html, {
       headers: {
         "Content-Type": "text/html;charset=UTF-8",
-        "Cache-Control": "public, max-age=86400",
+        "Cache-Control": htmlResponseCacheControl(),
       },
     });
   } catch (err) {
-    console.error("handleCity error", err);
+    logPageRenderError("/state/:state/:city", err);
+    const stale = await staleHtmlResponse(cacheKey);
+    if (stale) return stale;
     const html = errorPage("Service unavailable", "We're experiencing a temporary issue. Please try again in a moment.");
     return new Response(html, { status: 503, headers: { "Content-Type": "text/html;charset=UTF-8" } });
   }

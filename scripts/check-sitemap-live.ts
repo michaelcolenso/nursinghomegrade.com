@@ -14,7 +14,8 @@
 // canonical apex host it claims in every rel=canonical tag.
 
 import { readFileSync, writeFileSync } from "node:fs";
-import { fetchAndRead, fetchWithRetry } from "../src/fetch-retry";
+import { fetchAndRead, type FetchedText } from "../src/fetch-retry";
+import { REPRESENTATIVE_PAGE_PROBES, validatePageHealth } from "../src/page-health";
 import { validateIndex, validateUrlset, SITEMAP_BASE, type SitemapEntry, type SitemapIndexEntry } from "../src/sitemap-xml";
 import {
   classifySitemapUrl,
@@ -62,13 +63,24 @@ async function fetchText(url: string): Promise<string> {
   return res.text;
 }
 
-async function fetchPage(url: string, init?: RequestInit): Promise<{ status: number; text: string }> {
+async function fetchPage(url: string, init?: RequestInit): Promise<FetchedText> {
   return fetchAndRead(url, init);
 }
 
 async function main() {
   const today = new Date().toISOString().split("T")[0]!;
   const problems: string[] = [];
+
+  for (const probe of REPRESENTATIVE_PAGE_PROBES) {
+    const url = `${SITEMAP_BASE}${probe.path}`;
+    try {
+      const res = await fetchPage(url, { redirect: "manual" });
+      problems.push(...validatePageHealth(url, res, { requireIndexable: probe.requireIndexable }));
+      console.log(`Probed ${url}: ${res.status}.`);
+    } catch (err) {
+      problems.push(`${url} probe failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
 
   const indexXml = await fetchText(`${SITEMAP_BASE}/sitemap.xml`);
   const children = parseLocs(indexXml, "sitemap") as SitemapIndexEntry[];
@@ -106,33 +118,9 @@ async function main() {
     for (let i = 0; i < locs.length; i += step) {
       const url = locs[i]!;
       const res = await fetchPage(url, { redirect: "manual" });
-      if (res.status !== 200) {
-        problems.push(`${url} returned ${res.status} (sitemaps must list only 200 URLs)`);
-        continue;
-      }
-      const html = res.text;
-      const canonical = html.match(/<link rel="canonical" href="([^"]+)"/)?.[1];
-      if (canonical === undefined) {
-        // Absent is a failure, not a pass: the checker's contract is that every
-        // listed URL carries a self-referencing canonical, and a dropped or
-        // reformatted tag is exactly what this run exists to catch.
-        problems.push(`${url} has no canonical tag this checker can read`);
-      } else if (canonical !== url) {
-        problems.push(`${url} canonicalises to ${canonical}`);
-      }
       // A sitemap listing a noindex URL is a direct contradiction — the sitemap
       // asks Google to crawl it, the page asks Google not to keep it.
-      const robotsMeta = html.match(/<meta name="robots" content="([^"]*)"/)?.[1];
-      if (robotsMeta?.includes("noindex")) {
-        problems.push(`${url} is listed in the sitemap but marked noindex`);
-      }
-      // Catches a D1/subrequest failure that degrades silently into a thin 200
-      // (an error or empty-state page) instead of the retryable 5xx the error
-      // boundary is supposed to produce — invisible to the status-code check
-      // above because the edge status is still 200.
-      if (html.length < 2000) {
-        problems.push(`${url} returned a suspiciously thin 200 (${html.length} bytes) — possible masked failure`);
-      }
+      problems.push(...validatePageHealth(url, res, { requireIndexable: true }));
     }
     console.log(`Checked ${name}: ${entries.length} URLs, sampled ${Math.ceil(locs.length / step)}.`);
     await new Promise((resolve) => setTimeout(resolve, 50));

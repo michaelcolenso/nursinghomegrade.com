@@ -1,0 +1,42 @@
+[
+  {
+    "path": "/",
+    "fresh": 200,
+    "D1Failure": 200,
+    "cache": "stale",
+    "sameHtml": true
+  },
+  {
+    "path": "/facility/999999-example-care",
+    "fresh": 200,
+    "D1Failure": 200,
+    "cache": "stale",
+    "sameHtml": true
+  },
+  {
+    "path": "/state/washington",
+    "fresh": 200,
+    "D1Failure": 200,
+    "cache": "stale",
+    "sameHtml": true
+  },
+  {
+    "path": "/state/washington/seattle",
+    "fresh": 200,
+    "D1Failure": 200,
+    "cache": "stale",
+    "sameHtml": true
+  },
+  {
+    "path": "/data-sources",
+    "fresh": 200,
+    "D1Failure": 200,
+    "cache": "stale",
+    "sameHtml": true
+  },
+  {
+    "path": "/state/washington/tacoma",
+    "coldFailure": 503,
+    "Retry-After": "120"
+  }
+]

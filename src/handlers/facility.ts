@@ -1,5 +1,6 @@
 import type { Env } from "../types";
-import { htmlCacheKey, pageCache } from "../cache";
+import { htmlCacheKey, pageCache, staleHtmlResponse, htmlResponseCacheControl } from "../cache";
+import { logPageRenderError } from "../page-errors";
 import {
   getFacilityBySlugId,
   getFacilityInspectionDetails,
@@ -21,7 +22,20 @@ import { notFoundPage, errorPage } from "../templates/subscribe";
 import { toOperatorSlug } from "../ownership";
 
 export async function handleFacility(request: Request, env: Env, slugId: string): Promise<Response> {
+  // Only validated canonical renders are stored under this exact route key.
+  // Checking it before D1 keeps a cached facility available during an outage;
+  // another slug for the same CMS id must still take the redirect/404 path.
+  const cacheKey = htmlCacheKey(`facility:${slugId}`);
   try {
+    const cached = await pageCache.get(cacheKey);
+    if (cached)
+      return new Response(cached, {
+        headers: {
+          "Content-Type": "text/html;charset=UTF-8",
+          "Cache-Control": htmlResponseCacheControl(),
+        },
+      });
+
     const facility = await getFacilityBySlugId(env, slugId);
     if (!facility) {
       const html = notFoundPage(new URL(request.url).pathname);
@@ -34,16 +48,6 @@ export async function handleFacility(request: Request, env: Env, slugId: string)
       url.pathname = canonicalPath;
       return Response.redirect(url.toString(), 308);
     }
-
-    const cacheKey = htmlCacheKey(`facility:${facility.cms_id}-${facility.slug}`);
-    const cached = await pageCache.get(cacheKey);
-    if (cached)
-      return new Response(cached, {
-        headers: {
-          "Content-Type": "text/html;charset=UTF-8",
-          "Cache-Control": "public, max-age=86400",
-        },
-      });
 
     const [inspectionDetails, deficiencies, nearby, betterNearby, snapshots, nationalAvg, stateRnMedian, penalties] = await Promise.all([
       getFacilityInspectionDetails(env, facility.cms_id),
@@ -108,15 +112,18 @@ export async function handleFacility(request: Request, env: Env, slugId: string)
         nationalAvgRn: nationalAvg.avgRnHours || null,
       },
     );
-    await pageCache.put(cacheKey, html, { expirationTtl: 86400 });
+    await pageCache.putWithStale(cacheKey, html, { expirationTtl: 86400 });
     return new Response(html, {
       headers: {
         "Content-Type": "text/html;charset=UTF-8",
-        "Cache-Control": "public, max-age=86400",
+        "Cache-Control": htmlResponseCacheControl(),
       },
     });
   } catch (err) {
-    console.error("handleFacility error", err);
+    const providerId = slugId.split("-")[0] ?? "";
+    logPageRenderError("/facility/:id", err, /^[A-Za-z0-9]{6}$/.test(providerId) ? providerId : null);
+    const stale = await staleHtmlResponse(cacheKey);
+    if (stale) return stale;
     const html = errorPage("Service unavailable", "We're experiencing a temporary issue. Please try again in a moment.");
     return new Response(html, { status: 503, headers: { "Content-Type": "text/html;charset=UTF-8" } });
   }
