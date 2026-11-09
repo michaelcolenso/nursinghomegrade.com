@@ -3,6 +3,7 @@ import worker from "../src/index";
 import { layout } from "../src/templates/layout";
 import { SITE_CSS, SITE_CSS_HASH, SITE_CSS_HREF } from "../src/styles";
 import type { Env } from "../src/types";
+import { WORDMARK_SVG_INNER, WORDMARK_SVG_INNER_REVERSED, WORDMARK_VIEWBOX } from "../src/brand.generated";
 
 const env = { DB: {} as D1Database, CACHE: {} as KVNamespace } as Env;
 const get = (path: string) => worker.fetch(new Request(`https://nursinghomegrade.com${path}`), env);
@@ -62,6 +63,16 @@ describe("layout() brand and chrome", () => {
     expect(html).not.toContain("masthead-name");
     expect(html).not.toContain("masthead-icon");
     expect(html).not.toMatch(/<text[\s>]/);
+  });
+
+  it("uses the v3 wordmark with a readable reversed variant", () => {
+    expect(WORDMARK_VIEWBOX).toBe("-35 -90 10135 1220");
+    expect(WORDMARK_SVG_INNER).toContain('fill="#F4D35E"');
+    expect(html).toContain(WORDMARK_SVG_INNER);
+    // Reversed: cream "NursingHome", but "Grade" stays navy on the yellow highlight.
+    expect(WORDMARK_SVG_INNER_REVERSED).toContain('<g fill="#FFFDF7">');
+    expect(WORDMARK_SVG_INNER_REVERSED.trimEnd().endsWith("</g>")).toBe(true);
+    expect(WORDMARK_SVG_INNER_REVERSED).toMatch(/<g fill="#0B1F3B">(<path [^>]+\/>){5}<\/g>$/);
   });
 
   it("keeps the menu-toggle and comparison-bar contracts the layout script depends on", () => {

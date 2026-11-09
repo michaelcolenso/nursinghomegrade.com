@@ -7,7 +7,7 @@ export const LAYOUT_CSS = `
     .masthead { display: flex; align-items: center; justify-content: space-between; gap: var(--space-s); height: var(--header-h); }
     .brand { display: inline-flex; align-items: center; min-height: 44px; min-width: 0; text-decoration: none; border: 0; flex: 0 1 auto; }
     .brand:hover { border: 0; }
-    .brand-wordmark { display: block; height: 28px; width: auto; aspect-ratio: ${WORDMARK_ASPECT}; max-width: 100%; }
+    .brand-wordmark { display: block; height: 34px; width: auto; aspect-ratio: ${WORDMARK_ASPECT}; max-width: 100%; }
     .masthead-nav { display: flex; align-items: center; gap: var(--space-m); }
     .masthead-panel { display: flex; align-items: center; gap: var(--space-m); }
     .masthead-nav-link {
@@ -64,7 +64,7 @@ export const LAYOUT_CSS = `
     .masthead-toggle[aria-expanded="true"] .masthead-toggle-bar:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
 
     @media (max-width: 900px) {
-      .brand-wordmark { height: 24px; }
+      .brand-wordmark { height: 30px; }
       .masthead-toggle { display: inline-flex; }
       .masthead-nav { gap: 0; }
       .masthead-panel {
@@ -88,7 +88,7 @@ export const LAYOUT_CSS = `
       .masthead-search-btn { margin-top: var(--space-s); min-height: 48px; font-size: 1rem; }
     }
     @media (max-width: 400px) {
-      .brand-wordmark { height: 20px; }
+      .brand-wordmark { height: 26px; }
     }
 
     /* Footer */
@@ -117,7 +117,7 @@ export const LAYOUT_CSS = `
     .footer-brand { display: flex; flex-direction: column; gap: var(--space-s); }
     .footer-lockup { display: inline-flex; align-items: center; min-height: 44px; text-decoration: none; border: 0; }
     .footer-lockup:hover { border: 0; }
-    .footer-lockup .brand-wordmark { height: 24px; }
+    .footer-lockup .brand-wordmark { height: 30px; }
     .footer-tagline { font-size: 0.875rem; color: var(--slate-600); line-height: 1.6; margin: 0; max-width: 32ch; }
     .footer-col { display: flex; flex-direction: column; gap: 2px; }
     .footer-col-head { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--navy-900); margin-bottom: var(--space-2xs); }
