@@ -9,24 +9,30 @@ Font licensing: `FONTS-LICENSE.md`.
 
 ## Logo
 
-Two marks, both generated as outlined SVG paths by `scripts/generate-brand-assets.ts` into `src/brand.generated.ts`
+Both marks are embedded as outlined SVG paths by `scripts/generate-brand-assets.ts` into `src/brand.generated.ts`
 (committed; the Worker has no static assets). Never edit the generated file by hand.
+
+The wordmark (v3) is supplied artwork, not generated from fonts: source files, PNG exports, proof sheet and designer notes
+live in `docs/brand/wordmark/`. The generator reads `wordmark-primary.svg` and derives the reversed variant from it.
 
 | Mark | Use | Code |
 |---|---|---|
-| Wordmark: "NursingHomeGrade" Playfair Display SemiBold + ".com" Playfair Regular at 0.52x | Site header, footer, OG image, anywhere the name appears as a logo | `wordmark()` in `components.ts`; `WORDMARK_SVG_INNER[_REVERSED]` |
+| Wordmark v3: "NursingHome" navy + "Grade" navy on a yellow (#F4D35E) highlight, outlined serif | Site header, footer, OG image, anywhere the name appears as a logo | `wordmark()` in `components.ts`; `WORDMARK_SVG_INNER[_REVERSED]` |
 | Icon: two muted-teal bars, teal slash, navy block with "NHG" | App icon, avatar, small square slots | `ICON_SVG`, `APP_ICON_SVG`, PNG exports |
 | Favicon: bars and slash only, no lettering (illegible at 16px) | Browser tab | `FAVICON_SVG`, `FAVICON_32_PNG_BASE64` |
 
 Rules (recommendations from the brand brief, not contract requirements):
 
-- **Clear space:** at least the height of the "N" on every side.
-- **Minimum size:** wordmark no shorter than 16px tall; below that use the icon or favicon.
-- **Color:** navy wordmark with teal ".com" on light backgrounds; white wordmark with teal ".com" on navy (reversed). No other recolors, gradients, outlines or shadows.
+- **Clear space:** the SVG viewBox already includes a small margin; keep at least the height of the "N" clear on every side.
+- **Minimum size:** horizontal wordmark no narrower than ~200px (site: 34px tall desktop, 26px on phones ≈ 216px wide);
+  the designer flags 240px as the legibility limit. Below that use `wordmark-stacked.svg` or the icon.
+- **Color:** navy (#0B1F3B) on light backgrounds. Reversed (on navy): "NursingHome" in cream (#FFFDF7), "Grade" stays navy
+  on the yellow highlight. The supplied `wordmark-reversed.svg` puts cream on yellow (~1.1:1, unreadable) and is not used.
+  Monochrome (`wordmark-monochrome.svg`, no highlight) for print/single-ink. No other recolors, gradients, outlines or shadows.
+- Do not use an "A" grade seal as the company icon; it can be confused with a facility rating.
 - **Never** stretch, rotate, re-set in another font, or pair the logo with star icons (the site rates by letter grade, not stars).
-- The reversed ".com" is teal-600 on navy at 3.95:1. Logos are exempt from WCAG text contrast, but do not use that pairing for running text.
 
-Regenerate after any font or geometry change:
+Regenerate after any wordmark, font or geometry change:
 
 ```
 python3 scripts/brand/instance-fonts.py   # once: fetch fonts, cut static instances into data/fonts/
