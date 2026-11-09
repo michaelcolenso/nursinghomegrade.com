@@ -155,15 +155,18 @@ export async function getBenchmarkShortfall(env: Env): Promise<BenchmarkShortfal
  * CMS source files and the release dates of the copies in production.
  * Returns [] if the table has not been populated yet, so the page degrades to
  * its prose rather than rendering an empty or invented date.
+ * Strict callers propagate query failures so a saved good page can be served;
+ * a successful query with no rows remains a valid empty release list.
  */
-export async function getDataReleases(env: Env): Promise<DataRelease[]> {
+export async function getDataReleases(env: Env, opts?: { strict?: boolean }): Promise<DataRelease[]> {
   try {
     const results = await env.DB.prepare(
       `SELECT source_key, label, cms_release_date, ingested_at, source_url
          FROM data_releases ORDER BY label ASC`,
     ).all<DataRelease>();
     return results.results ?? [];
-  } catch {
+  } catch (err) {
+    if (opts?.strict) throw err;
     return [];
   }
 }

@@ -1,6 +1,14 @@
-// Bumped for thin-city noindex rules. Earlier indexable city HTML must not
-// survive the rollout under an old cache key.
+// Start a new generation of stable-page HTML with a separate stale copy.
+// Earlier cache generations must not supply fallback HTML after a rollout.
+// v33: design overhaul Phase 1 (new masthead/footer/stylesheet markup).
 const HTML_CACHE_VERSION = "html:v33";
+
+export const HTML_STALE_TTL_SECONDS = 604800;
+
+/** Outgoing response policy; Cache API retention is controlled separately. */
+export function htmlResponseCacheControl(freshTtl = 86400): string {
+  return `public, max-age=${freshTtl}, stale-while-revalidate=${HTML_STALE_TTL_SECONDS}`;
+}
 
 export function htmlCacheKey(key: string): string {
   return `${HTML_CACHE_VERSION}:${key}`;
@@ -17,44 +25,88 @@ function cacheRequest(key: string): Request {
 
 function edgeCache(): Cache | null {
   // `caches` is absent outside the Workers runtime (vitest, node scripts).
-  return typeof caches === "undefined" ? null : caches.default;
+  try {
+    return typeof caches === "undefined" ? null : caches.default;
+  } catch {
+    return null;
+  }
+}
+
+function staleCacheKey(key: string): string {
+  return `stale:${key}`;
+}
+
+async function readCachedText(key: string): Promise<string | null> {
+  const cache = edgeCache();
+  if (!cache) return null;
+  try {
+    const hit = await cache.match(cacheRequest(key));
+    return hit ? await hit.text() : null;
+  } catch {
+    return null;
+  }
+}
+
+async function writeCachedText(key: string, value: string, opts?: { expirationTtl?: number }): Promise<void> {
+  const cache = edgeCache();
+  if (!cache) return;
+  const ttl = opts?.expirationTtl ?? 86400;
+  try {
+    await cache.put(
+      cacheRequest(key),
+      new Response(value, {
+        headers: { "Cache-Control": `public, max-age=${ttl}` },
+      }),
+    );
+  } catch {
+    // Caching is best-effort; serving the response matters more.
+  }
+}
+
+async function deleteCachedEntry(key: string): Promise<void> {
+  const cache = edgeCache();
+  if (!cache) return;
+  try {
+    await cache.delete(cacheRequest(key));
+  } catch {
+    /* best-effort */
+  }
 }
 
 export const pageCache = {
-  async get(key: string): Promise<string | null> {
-    const cache = edgeCache();
-    if (!cache) return null;
-    try {
-      const hit = await cache.match(cacheRequest(key));
-      return hit ? await hit.text() : null;
-    } catch {
-      return null;
-    }
+  get: readCachedText,
+  put: writeCachedText,
+
+  async getStale(key: string): Promise<string | null> {
+    return readCachedText(staleCacheKey(key));
   },
 
-  async put(key: string, value: string, opts?: { expirationTtl?: number }): Promise<void> {
-    const cache = edgeCache();
-    if (!cache) return;
-    const ttl = opts?.expirationTtl ?? 86400;
-    try {
-      await cache.put(
-        cacheRequest(key),
-        new Response(value, {
-          headers: { "Cache-Control": `public, max-age=${ttl}` },
-        }),
-      );
-    } catch {
-      // Caching is best-effort; serving the response matters more.
-    }
+  async putWithStale(key: string, value: string, opts?: { expirationTtl?: number }): Promise<void> {
+    // Cache API put/match do not support stale-while-revalidate. Retain a
+    // separate successful render for stable routes to use on an error only.
+    await Promise.all([
+      writeCachedText(key, value, opts),
+      writeCachedText(staleCacheKey(key), value, { expirationTtl: HTML_STALE_TTL_SECONDS }),
+    ]);
   },
 
   async delete(key: string): Promise<void> {
-    const cache = edgeCache();
-    if (!cache) return;
-    try {
-      await cache.delete(cacheRequest(key));
-    } catch {
-      /* best-effort */
-    }
+    await Promise.all([
+      deleteCachedEntry(key),
+      deleteCachedEntry(staleCacheKey(key)),
+    ]);
   },
 };
+
+/** Only stable HTML handlers opt into fallback; reads never renew retention. */
+export async function staleHtmlResponse(key: string): Promise<Response | null> {
+  const html = await pageCache.getStale(key);
+  if (html === null) return null;
+  return new Response(html, {
+    headers: {
+      "Content-Type": "text/html;charset=UTF-8",
+      "Cache-Control": "public, max-age=60",
+      "X-NHG-Cache": "stale",
+    },
+  });
+}
