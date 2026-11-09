@@ -1,19 +1,20 @@
 import type { Env } from "../types";
 import type { Facility } from "../types";
-import { htmlCacheKey, pageCache } from "../cache";
+import { htmlCacheKey, pageCache, staleHtmlResponse, htmlResponseCacheControl } from "../cache";
+import { logPageRenderError } from "../page-errors";
 import { getNationalPctFailing, searchByZipExact, searchNearby, getStatesWithCounts, getDataReleases } from "../db";
 import { homePage, searchResultsPage, searchFormPage } from "../templates/home";
 import { errorPage } from "../templates/subscribe";
 
 export async function handleHome(request: Request, env: Env): Promise<Response> {
+  const cacheKey = htmlCacheKey("page:home");
   try {
-    const cacheKey = htmlCacheKey("page:home");
     const cached = await pageCache.get(cacheKey);
     if (cached)
       return new Response(cached, {
         headers: {
           "Content-Type": "text/html;charset=UTF-8",
-          "Cache-Control": "public, max-age=3600",
+          "Cache-Control": htmlResponseCacheControl(3600),
         },
       });
 
@@ -21,15 +22,17 @@ export async function handleHome(request: Request, env: Env): Promise<Response> 
       getNationalPctFailing(env), getDataReleases(env),
     ]);
     const html = homePage(pctFailing, releases);
-    await pageCache.put(cacheKey, html, { expirationTtl: 3600 });
+    await pageCache.putWithStale(cacheKey, html, { expirationTtl: 3600 });
     return new Response(html, {
       headers: {
         "Content-Type": "text/html;charset=UTF-8",
-        "Cache-Control": "public, max-age=3600",
+        "Cache-Control": htmlResponseCacheControl(3600),
       },
     });
   } catch (err) {
-    console.error("handleHome error", err);
+    logPageRenderError("/", err);
+    const stale = await staleHtmlResponse(cacheKey);
+    if (stale) return stale;
     const html = errorPage("Service unavailable", "We're experiencing a temporary issue. Please try again in a moment.");
     return new Response(html, { status: 503, headers: { "Content-Type": "text/html;charset=UTF-8" } });
   }
