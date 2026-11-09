@@ -1,7 +1,7 @@
 import type { CMSFacility, Facility } from "../src/types";
 import { computeGrade, scoreToSummary, toSlug, type PenaltyDeficiency } from "../src/scoring";
 import { normalizeOwnerName, toOperatorSlug } from "../src/ownership";
-import { SITE_STATS_REFRESH_SQL, STATE_STATS_CLEANUP_SQL, STATE_STATS_REFRESH_SQL } from "./stats-sql";
+import { SITE_GRADE_DISTRIBUTION_REFRESH_SQL, SITE_STATS_REFRESH_SQL, STATE_STATS_CLEANUP_SQL, STATE_STATS_REFRESH_SQL } from "./stats-sql";
 import {
   SETUP_FILE,
   SWAP_FILE,
@@ -451,6 +451,7 @@ async function main() {
     ...operatorSqls,
     ...penaltySqls,
     SITE_STATS_REFRESH_SQL,
+    SITE_GRADE_DISTRIBUTION_REFRESH_SQL,
     STATE_STATS_CLEANUP_SQL,
     STATE_STATS_REFRESH_SQL,
     releaseSql,

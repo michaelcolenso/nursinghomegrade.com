@@ -23,6 +23,7 @@ import {
   type PenaltyDeficiency,
   type ScoreInputs,
 } from "../src/scoring";
+import { SITE_GRADE_DISTRIBUTION_REFRESH_SQL } from "./stats-sql";
 
 const DB_NAME = "nursinghomegrade";
 const REASON = "pre-penalty-baseline";
@@ -252,6 +253,9 @@ async function main() {
             computed_at = datetime('now')
       WHERE id = 1;`,
   );
+
+  console.log("Refreshing site_grade_distribution...");
+  query(SITE_GRADE_DISTRIBUTION_REFRESH_SQL);
 
   console.log("Done.");
 }

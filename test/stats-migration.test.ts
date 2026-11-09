@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
+  SITE_GRADE_DISTRIBUTION_REFRESH_SQL,
   SITE_STATS_REFRESH_SQL,
   STATE_STATS_CLEANUP_SQL,
   STATE_STATS_REFRESH_SQL,
@@ -13,6 +14,7 @@ import {
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const wranglerBin = join(repoRoot, "node_modules/wrangler/bin/wrangler.js");
 const migrationSql = readFileSync(join(repoRoot, "migrations/008_stats_tables.sql"), "utf8");
+const distributionMigrationSql = readFileSync(join(repoRoot, "migrations/014_site_grade_distribution.sql"), "utf8");
 
 interface WranglerResult {
   results: Array<Record<string, unknown>>;
@@ -147,5 +149,67 @@ describe("stats migration and refresh SQL", () => {
     );
 
     expect(siteStats).toEqual([{ total_facilities: 2, avg_grade: 80 }]);
+  }, 20_000);
+});
+
+describe("site_grade_distribution (migration 014 and refresh SQL)", () => {
+  const rows = `
+    INSERT INTO facilities VALUES
+      ('a1', 'WA', 100, 'A', 0.7, 1),
+      ('a2', 'WA', 85, 'A', 0.7, 1),
+      ('b1', 'WA', 72, 'B', 0.7, 1),
+      ('c1', 'WA', 50, 'C', 0.7, 1),
+      ('d1', 'OR', 35, 'D', 0.7, 1),
+      ('f1', 'OR', 0, 'F', 0.7, 1),
+      ('nr1', 'OR', -1, 'NR', NULL, NULL),
+      ('nr2', 'OR', 95, 'NR', 0.7, 1);
+  `;
+  const expected = [
+    { bucket: "A", n: 2 }, { bucket: "B", n: 1 }, { bucket: "C", n: 1 }, { bucket: "D", n: 1 }, { bucket: "F", n: 1 }, { bucket: "NR", n: 2 },
+    { bucket: "s00", n: 1 }, { bucket: "s10", n: 0 }, { bucket: "s20", n: 0 }, { bucket: "s30", n: 1 }, { bucket: "s40", n: 0 },
+    { bucket: "s50", n: 1 }, { bucket: "s60", n: 0 }, { bucket: "s70", n: 1 }, { bucket: "s80", n: 1 }, { bucket: "s90", n: 1 },
+  ];
+  const select = "SELECT bucket, n FROM site_grade_distribution ORDER BY CASE WHEN bucket GLOB 's*' THEN 1 ELSE 0 END, bucket;";
+
+  it("migration backfills letters, NR and 10-point buckets, folding 100 into s90 and excluding NR rows from score buckets", () => {
+    const [dist] = executeFixture(`${facilitiesTableSql(rows)}\n${distributionMigrationSql}\n${select}`, 1);
+    expect(dist).toEqual(expected);
+  }, 20_000);
+
+  it("refresh SQL creates the table itself, so the production refresh works without migration 014", () => {
+    const [dist] = executeFixture(`${facilitiesTableSql(rows)}\n${SITE_GRADE_DISTRIBUTION_REFRESH_SQL}\n${select}`, 1);
+    expect(dist).toEqual(expected);
+  }, 20_000);
+
+  it("migration and refresh produce identical rows, and applying either repeatedly is idempotent", () => {
+    const [once] = executeFixture(`${facilitiesTableSql(rows)}\n${distributionMigrationSql}\n${select}`, 1);
+    const [repeated] = executeFixture(
+      `${facilitiesTableSql(rows)}
+      ${distributionMigrationSql}
+      ${SITE_GRADE_DISTRIBUTION_REFRESH_SQL}
+      ${distributionMigrationSql}
+      ${select}`,
+      1,
+    );
+    expect(repeated).toEqual(once);
+    expect(repeated).toEqual(expected);
+  }, 20_000);
+
+  it("rebuilds from current rows: regraded and removed facilities leave no stale counts", () => {
+    const [dist] = executeFixture(
+      `${facilitiesTableSql(rows)}
+      ${SITE_GRADE_DISTRIBUTION_REFRESH_SQL}
+      UPDATE facilities SET grade_score = -1, grade_letter = 'NR' WHERE cms_id = 'a1';
+      DELETE FROM facilities WHERE cms_id = 'f1';
+      ${SITE_GRADE_DISTRIBUTION_REFRESH_SQL}
+      SELECT bucket, n FROM site_grade_distribution WHERE bucket IN ('A','F','NR','s90','s00') ORDER BY bucket;`,
+      1,
+    );
+    expect(dist).toEqual([{ bucket: "A", n: 1 }, { bucket: "F", n: 0 }, { bucket: "NR", n: 2 + 1 }, { bucket: "s00", n: 0 }, { bucket: "s90", n: 0 }]);
+  }, 20_000);
+
+  it("handles an empty facilities table without NULLs", () => {
+    const [dist] = executeFixture(`${facilitiesTableSql()}\n${SITE_GRADE_DISTRIBUTION_REFRESH_SQL}\nSELECT COUNT(*) AS rows, SUM(n) AS total FROM site_grade_distribution;`, 1);
+    expect(dist).toEqual([{ rows: 16, total: 0 }]);
   }, 20_000);
 });
