@@ -147,6 +147,8 @@ export function layout(
           <a href="/reports/staffing-failures" class="footer-link">Staffing Report</a>
           <a href="/reports/staffing-standard-repeal" class="footer-link">The Repealed Staffing Rule</a>
           <a href="/reports/uncorrected-deficiencies" class="footer-link">Uncorrected Deficiencies</a>
+          <a href="/reports/abuse-citations" class="footer-link">Abuse and Neglect Citations</a>
+          <a href="/reports/special-focus-facilities" class="footer-link">Special Focus Facilities</a>
         </nav>
 
         <nav class="footer-col" aria-label="Company">

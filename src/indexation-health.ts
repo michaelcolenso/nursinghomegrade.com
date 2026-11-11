@@ -34,10 +34,12 @@ const CORE_PATHS = new Set([
   "/glossary",
   "/reports/staffing-standard-repeal",
   "/reports/staffing-failures",
+  "/reports/abuse-citations",
+  "/reports/special-focus-facilities",
   "/states",
 ]);
 const STAFFING_REPORT_PATHS = new Set(
-  getAllStateSlugs().map((slug) => `/reports/staffing-failures/${slug}`),
+  getAllStateSlugs().flatMap((slug) => [`/reports/staffing-failures/${slug}`, `/reports/abuse-citations/${slug}`]),
 );
 
 function isPositiveInteger(value: unknown): value is number {

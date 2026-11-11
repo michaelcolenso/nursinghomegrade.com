@@ -24,7 +24,7 @@ import { howWeGradePage } from "../src/templates/how-we-grade";
 import { methodologyPage } from "../src/templates/methodology";
 import { aboutPage } from "../src/templates/about";
 import { faqPage } from "../src/templates/faq";
-import { staffingFailuresPage, staffingFailuresStatePage, highDeficiencyPage, chainsReportPage, uncorrectedDeficienciesPage } from "../src/templates/reports";
+import { staffingFailuresPage, staffingFailuresStatePage, highDeficiencyPage, chainsReportPage, uncorrectedDeficienciesPage, abuseCitationsPage, abuseCitationsStatePage, specialFocusPage } from "../src/templates/reports";
 import { dataSourcesPage } from "../src/templates/data-sources";
 import { contactPage } from "../src/templates/contact";
 import { privacyPage } from "../src/templates/privacy";
@@ -92,8 +92,8 @@ const list: FacilityPageData[] = [
   fac(1, "A", 88),
   fac(2, "B", 72, { city: "Brooklyn" }),
   fac(3, "C", 57, { city: "Queens" }),
-  fac(4, "D", 41, { city: "Bronx" }),
-  fac(5, "F", 22, { city: "Yonkers" }),
+  fac(4, "D", 41, { city: "Bronx", abuse_icon: "Y" }),
+  fac(5, "F", 22, { city: "Yonkers", special_focus_status: "SFF", abuse_icon: "Y" }),
   fac(6, "NR", -1, { city: "Albany", grade_completeness: "insufficient", rn_hours_per_resident_day: null }),
 ];
 
@@ -113,6 +113,7 @@ const operator: Operator = {
 const rows = list.filter((f) => f.grade_letter !== "NR").map((f) => ({
   cms_id: f.cms_id, name: f.name, city: f.city, state: f.state, rn_hours_per_resident_day: f.rn_hours_per_resident_day,
   total_deficiencies: f.total_deficiencies, grade_score: f.grade_score, grade_letter: f.grade_letter, slug: f.slug,
+  abuse_icon: f.abuse_icon ?? null, special_focus_status: f.special_focus_status ?? null,
 }));
 
 const ops: Operator[] = [
@@ -187,6 +188,16 @@ const pages: Record<string, string> = {
   "not-found": notFoundPage("/this-page-does-not-exist"),
   facility: facilityPage(baseFacility, [defs[2] as Deficiency], [list[1] as Facility, list[2] as Facility], [list[0] as Facility], trajectory, "", "", operator),
   "facility-d": facilityPage(fac(9, "D", 41, { cms_id: "335009", total_deficiencies: 12 }), defs, [list[2] as Facility], [list[0] as Facility, list[1] as Facility], { ...trajectory, status: "declining", grade_change: -9, rn_hours_trend: "down" }, "", "", null),
+  // A B-graded home that carries CMS warnings: the case the warnings block exists for.
+  "facility-flagged": facilityPage(
+    fac(7, "B", 71, { cms_id: "335007", abuse_icon: "Y", special_focus_status: "SFF Candidate" }),
+    [{ ...(defs[1] as Deficiency), id: 9, deficiency_category: "Freedom from Abuse, Neglect, and Exploitation Deficiencies", deficiency_tag_number: "0600", deficiency_description: "Protect each resident from all types of abuse such as physical, mental, sexual abuse, physical punishment, and neglect by anybody.", complaint_deficiency: "Y" }, defs[2] as Deficiency],
+    [list[2] as Facility], [list[0] as Facility], null, "", "", null,
+    { cmsNotes: { staffing_rating_footnote: "24", reported_staffing_footnote: "25" } },
+  ),
+  "report-abuse": abuseCitationsPage([{ stateName: "Texas", slug: "texas", count: 141, goodGrades: 17 }, { stateName: "Ohio", slug: "ohio", count: 88, goodGrades: 9 }, { stateName: "New York", slug: "new-york", count: 52, goodGrades: 4 }], 281),
+  "report-abuse-state": abuseCitationsStatePage("New York", "new-york", rows.slice().reverse(), { total: 52, goodGrades: 4, page: 1, totalPages: 1 }),
+  "report-sff": specialFocusPage(rows.slice(3), rows.slice(0, 4)),
   "facility-nr": facilityPage(fac(8, "NR", -1, { cms_id: "335008", grade_completeness: "insufficient", rn_hours_per_resident_day: null, quality_rating: null }), [], [], [], null, "", "", null),
 };
 

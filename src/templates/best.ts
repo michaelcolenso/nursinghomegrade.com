@@ -1,5 +1,5 @@
 import { layout, escHtml } from "./layout";
-import { breadcrumb, gradePill } from "./components";
+import { breadcrumb, cmsWarningBadges, gradePill } from "./components";
 
 interface FacilityRow {
   cms_id: string;
@@ -11,6 +11,8 @@ interface FacilityRow {
   grade_score: number;
   grade_letter: string;
   slug: string;
+  abuse_icon?: string | null;
+  special_focus_status?: string | null;
 }
 
 /**
@@ -51,6 +53,7 @@ function renderTable(facilities: FacilityRow[]): string {
         <td class="rank-n">${i + 1}</td>
         <td class="name">
           <a href="/facility/${escHtml(f.cms_id)}-${escHtml(f.slug)}">${escHtml(f.name)}</a>
+          ${cmsWarningBadges(f)}
         </td>
         <td>${escHtml(f.city)}, ${escHtml(f.state)}</td>
         <td>${gradePill(f.grade_letter)}</td>

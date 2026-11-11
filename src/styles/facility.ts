@@ -18,6 +18,18 @@ export const FACILITY_CSS = `
       .fac-head { grid-template-columns: 1fr; grid-template-areas: "title" "chip" "actions"; }
     }
 
+    /* CMS warnings (abuse icon, Special Focus status, days without an RN): first thing under the header */
+    .cms-warnings { margin: 0 0 var(--space-m); padding: var(--space-m); background: var(--grade-F-tint); border: 1px solid var(--grade-F-ink); border-left-width: 4px; border-radius: var(--radius-md); }
+    .cms-warnings-heading { margin: 0 0 var(--space-xs); font-family: var(--font-ui); font-size: 0.8125rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--alarm); }
+    .cms-warning-list { display: grid; gap: var(--space-s); margin: 0; padding: 0; list-style: none; }
+    .cms-warning p { margin: 0; max-width: 72ch; }
+    .cms-warning-title { font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; line-height: 1.25; color: var(--navy-900); }
+    .cms-warnings-note { margin: var(--space-s) 0 0; font-size: 0.875rem; color: var(--navy-900); }
+    .staffing-notes { margin: var(--space-s) 0; padding: var(--space-s) var(--space-m); background: var(--grade-NR-tint); border: 1px solid var(--line-strong); border-radius: var(--radius-md); }
+    .staffing-notes-title { margin: 0 0 var(--space-2xs); font-weight: 700; }
+    .staffing-notes ul { margin: 0; padding-left: 1.25rem; }
+    .staffing-notes .is-urgent { color: var(--alarm); font-weight: 600; }
+
     /* Facts */
     .fact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-m); margin: 0; padding: var(--space-m); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); }
     .fact-grid--wide { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: var(--space-xs); }

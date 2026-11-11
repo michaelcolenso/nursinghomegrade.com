@@ -85,3 +85,18 @@ describe("canonical host normalization", () => {
     expect(res.status).not.toBe(301);
   });
 });
+
+describe("CMS warning-flag report routes", () => {
+  it("serves the national abuse and Special Focus reports", async () => {
+    for (const path of ["/reports/abuse-citations", "/reports/special-focus-facilities"]) {
+      const res = await worker.fetch(new Request(`https://nursinghomegrade.com${path}`), stubEnv());
+      expect(res.status, path).toBe(200);
+    }
+  });
+
+  it("routes /reports/abuse-citations/:state to the state handler (404 when the state has no flagged homes)", async () => {
+    const res = await worker.fetch(new Request("https://nursinghomegrade.com/reports/abuse-citations/ohio"), stubEnv());
+    expect(res.status).toBe(404);
+    expect(await res.text()).toContain("Page not found");
+  });
+});

@@ -1,4 +1,4 @@
-import type { Facility, FacilityInspectionDetails, Deficiency, Env, Operator, FacilitySnapshot, FacilityPenalty, StateFacilityCard } from "./types";
+import type { Facility, FacilityInspectionDetails, Deficiency, Env, Operator, FacilitySnapshot, FacilityPenalty, StateFacilityCard, FacilityCmsNotes } from "./types";
 import { cityDisplayName, citySlug } from "./states";
 import type { DataRelease } from "./templates/data-sources";
 
@@ -228,7 +228,7 @@ export async function getFacilitiesByState(env: Env, state: string, limit = 200)
  */
 export async function getTopFacilitiesByState(env: Env, state: string, limit = 10): Promise<StateFacilityCard[]> {
   const results = await env.DB.prepare(
-    `SELECT cms_id, name, slug, city, state, grade_score, grade_letter, rn_hours_per_resident_day
+    `SELECT cms_id, name, slug, city, state, grade_score, grade_letter, rn_hours_per_resident_day, abuse_icon, special_focus_status
      FROM facilities WHERE state = ? AND grade_letter != 'NR' AND grade_score >= 0 ORDER BY grade_score DESC LIMIT ?`
   )
     .bind(state, limit)
@@ -463,7 +463,7 @@ export async function getCitySnapshot(
   limit = 200,
 ): Promise<CitySnapshot | null> {
   const results = await env.DB.prepare(
-    `SELECT cms_id, name, address, city, state, overall_rating, rn_hours_per_resident_day, grade_score, grade_letter, slug
+    `SELECT cms_id, name, address, city, state, overall_rating, rn_hours_per_resident_day, grade_score, grade_letter, slug, abuse_icon, special_focus_status
      FROM facilities WHERE state = ? ORDER BY grade_score DESC`
   )
     .bind(state)
@@ -645,6 +645,23 @@ export async function getHomeStats(env: Env): Promise<HomeStats | null> {
   }
 
   return { avgScore: site.avg_grade, totalFacilities: site.total_facilities, distribution };
+}
+
+/**
+ * CMS staffing footnotes for one facility. facility_cms_notes is created by the
+ * ingest seed itself, so until the first refresh after deploy it may not exist:
+ * that, and any other failure, returns null and the page simply shows no notes.
+ * A facility with no notable footnote has no row and also returns null.
+ */
+export async function getFacilityCmsNotes(env: Env, cmsId: string): Promise<FacilityCmsNotes | null> {
+  try {
+    const row = await env.DB.prepare(
+      "SELECT staffing_rating_footnote, reported_staffing_footnote FROM facility_cms_notes WHERE cms_id = ?",
+    ).bind(cmsId).first<FacilityCmsNotes>();
+    return row ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function getFacilitySnapshots(env: Env, cmsId: string): Promise<FacilitySnapshot[]> {

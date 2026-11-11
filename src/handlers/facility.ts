@@ -12,6 +12,7 @@ import {
   getStateRnMedian,
   getOperatorBySlug,
   getFacilityPenalties,
+  getFacilityCmsNotes,
 } from "../db";
 import { computeTrajectory } from "../trajectory";
 import { generateFacilityAssessment } from "../narrative";
@@ -49,7 +50,7 @@ export async function handleFacility(request: Request, env: Env, slugId: string)
       return Response.redirect(url.toString(), 308);
     }
 
-    const [inspectionDetails, deficiencies, nearby, betterNearby, snapshots, nationalAvg, stateRnMedian, penalties] = await Promise.all([
+    const [inspectionDetails, deficiencies, nearby, betterNearby, snapshots, nationalAvg, stateRnMedian, penalties, cmsNotes] = await Promise.all([
       getFacilityInspectionDetails(env, facility.cms_id),
       getFacilityDeficiencies(env, facility.cms_id),
       // Peers for THIS facility, widening past the city when the city is small,
@@ -60,6 +61,8 @@ export async function handleFacility(request: Request, env: Env, slugId: string)
       getNationalAverages(env),
       getStateRnMedian(env, facility.state),
       getFacilityPenalties(env, facility.cms_id),
+      // Never throws: null until the first ingest after deploy creates the table.
+      getFacilityCmsNotes(env, facility.cms_id),
     ]);
 
     const trajectory = snapshots.length >= 3 ? computeTrajectory(snapshots) : null;
@@ -110,6 +113,7 @@ export async function handleFacility(request: Request, env: Env, slugId: string)
         penalties,
         stateRnMedian,
         nationalAvgRn: nationalAvg.avgRnHours || null,
+        cmsNotes,
       },
     );
     await pageCache.putWithStale(cacheKey, html, { expirationTtl: 86400 });

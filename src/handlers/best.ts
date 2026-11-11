@@ -14,6 +14,8 @@ interface FacilityRow {
   grade_score: number;
   grade_letter: string;
   slug: string;
+  abuse_icon?: string | null;
+  special_focus_status?: string | null;
 }
 
 const RANKABLE_GRADE_SQL = "grade_letter != 'NR' AND grade_score >= 0";
@@ -26,7 +28,7 @@ const RANKABLE_GRADE_SQL = "grade_letter != 'NR' AND grade_score >= 0";
 async function fetchBest(env: Env, state?: string): Promise<FacilityRow[]> {
   if (state) {
     const results = await env.DB.prepare(
-      `SELECT cms_id, name, city, state, rn_hours_per_resident_day, total_deficiencies, grade_score, grade_letter, slug
+      `SELECT cms_id, name, city, state, rn_hours_per_resident_day, total_deficiencies, grade_score, grade_letter, slug, abuse_icon, special_focus_status
        FROM facilities
        WHERE state = ? AND ${RANKABLE_GRADE_SQL}
        ORDER BY grade_score DESC
@@ -35,7 +37,7 @@ async function fetchBest(env: Env, state?: string): Promise<FacilityRow[]> {
     return results.results ?? [];
   }
   const results = await env.DB.prepare(
-    `SELECT cms_id, name, city, state, rn_hours_per_resident_day, total_deficiencies, grade_score, grade_letter, slug
+    `SELECT cms_id, name, city, state, rn_hours_per_resident_day, total_deficiencies, grade_score, grade_letter, slug, abuse_icon, special_focus_status
      FROM facilities
      WHERE ${RANKABLE_GRADE_SQL}
      ORDER BY grade_score DESC
@@ -47,7 +49,7 @@ async function fetchBest(env: Env, state?: string): Promise<FacilityRow[]> {
 async function fetchWorst(env: Env, state?: string): Promise<FacilityRow[]> {
   if (state) {
     const results = await env.DB.prepare(
-      `SELECT cms_id, name, city, state, rn_hours_per_resident_day, total_deficiencies, grade_score, grade_letter, slug
+      `SELECT cms_id, name, city, state, rn_hours_per_resident_day, total_deficiencies, grade_score, grade_letter, slug, abuse_icon, special_focus_status
        FROM facilities
        WHERE state = ? AND ${RANKABLE_GRADE_SQL}
        ORDER BY grade_score ASC
@@ -56,7 +58,7 @@ async function fetchWorst(env: Env, state?: string): Promise<FacilityRow[]> {
     return results.results ?? [];
   }
   const results = await env.DB.prepare(
-    `SELECT cms_id, name, city, state, rn_hours_per_resident_day, total_deficiencies, grade_score, grade_letter, slug
+    `SELECT cms_id, name, city, state, rn_hours_per_resident_day, total_deficiencies, grade_score, grade_letter, slug, abuse_icon, special_focus_status
      FROM facilities
      WHERE ${RANKABLE_GRADE_SQL}
      ORDER BY grade_score ASC

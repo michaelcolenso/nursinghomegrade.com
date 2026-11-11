@@ -35,6 +35,9 @@ export interface CMSFacility {
   rating_cycle_1_standard_survey_health_date?: string;
   registered_nurse_turnover?: string;
   total_nursing_staff_turnover?: string;
+  // Staffing footnote codes (Data Dictionary Table 15), e.g. "24" = many days without an RN onsite.
+  staffing_rating_footnote?: string;
+  reported_staffing_footnote?: string;
   processing_date?: string;
 }
 
@@ -62,6 +65,12 @@ export interface FacilityProfile {
   rn_turnover_pct?: number | null;
   total_nursing_turnover_pct?: number | null;
   cms_processing_date?: string | null;
+}
+
+/** CMS staffing footnotes, stored in facility_cms_notes (created by the ingest seed). */
+export interface FacilityCmsNotes {
+  staffing_rating_footnote: string | null;
+  reported_staffing_footnote: string | null;
 }
 
 /** One enforcement action from the CMS Penalties file. */
@@ -113,6 +122,8 @@ export interface StateFacilityCard {
   grade_score: number;
   grade_letter: string;
   rn_hours_per_resident_day: number | null;
+  abuse_icon?: string | null;
+  special_focus_status?: string | null;
 }
 
 export interface FacilityInspectionDetails {
