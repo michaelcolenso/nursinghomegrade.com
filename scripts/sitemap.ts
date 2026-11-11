@@ -86,13 +86,13 @@ async function main() {
 
   // Pull facility rows used to build the URL corpus.
   const result = execSync(
-    `npx wrangler d1 execute nursinghomegrade ${d1Flag} --command "SELECT cms_id, slug, state, city, updated_at, rn_hours_per_resident_day FROM facilities ORDER BY state, cms_id;" --json`,
+    `npx wrangler d1 execute nursinghomegrade ${d1Flag} --command "SELECT cms_id, slug, state, city, updated_at, rn_hours_per_resident_day, abuse_icon FROM facilities ORDER BY state, cms_id;" --json`,
     { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
   );
 
   // wrangler d1 execute --json returns an array of result sets
   const parsed = parseWranglerJson<Array<{
-    results: Array<{ cms_id: string; slug: string; state: string; city: string; updated_at: string; rn_hours_per_resident_day: number | null }>;
+    results: Array<{ cms_id: string; slug: string; state: string; city: string; updated_at: string; rn_hours_per_resident_day: number | null; abuse_icon?: string | null }>;
   }>>(result, "facility rows");
   const rows = parsed[0]?.results ?? [];
 
@@ -124,6 +124,15 @@ async function main() {
     ...new Set(
       rows
         .filter((r) => r.rn_hours_per_resident_day !== null && r.rn_hours_per_resident_day! < 0.55)
+        .map((r) => STATE_NAMES[r.state.toUpperCase()]?.slug)
+        .filter((s): s is string => Boolean(s)),
+    ),
+  ].sort();
+  // Only states that have a flagged home get an abuse-citations page (others 404).
+  const abuseStateSlugs = [
+    ...new Set(
+      rows
+        .filter((r) => r.abuse_icon === "Y")
         .map((r) => STATE_NAMES[r.state.toUpperCase()]?.slug)
         .filter((s): s is string => Boolean(s)),
     ),
@@ -310,6 +319,24 @@ async function main() {
       changefreq: "weekly",
       priority: "0.6" as string,
     })),
+    {
+      loc: `${BASE}/reports/abuse-citations`,
+      lastmod: newestDate(siteDataLastmod, staffingFailuresSourceLastmod),
+      changefreq: "weekly",
+      priority: "0.7",
+    },
+    ...abuseStateSlugs.map((s) => ({
+      loc: `${BASE}/reports/abuse-citations/${escapeXml(s)}`,
+      lastmod: newestDate(stateLastmodBySlug.get(s) ?? siteDataLastmod, staffingFailuresSourceLastmod),
+      changefreq: "weekly",
+      priority: "0.6" as string,
+    })),
+    {
+      loc: `${BASE}/reports/special-focus-facilities`,
+      lastmod: newestDate(siteDataLastmod, staffingFailuresSourceLastmod),
+      changefreq: "weekly",
+      priority: "0.7",
+    },
     {
       loc: `${BASE}/states`,
       lastmod: newestDate(siteDataLastmod, stateSourceLastmod),

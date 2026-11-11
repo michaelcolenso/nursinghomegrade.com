@@ -2,7 +2,17 @@ import type { Env } from "../types";
 import { htmlCacheKey, pageCache } from "../cache";
 import { getStateAbbreviation, getStateInfo } from "../states";
 import { getOperatorsRanked, getNationalAverages, getFacilitiesWithUncorrectedDeficiencies, getBenchmarkShortfall } from "../db";
-import { staffingFailuresPage, highDeficiencyPage, staffingFailuresStatePage, chainsReportPage, uncorrectedDeficienciesPage } from "../templates/reports";
+import {
+  staffingFailuresPage,
+  highDeficiencyPage,
+  staffingFailuresStatePage,
+  chainsReportPage,
+  uncorrectedDeficienciesPage,
+  abuseCitationsPage,
+  abuseCitationsStatePage,
+  specialFocusPage,
+  type AbuseStateRow,
+} from "../templates/reports";
 import { staffingStandardRepealPage } from "../templates/staffing-repeal";
 import { notFoundPage, errorPage } from "../templates/subscribe";
 
@@ -217,5 +227,118 @@ export async function handleUncorrectedDeficiencies(request: Request, env: Env):
     console.error("handleUncorrectedDeficiencies error", err);
     const html = errorPage("Service unavailable", "We're experiencing a temporary issue. Please try again in a moment.");
     return new Response(html, { status: 503, headers: { "Content-Type": "text/html;charset=UTF-8" } });
+  }
+}
+
+// ── CMS warning-flag reports ───────────────────────────────────────────────
+// abuse_icon and special_focus_status are copied verbatim from CMS by ingest.
+
+const ABUSE_PAGE_SIZE = 200;
+const ABUSE_WHERE = "abuse_icon = 'Y'";
+const notFound = (pathname: string) =>
+  new Response(notFoundPage(pathname), { status: 404, headers: { "Content-Type": "text/html;charset=UTF-8" } });
+const serviceUnavailable = () =>
+  new Response(errorPage("Service unavailable", "We're experiencing a temporary issue. Please try again in a moment."), {
+    status: 503,
+    headers: { "Content-Type": "text/html;charset=UTF-8" },
+  });
+
+async function handleAbuseNational(env: Env): Promise<Response> {
+  const cacheKey = htmlCacheKey("report:abuse-citations");
+  const cached = await pageCache.get(cacheKey);
+  if (cached) return staffingFailuresCacheResponse(cached);
+
+  const result = await env.DB.prepare(
+    `SELECT state, COUNT(*) AS count,
+            SUM(CASE WHEN grade_letter IN ('A', 'B') THEN 1 ELSE 0 END) AS good_grades
+     FROM facilities
+     WHERE ${ABUSE_WHERE}
+     GROUP BY state
+     ORDER BY count DESC, state ASC`
+  ).all<{ state: string; count: number; good_grades: number | null }>();
+
+  const states = (result.results ?? [])
+    .map((row): AbuseStateRow | null => {
+      const info = getStateInfo(row.state);
+      return info ? { stateName: info.name, slug: info.slug, count: row.count, goodGrades: row.good_grades ?? 0 } : null;
+    })
+    .filter((row): row is AbuseStateRow => row !== null);
+  const total = states.reduce((sum, row) => sum + row.count, 0);
+
+  const html = abuseCitationsPage(states, total);
+  await pageCache.put(cacheKey, html, { expirationTtl: 86400 });
+  return staffingFailuresCacheResponse(html);
+}
+
+async function handleAbuseState(request: Request, env: Env, stateSlug: string): Promise<Response> {
+  const url = new URL(request.url);
+  const stateAbbr = getStateAbbreviation(stateSlug);
+  const info = stateAbbr ? getStateInfo(stateAbbr) : undefined;
+  if (!stateAbbr || !info) return notFound(url.pathname);
+  const page = staffingFailuresPageNumber(url.searchParams.get("page"));
+
+  const cacheKey = htmlCacheKey(`report:abuse-citations:${stateAbbr}:p${page}`);
+  const cached = await pageCache.get(cacheKey);
+  if (cached) return staffingFailuresCacheResponse(cached);
+
+  const counts = await env.DB.prepare(
+    `SELECT COUNT(*) AS count, SUM(CASE WHEN grade_letter IN ('A', 'B') THEN 1 ELSE 0 END) AS good_grades
+     FROM facilities WHERE ${ABUSE_WHERE} AND state = ?`
+  ).bind(stateAbbr).first<{ count: number; good_grades: number | null }>();
+  const total = counts?.count ?? 0;
+  // A state with no flagged homes has no page: an empty list is not worth indexing.
+  if (total === 0) return notFound(url.pathname);
+  const totalPages = Math.max(1, Math.ceil(total / ABUSE_PAGE_SIZE));
+  if (page > totalPages) return notFound(url.pathname);
+
+  const result = await env.DB.prepare(
+    `SELECT cms_id, name, city, state, grade_score, grade_letter, slug
+     FROM facilities
+     WHERE ${ABUSE_WHERE} AND state = ?
+     ORDER BY CASE WHEN grade_letter = 'NR' THEN 1 ELSE 0 END, grade_score ASC, name ASC
+     LIMIT ? OFFSET ?`
+  ).bind(stateAbbr, ABUSE_PAGE_SIZE, (page - 1) * ABUSE_PAGE_SIZE).all<FacilityRow>();
+
+  const html = abuseCitationsStatePage(info.name, info.slug, result.results ?? [], {
+    total,
+    goodGrades: counts?.good_grades ?? 0,
+    page,
+    totalPages,
+  });
+  await pageCache.put(cacheKey, html, { expirationTtl: 86400 });
+  return staffingFailuresCacheResponse(html);
+}
+
+export async function handleAbuseCitations(request: Request, env: Env, stateSlug?: string): Promise<Response> {
+  try {
+    return stateSlug ? await handleAbuseState(request, env, stateSlug) : await handleAbuseNational(env);
+  } catch (err) {
+    console.error("handleAbuseCitations error", err);
+    return serviceUnavailable();
+  }
+}
+
+export async function handleSpecialFocus(request: Request, env: Env): Promise<Response> {
+  try {
+    const cacheKey = htmlCacheKey("report:special-focus-facilities");
+    const cached = await pageCache.get(cacheKey);
+    if (cached) return staffingFailuresCacheResponse(cached);
+
+    const result = await env.DB.prepare(
+      `SELECT cms_id, name, city, state, grade_score, grade_letter, slug, special_focus_status
+       FROM facilities
+       WHERE special_focus_status IN ('SFF', 'SFF Candidate')
+       ORDER BY state ASC, name ASC`
+    ).all<FacilityRow & { special_focus_status: string }>();
+    const rows = result.results ?? [];
+    const html = specialFocusPage(
+      rows.filter((r) => r.special_focus_status === "SFF"),
+      rows.filter((r) => r.special_focus_status === "SFF Candidate"),
+    );
+    await pageCache.put(cacheKey, html, { expirationTtl: 86400 });
+    return staffingFailuresCacheResponse(html);
+  } catch (err) {
+    console.error("handleSpecialFocus error", err);
+    return serviceUnavailable();
   }
 }

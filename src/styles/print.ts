@@ -27,6 +27,8 @@ export const PRINT_CSS = `
       .hbar { border: 1px solid #000; background: #fff; }
       .hbar-fill { background: #000 !important; }
       .trend, .notice { background: #fff !important; border: 1px solid #000 !important; color: #000 !important; }
+      .cms-warnings, .staffing-notes { background: #fff !important; border: 2px solid #000 !important; break-inside: avoid; }
+      .cms-warnings-heading, .staffing-notes .is-urgent { color: #000 !important; }
       * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     }
 `;

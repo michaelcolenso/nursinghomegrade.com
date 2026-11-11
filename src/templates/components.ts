@@ -4,6 +4,7 @@ import { WORDMARK_SVG_INNER, WORDMARK_SVG_INNER_REVERSED, WORDMARK_VIEWBOX } fro
 import { RN_BENCHMARK, benchmarkLabel } from "../staffing-standard";
 import { scoreToGrade, scoreToSummary, type ScoreInputKey } from "../scoring";
 import { escHtml } from "./escape";
+import { isAbuseFlagged, specialFocusKind } from "../cms-warnings";
 import { icon, type IconName } from "./icons";
 
 export type GradeKey = "A" | "B" | "C" | "D" | "F" | "NR";
@@ -206,6 +207,20 @@ export interface CardFacility extends ChipFacility {
   quality_rating?: number | null;
   staffing_rating?: number | null;
   grade_missing_inputs?: string | null;
+  /** CMS warning flags; lists that select them show a badge on the card. */
+  abuse_icon?: string | null;
+  special_focus_status?: string | null;
+}
+
+/** Short CMS warning badges for list cards, worst first. Empty when the home carries none. */
+export function cmsWarningBadges(f: Pick<CardFacility, "abuse_icon" | "special_focus_status">): string {
+  const badges: string[] = [];
+  const sff = specialFocusKind(f.special_focus_status);
+  if (sff === "sff") badges.push("CMS Special Focus Facility");
+  if (sff === "candidate") badges.push("Special Focus candidate");
+  if (isAbuseFlagged(f.abuse_icon)) badges.push("Cited for abuse or neglect");
+  if (badges.length === 0) return "";
+  return `<ul class="warn-badges" aria-label="CMS warnings">${badges.map((b) => `<li class="warn-badge">${escHtml(b)}</li>`).join("")}</ul>`;
 }
 
 export interface CardOptions {
@@ -279,6 +294,7 @@ export function facilityCard(f: CardFacility, opts: CardOptions = {}): string {
           ${rank ? `<span class="fcard-rank">${escHtml(rank)}</span>` : ""}
           <${h} class="fcard-name"><a href="${facilityHref(f)}">${escHtml(f.name)}</a></${h}>
           <p class="fcard-meta">${where.map(escHtml).join(", ")}</p>
+          ${cmsWarningBadges(f)}
         </div>
         ${compare ? compareToggle(f) : ""}
       </div>

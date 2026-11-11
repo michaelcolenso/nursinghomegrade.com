@@ -1,4 +1,13 @@
-import type { FacilityPageData, Deficiency, Facility, Trajectory, Operator, FacilityPenalty } from "../types";
+import type { FacilityPageData, Deficiency, Facility, Trajectory, Operator, FacilityPenalty, FacilityCmsNotes } from "../types";
+import {
+  ABUSE_ICON_DEFINITION,
+  SPECIAL_FOCUS_CLAUSE,
+  countAbuseCitations,
+  isAbuseFlagged,
+  specialFocusKind,
+  staffingNotes,
+  type StaffingNote,
+} from "../cms-warnings";
 import { citySlug, getStateInfo } from "../states";
 import { layout, escHtml } from "./layout";
 import { renderTrustModule } from "./trust";
@@ -432,6 +441,7 @@ function renderStaffingComparison(
   f: FacilityPageData,
   stateRnMedian: number | null,
   nationalAvgRn: number | null,
+  notes: StaffingNote[] = [],
 ): string {
   const rn = f.rn_hours_per_resident_day;
   const rows: string[] = [];
@@ -461,7 +471,14 @@ function renderStaffingComparison(
     turnover.push(`Total nursing staff turnover: <strong>${f.total_nursing_turnover_pct.toFixed(1)}%</strong>`);
   }
 
-  if (rows.length === 0 && turnover.length === 0) return "";
+  if (rows.length === 0 && turnover.length === 0 && notes.length === 0) return "";
+
+  const notesHtml = notes.length > 0
+    ? `<div class="staffing-notes">
+      <p class="staffing-notes-title">CMS notes on this facility's staffing data</p>
+      <ul>${notes.map((n) => `<li${n.urgent ? ` class="is-urgent"` : ""}>${escHtml(n.text)} <span class="muted">(CMS footnote ${escHtml(n.code)})</span></li>`).join("")}</ul>
+    </div>`
+    : "";
 
   const period = formatIsoDate(f.cms_processing_date);
   const periodNote = period
@@ -478,7 +495,59 @@ function renderStaffingComparison(
       </table>
     </div>` : ""}
     ${turnover.length > 0 ? `<p>${turnover.join(" · ")}</p>` : ""}
+    ${notesHtml}
     ${periodNote}`;
+}
+
+/**
+ * CMS's own warning flags, shown above everything else on the page. The A–F grade
+ * counts the underlying citations by severity but does not use these flags, so a
+ * home can carry a good grade and a CMS warning at once; the reader sees both.
+ */
+export function renderCmsWarnings(
+  f: Pick<FacilityPageData, "abuse_icon" | "special_focus_status" | "state">,
+  deficiencies: ReadonlyArray<Pick<Deficiency, "deficiency_category">> | null,
+  notes: StaffingNote[],
+): string {
+  const items: string[] = [];
+  const sff = specialFocusKind(f.special_focus_status);
+  if (sff) {
+    const title = sff === "sff" ? "CMS Special Focus Facility" : "Candidate for CMS Special Focus program";
+    const lead = sff === "sff"
+      ? "CMS has placed this home in its Special Focus Facility program"
+      : "CMS lists this home as a candidate for its Special Focus Facility program";
+    items.push(`<li class="cms-warning">
+      <p class="cms-warning-title">${escHtml(title)}</p>
+      <p>${escHtml(lead)}, ${escHtml(SPECIAL_FOCUS_CLAUSE)}. <a href="/reports/special-focus-facilities">All Special Focus homes</a></p>
+    </li>`);
+  }
+  if (isAbuseFlagged(f.abuse_icon)) {
+    const n = deficiencies ? countAbuseCitations(deficiencies) : 0;
+    const record = n > 0
+      ? ` The inspection record below lists ${n} ${n === 1 ? "citation" : "citations"} in CMS's abuse, neglect and exploitation category. <a href="#inspections">See the citations</a>`
+      : "";
+    const state = getStateInfo(f.state);
+    const stateLink = state
+      ? ` · <a href="/reports/abuse-citations/${escHtml(state.slug)}">Other flagged homes in ${escHtml(state.name)}</a>`
+      : "";
+    items.push(`<li class="cms-warning">
+      <p class="cms-warning-title">Cited for abuse or neglect</p>
+      <p>${escHtml(ABUSE_ICON_DEFINITION)}${record}${stateLink}</p>
+    </li>`);
+  }
+  for (const note of notes.filter((n) => n.urgent)) {
+    items.push(`<li class="cms-warning">
+      <p class="cms-warning-title">Days without a registered nurse</p>
+      <p>${escHtml(note.text)} CMS lowered this home's staffing rating for this reason. <a href="#staffing">Staffing details</a></p>
+    </li>`);
+  }
+  if (items.length === 0) return "";
+  return `
+    <section class="cms-warnings" aria-labelledby="cms-warnings-heading">
+      <h2 id="cms-warnings-heading" class="cms-warnings-heading">CMS warnings for this home</h2>
+      <ul class="cms-warning-list">${items.join("")}</ul>
+      <p class="cms-warnings-note">These flags come from CMS. Our A–F grade counts the underlying citations by severity but does not use the flags themselves. <a href="/how-we-grade">How we grade</a></p>
+    </section>`;
 }
 
 function renderPenalties(f: FacilityPageData, summary: PenaltySummary): string {
@@ -730,6 +799,8 @@ export function facilityPage(
     penalties?: FacilityPenalty[] | null;
     stateRnMedian?: number | null;
     nationalAvgRn?: number | null;
+    /** null = no notable CMS footnote, or the lookup failed. */
+    cmsNotes?: FacilityCmsNotes | null;
   } = {},
 ): string {
   const stateInfo = getStateInfo(f.state);
@@ -828,7 +899,10 @@ export function facilityPage(
       ${renderAssessment(assessment)}
     </section>`;
 
-  const staffingSection = renderStaffingComparison(f, extras.stateRnMedian ?? null, extras.nationalAvgRn ?? null);
+  const notes = extras.cmsNotes
+    ? staffingNotes(extras.cmsNotes.staffing_rating_footnote, extras.cmsNotes.reported_staffing_footnote)
+    : [];
+  const staffingSection = renderStaffingComparison(f, extras.stateRnMedian ?? null, extras.nationalAvgRn ?? null, notes);
   const recordsSection = renderInspectionRecords(f, deficiencies);
   const penaltiesSection = renderPenalties(f, penaltySummary);
   const contactSection = renderOwnershipAndContact(f, operator);
@@ -917,6 +991,8 @@ export function facilityPage(
         <button type="button" class="btn btn--secondary btn--sm" data-share hidden title="Share or copy the link to this page">${icon("share-2", { size: 18 })}<span class="share-label">Share</span></button>
       </div>
     </header>
+
+    ${renderCmsWarnings(f, deficiencies, notes)}
 
     <div class="fac-top">
       ${renderIdentityFacts(f)}

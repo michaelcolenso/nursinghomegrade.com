@@ -3,6 +3,7 @@ import type { UncorrectedRow } from "../db";
 import { layout, escHtml } from "./layout";
 import { breadcrumb, gradePill } from "./components";
 import { repealDisclosureHtml } from "../staffing-standard";
+import { ABUSE_ICON_DEFINITION, SPECIAL_FOCUS_DEFINITION } from "../cms-warnings";
 
 interface FacilityRow {
   cms_id: string;
@@ -384,5 +385,158 @@ export function uncorrectedDeficienciesPage(facilities: UncorrectedRow[]): strin
     "Nursing facilities with outstanding health inspection deficiencies that have not yet been corrected. Sorted by severity.",
     body,
     { canonicalPath: "/reports/uncorrected-deficiencies" },
+  );
+}
+
+// ── CMS warning-flag reports (docs/data-stories/UNTOLD-STORIES.md §1) ────────
+
+export interface AbuseStateRow {
+  stateName: string;
+  slug: string;
+  count: number;
+  /** Flagged homes that still hold an A or B from us. */
+  goodGrades: number;
+}
+
+const ABUSE_BASE = "/reports/abuse-citations";
+const SFF_PATH = "/reports/special-focus-facilities";
+
+function flagSourceNote(): string {
+  return `
+    <div class="panel panel--tint panel-methodology">
+      <h3>About this list</h3>
+      <p>
+        The flag comes from the CMS Provider Information file (dataset 4pq5-n9py), column "Abuse Icon" or "Special Focus Status",
+        exactly as CMS publishes it. ${escHtml(ABUSE_ICON_DEFINITION)} ${escHtml(SPECIAL_FOCUS_DEFINITION)}
+      </p>
+      <p>
+        Our A–F grade counts a home's citations by severity but does not use these flags, so a flagged home can still carry
+        a good grade. We show both. <a href="/how-we-grade">How we grade</a> · <a href="/data-sources">Release dates</a>
+      </p>
+    </div>`;
+}
+
+function flagRelatedReports(): string {
+  return `
+    <div class="cta-box">
+      <h3>Related Reports</h3>
+      <p>Other lists built from official CMS records.</p>
+      <a class="btn" href="${ABUSE_BASE}">Abuse and Neglect Citations →</a>
+      <a href="${SFF_PATH}" class="btn-secondary">Special Focus Facilities →</a>
+      <a href="/reports/uncorrected-deficiencies" class="btn-secondary">Uncorrected Deficiencies →</a>
+    </div>`;
+}
+
+export function abuseCitationsPage(states: AbuseStateRow[], total: number): string {
+  const goodGrades = states.reduce((sum, s) => sum + s.goodGrades, 0);
+  const rows = states
+    .map(
+      (st) => `
+        <tr>
+          <td class="strong"><a href="${ABUSE_BASE}/${escHtml(st.slug)}">${escHtml(st.stateName)}</a></td>
+          <td>${st.count.toLocaleString("en-US")}</td>
+          <td>${st.goodGrades.toLocaleString("en-US")}</td>
+        </tr>`,
+    )
+    .join("");
+  const body = `
+    ${breadcrumb([{ label: "Home", href: "/" }, { label: "Abuse and Neglect Citations" }])}
+
+    <h1>Nursing Homes CMS Flags for Abuse or Neglect</h1>
+    <p class="lede">
+      CMS flags <strong>${total.toLocaleString("en-US")} nursing homes</strong> in ${states.length} states for abuse or neglect citations.
+      ${goodGrades > 0 ? `${goodGrades.toLocaleString("en-US")} of them still hold an A or B grade from us, which is why we show the flag on every page.` : ""}
+    </p>
+    <p>${escHtml(ABUSE_ICON_DEFINITION)}</p>
+
+    <h2>Flagged Homes by State</h2>
+    <div class="table-container">
+      <table class="report-table">
+        <thead><tr><th scope="col">State</th><th scope="col">Flagged homes</th><th scope="col">Graded A or B by us</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+
+    ${flagSourceNote()}
+    ${flagRelatedReports()}
+  `;
+  return layout(
+    "Nursing Homes Cited for Abuse or Neglect — NursingHomeGrade Report",
+    `${total.toLocaleString("en-US")} U.S. nursing homes carry CMS's abuse or neglect warning. See them by state, with each home's grade.`,
+    body,
+    { canonicalPath: ABUSE_BASE },
+  );
+}
+
+export function abuseCitationsStatePage(
+  stateName: string,
+  stateSlug: string,
+  facilities: FacilityRow[],
+  opts: { total: number; goodGrades: number; page: number; totalPages: number },
+): string {
+  const { total, goodGrades, page, totalPages } = opts;
+  const basePath = `${ABUSE_BASE}/${stateSlug}`;
+  const canonicalPath = page > 1 ? `${basePath}?page=${page}` : basePath;
+  const pagination = totalPages > 1 ? renderStaffingPagination(basePath, page, totalPages) : "";
+  const scope = `Nursing Homes Cited for Abuse or Neglect in ${stateName}`;
+  const body = `
+    ${breadcrumb([{ label: "Home", href: "/" }, { label: "Abuse and Neglect Citations", href: ABUSE_BASE }, { label: stateName }])}
+
+    <h1>${escHtml(scope)}</h1>
+    <p class="lede">
+      CMS flags <strong>${total.toLocaleString("en-US")} ${total === 1 ? "nursing home" : "nursing homes"}</strong> in ${escHtml(stateName)} for abuse or neglect citations.
+      ${goodGrades > 0 ? `${goodGrades.toLocaleString("en-US")} of them hold an A or B grade from us.` : ""}
+    </p>
+    <p>${escHtml(ABUSE_ICON_DEFINITION)}</p>
+
+    <h2>Flagged Homes, Lowest Grade First</h2>
+    ${renderReportTable(facilities, [
+      { key: "name", label: "Facility" },
+      { key: "city", label: "City" },
+      { key: "grade_letter", label: "Our grade" },
+    ])}
+    ${pagination}
+
+    ${flagSourceNote()}
+    ${flagRelatedReports()}
+  `;
+  return layout(
+    page > 1 ? `${scope} (Page ${page}) — NursingHomeGrade Report` : `${scope} — NursingHomeGrade Report`,
+    `${total.toLocaleString("en-US")} nursing homes in ${stateName} carry CMS's abuse or neglect warning. See each home's record and grade.`,
+    body,
+    { canonicalPath, noindex: page > 1 },
+  );
+}
+
+export function specialFocusPage(sff: FacilityRow[], candidates: FacilityRow[]): string {
+  const columns: { key: keyof FacilityRow; label: string }[] = [
+    { key: "name", label: "Facility" },
+    { key: "city", label: "City" },
+    { key: "state", label: "State" },
+    { key: "grade_letter", label: "Our grade" },
+  ];
+  const body = `
+    ${breadcrumb([{ label: "Home", href: "/" }, { label: "Special Focus Facilities" }])}
+
+    <h1>CMS Special Focus Facilities and Candidates</h1>
+    <p class="lede">
+      ${escHtml(SPECIAL_FOCUS_DEFINITION)} CMS currently lists <strong>${sff.length.toLocaleString("en-US")} Special Focus ${sff.length === 1 ? "Facility" : "Facilities"}</strong>
+      and <strong>${candidates.length.toLocaleString("en-US")} ${candidates.length === 1 ? "candidate" : "candidates"}</strong> for the program.
+    </p>
+
+    <h2 id="sff">Special Focus Facilities</h2>
+    ${sff.length > 0 ? renderReportTable(sff, columns) : `<p class="muted">CMS lists no Special Focus Facilities in the current release.</p>`}
+
+    <h2 id="candidates">Special Focus Candidates</h2>
+    ${candidates.length > 0 ? renderReportTable(candidates, columns) : `<p class="muted">CMS lists no candidates in the current release.</p>`}
+
+    ${flagSourceNote()}
+    ${flagRelatedReports()}
+  `;
+  return layout(
+    "CMS Special Focus Nursing Homes — NursingHomeGrade Report",
+    `${sff.length} nursing homes are in CMS's Special Focus Facility program and ${candidates.length} are candidates. See each home's record and grade.`,
+    body,
+    { canonicalPath: SFF_PATH },
   );
 }

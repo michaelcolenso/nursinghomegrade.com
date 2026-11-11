@@ -322,6 +322,8 @@ export const COMPONENTS_CSS = `
     .fcard-name a:visited { color: var(--navy-900); }
     .fcard-name a:hover { color: var(--teal-700); text-decoration: underline; text-underline-offset: 3px; }
     .fcard-meta { margin: 4px 0 0; font-size: 0.875rem; color: var(--slate-600); }
+    .warn-badges { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; padding: 0; list-style: none; }
+    .warn-badge { padding: 2px 8px; background: var(--grade-F-tint); border: 1px solid var(--grade-F-ink); border-radius: var(--radius-sm); color: var(--alarm); font-size: 0.8125rem; font-weight: 700; line-height: 1.4; }
     .fcard-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: var(--space-xs); margin: var(--space-s) 0 0; }
     .fcard-stat { padding: 8px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm); }
     .fcard-stat dt { font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--slate-600); }

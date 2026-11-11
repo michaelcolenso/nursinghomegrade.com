@@ -9,7 +9,7 @@ import { handleCompare, handleCompareApi } from "./handlers/comparison";
 import { handleExplore, handleMapApi } from "./handlers/map";
 import { handleHowWeGrade } from "./handlers/how-we-grade";
 import { handleOperator, handleOperatorsHub, handleOperatorsBest, handleOperatorsWorst } from "./handlers/operator";
-import { handleStaffingFailures, handleHighDeficiency, handleChainsReport, handleUncorrectedDeficiencies, handleStaffingStandardRepeal } from "./handlers/reports";
+import { handleStaffingFailures, handleHighDeficiency, handleChainsReport, handleUncorrectedDeficiencies, handleStaffingStandardRepeal, handleAbuseCitations, handleSpecialFocus } from "./handlers/reports";
 import { handleBest, handleWorst } from "./handlers/best";
 import { handleStateReport } from "./handlers/state-report";
 import { handleWellKnown } from "./handlers/well-known";
@@ -381,6 +381,8 @@ async function route(request: Request, env: Env): Promise<Response> {
     if (path === "/reports/high-deficiency-facilities") return handleHighDeficiency(request, env).then(r => wrapResponse(r, request));
     if (path === "/reports/chains") return handleChainsReport(request, env).then(r => wrapResponse(r, request));
     if (path === "/reports/uncorrected-deficiencies") return handleUncorrectedDeficiencies(request, env).then(r => wrapResponse(r, request));
+    if (path === "/reports/abuse-citations") return handleAbuseCitations(request, env).then(r => wrapResponse(r, request));
+    if (path === "/reports/special-focus-facilities") return handleSpecialFocus(request, env).then(r => wrapResponse(r, request));
 
     if (path === "/best") return handleBest(request, env).then(r => wrapResponse(r, request));
     if (path === "/worst") return handleWorst(request, env).then(r => wrapResponse(r, request));
@@ -522,6 +524,9 @@ async function route(request: Request, env: Env): Promise<Response> {
     // ── Dynamic path routes ────────────────────────────────────────────
     const operatorMatch = path.match(/^\/operator\/([a-z0-9-]+)$/);
     if (operatorMatch?.[1]) return handleOperator(request, env, operatorMatch[1]).then(r => wrapResponse(r, request));
+
+    const abuseStateMatch = path.match(/^\/reports\/abuse-citations\/([a-z-]+)$/);
+    if (abuseStateMatch?.[1]) return handleAbuseCitations(request, env, abuseStateMatch[1]).then(r => wrapResponse(r, request));
 
     const staffingFailuresStateMatch = path.match(/^\/reports\/staffing-failures\/([a-z-]+)$/);
     if (staffingFailuresStateMatch?.[1]) return handleStaffingFailures(request, env, staffingFailuresStateMatch[1]).then(r => wrapResponse(r, request));
