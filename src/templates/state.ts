@@ -100,7 +100,7 @@ export function statePage(data: StatePageData): string {
       }
     </div>
     <div class="center btn-row btn-row--center">
-       <a href="/search?state=${stateSlug}" class="btn btn--secondary">View all ranked facilities</a>
+       <a href="/best/${stateSlug}" class="btn btn--secondary">Best nursing homes in ${escHtml(stateName)}</a>
     </div>
   `;
 
