@@ -63,6 +63,12 @@ describe("statePage", () => {
     expect(html).toContain("grade-F");
   });
 
+  it("links the ranked list to the state best page, not a search URL", () => {
+    const html = statePage(baseStateData);
+    expect(html).toContain('href="/best/california"');
+    expect(html).not.toContain("/search?state=");
+  });
+
   it("renders city list", () => {
     const html = statePage(baseStateData);
     expect(html).toContain("Los Angeles");

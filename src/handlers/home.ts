@@ -6,6 +6,7 @@ import { getNationalPctFailing, searchByZipExact, searchNearby, getStatesWithCou
 import { homePage } from "../templates/home";
 import { searchResultsPage, searchFormPage } from "../templates/search";
 import { errorPage } from "../templates/subscribe";
+import { getStateAbbreviation } from "../states";
 
 export async function handleHome(request: Request, env: Env): Promise<Response> {
   const cacheKey = htmlCacheKey("page:home");
@@ -102,6 +103,13 @@ export async function handleSearch(request: Request, env: Env): Promise<Response
   const url = new URL(request.url);
   const zip = (url.searchParams.get("zip") ?? "").replace(/\D/g, "").slice(0, 5);
   if (zip.length !== 5) {
+    // /search has never filtered by state, but state pages used to link to
+    // /search?state=<slug>, which rendered the blank ZIP form. Send those
+    // already-crawled URLs to the state page they were meant to reach.
+    const stateSlug = (url.searchParams.get("state") ?? "").toLowerCase();
+    if (getStateAbbreviation(stateSlug)) {
+      return Response.redirect(`${url.origin}/state/${stateSlug}`, 301);
+    }
     return new Response(searchFormPage(await getDataReleases(env)), {
       headers: { "Content-Type": "text/html;charset=UTF-8" },
     });
