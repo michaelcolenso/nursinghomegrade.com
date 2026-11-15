@@ -91,6 +91,25 @@ describe("search routing safety", () => {
     expect(response.status).toBe(200);
     expect(await response.text()).toContain("Search nursing homes by ZIP code");
   });
+
+  it("redirects legacy /search?state=<slug> links to the state page", async () => {
+    const response = await handleSearch(
+      new Request("https://nursinghomegrade.com/search?state=new-york"),
+      {} as Env,
+    );
+
+    expect(response.status).toBe(301);
+    expect(response.headers.get("Location")).toBe("https://nursinghomegrade.com/state/new-york");
+  });
+
+  it("does not redirect on an unknown state value", async () => {
+    const response = await handleSearch(
+      new Request("https://nursinghomegrade.com/search?state=//evil.example"),
+      {} as Env,
+    );
+
+    expect(response.status).toBe(200);
+  });
 });
 
 describe("facility routing safety", () => {
