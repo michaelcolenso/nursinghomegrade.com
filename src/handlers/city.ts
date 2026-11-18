@@ -2,6 +2,7 @@ import type { Env } from "../types";
 import { htmlCacheKey, pageCache, staleHtmlResponse, htmlResponseCacheControl } from "../cache";
 import { logPageRenderError } from "../page-errors";
 import { isIndexableCity } from "../city-indexation";
+import { cachedCityIndexabilityMatches } from "../city-cache-coherence";
 import { getStateAbbreviation, getStateInfo } from "../states";
 import {
   getCitySnapshot,
@@ -27,17 +28,26 @@ export async function handleCity(request: Request, env: Env, stateSlug: string, 
       return new Response(html, { status: 404, headers: { "Content-Type": "text/html;charset=UTF-8" } });
     }
 
+    // Read current D1 membership before trusting cached HTML. An ingest can
+    // move a city across the 3-facility indexability threshold while its old
+    // HTML remains cached for 24 hours (and stale fallback for seven days).
+    const snapshot = await getCitySnapshot(env, stateAbbr, citySlugParam, 200);
+    if (!snapshot) {
+      const html = notFoundPage(new URL(request.url).pathname);
+      return new Response(html, { status: 404, headers: { "Content-Type": "text/html;charset=UTF-8" } });
+    }
+
     const cached = await pageCache.get(cacheKey);
-    if (cached)
+    if (cached && cachedCityIndexabilityMatches(cached, snapshot.facilityCount)) {
       return new Response(cached, {
         headers: {
           "Content-Type": "text/html;charset=UTF-8",
           "Cache-Control": htmlResponseCacheControl(),
         },
       });
+    }
 
-    const [snapshot, nationalPctFailing, allCities] = await Promise.all([
-      getCitySnapshot(env, stateAbbr, citySlugParam, 200),
+    const [nationalPctFailing, allCities] = await Promise.all([
       getNationalPctFailing(env),
       getStateCityList(env, stateAbbr),
     ]);
@@ -48,11 +58,6 @@ export async function handleCity(request: Request, env: Env, stateSlug: string, 
     const nearbyOutsideCity = anchor
       ? (await getPeerFacilities(env, anchor, 12)).filter((f) => f.city !== anchor.city).slice(0, 6)
       : [];
-
-    if (!snapshot) {
-      const html = notFoundPage(new URL(request.url).pathname);
-      return new Response(html, { status: 404, headers: { "Content-Type": "text/html;charset=UTF-8" } });
-    }
 
     const html = cityPage({
       cityName: snapshot.cityName,
