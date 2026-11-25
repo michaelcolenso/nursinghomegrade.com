@@ -1,6 +1,8 @@
 // Validates the sitemaps as they are actually served, not as they are
 // generated: npx tsx scripts/check-sitemap-live.ts [--sample 25] [--update-baseline]
 // Planned city pruning only: --update-baseline --accept-city-reduction <count>.
+// If no class-aware baseline was recorded before the pruning shipped, add
+// --previous-city-count <measured pre-rollout count> (legacy baseline only).
 //
 // This is the check that can reproduce a Search Console warning, because it
 // sees what Googlebot sees — the deployed index, the children it references,
@@ -22,6 +24,7 @@ import {
   comparePlannedCityReduction,
   compareSitemapCoverage,
   parseAcceptedCityReduction,
+  parsePreviousCityCount,
   parseSitemapBaseline,
   shouldUpdateSitemapBaseline,
   type SitemapBaseline,
@@ -32,6 +35,7 @@ const args = process.argv.slice(2);
 const sampleSize = Number(args[args.indexOf("--sample") + 1]) || 25;
 const updateBaseline = args.includes("--update-baseline");
 const acceptedCityCount = parseAcceptedCityReduction(args);
+const previousCityCount = parsePreviousCityCount(args);
 
 // Relative to the repo root, matching the other read/write paths in this
 // script and in scripts/sitemap.ts — both are documented to run from there.
@@ -157,7 +161,7 @@ async function main() {
     const coverage: SitemapCoverage = { totalUrls, shardCount, pageClasses };
     problems.push(...(acceptedCityCount === undefined
       ? compareSitemapCoverage(coverage, baseline, REGRESSION_THRESHOLD)
-      : comparePlannedCityReduction(coverage, baseline, acceptedCityCount, REGRESSION_THRESHOLD)));
+      : comparePlannedCityReduction(coverage, baseline, acceptedCityCount, REGRESSION_THRESHOLD, previousCityCount)));
   } else if (acceptedCityCount !== undefined) {
     problems.push("City reduction requires an existing class-aware baseline recorded before rollout.");
   } else {

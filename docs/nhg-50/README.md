@@ -88,6 +88,34 @@ cities. On Michael's approved rollout, from a checkout containing this change:
 4. Review and commit the post-rollout baseline, then run the ordinary checker
    without the acknowledgement flag.
 
+### Recovery: the Worker shipped before steps 1 and 2 (state as of 2026-11-24)
+
+The thin-city Worker went live with the 2026-11-08 merge, but the sitemaps were
+never regenerated and no class-aware baseline was recorded. The served
+`sitemap-cities.xml` still lists every city, so roughly four in five sampled
+city URLs answer `noindex, follow`, and every scheduled site-health run since
+then has failed. To recover:
+
+1. Regenerate and upload the sitemaps from current code, either with the
+   **Repair production sitemap** workflow or locally with
+   `npx tsx scripts/sitemap.ts --remote`. (The workflow's own check step is
+   still expected to fail on the total-URL drop until step 2 lands.)
+2. Record the post-rollout baseline against the legacy one, stating the
+   measured pre-rollout city count (6,908 from the table above) and the city
+   count the generator now publishes:
+
+   ```sh
+   npx tsx scripts/check-sitemap-live.ts --update-baseline \
+     --accept-city-reduction <served city count> --previous-city-count 6908
+   ```
+
+   Core and facility URLs are checked together against the ordinary 10%
+   tolerance, because the legacy baseline cannot separate them. Everything
+   else (exact city count, no unknown routes, no lost shard, no listed
+   noindex page) blocks the update as before.
+3. Commit the new class-aware `scripts/sitemap-baseline.json`. Ordinary runs
+   are then fully class-aware again.
+
 Wrangler authentication is separate from MCP authentication; run these approved
 operational commands from a Wrangler-authenticated environment.
 

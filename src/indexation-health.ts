@@ -192,17 +192,86 @@ export function parseAcceptedCityReduction(args: readonly string[]): number | un
 }
 
 /**
+ * Recovery path for a rollout that skipped the class-aware baseline: the
+ * operator states the measured pre-rollout city count, and only a legacy
+ * (total/shard) baseline may be combined with it.
+ */
+export function parsePreviousCityCount(args: readonly string[]): number | undefined {
+  const index = args.indexOf("--previous-city-count");
+  if (index === -1) return undefined;
+  const count = Number(args[index + 1]);
+  if (!args.includes("--accept-city-reduction") || !isPositiveInteger(count)) {
+    throw new Error("--previous-city-count requires --accept-city-reduction and a positive integer measured city count.");
+  }
+  return count;
+}
+
+/**
+ * A legacy baseline cannot separate core from facility URLs, so the stated
+ * pre-rollout city count is the only class it can vouch for. Non-city URLs are
+ * held to the ordinary regression threshold as one group; every other guard
+ * (exact city count, no unknown routes, no lost shard) stays strict.
+ */
+function compareLegacyCityReduction(
+  current: SitemapCoverage,
+  baseline: SitemapBaseline,
+  expectedCityCount: number,
+  previousCityCount: number,
+  threshold: number,
+): string[] {
+  if (!isPositiveInteger(previousCityCount) || previousCityCount >= baseline.totalUrls) {
+    return ["Previous city count must be a positive integer below the baseline total."];
+  }
+  const problems: string[] = [];
+  for (const name of [...REQUIRED_CLASSES, "unknown"] as const) {
+    if (!isNonNegativeInteger(current.pageClasses[name] ?? (name === "unknown" ? 0 : undefined))) {
+      problems.push(`Current sitemap ${name} URL count is invalid.`);
+    }
+  }
+  if (current.pageClasses.city !== expectedCityCount || expectedCityCount >= previousCityCount) {
+    problems.push(`Expected a city reduction to exactly ${expectedCityCount} URLs; found ${current.pageClasses.city}.`);
+  }
+  const baselineNonCity = baseline.totalUrls - previousCityCount;
+  const currentNonCity = current.pageClasses.core + current.pageClasses.facility;
+  if (currentNonCity / baselineNonCity < threshold) {
+    problems.push(
+      `Cannot accept city reduction while core+facility URLs dropped to ${currentNonCity} ` +
+        `from ${baselineNonCity} in the legacy baseline.`,
+    );
+  }
+  if (current.shardCount < baseline.shardCount) {
+    problems.push("Cannot accept city reduction while sitemap shard count decreased.");
+  }
+  if (problems.length > 0) return problems;
+
+  return compareSitemapCoverage(current, {
+    totalUrls: baseline.totalUrls - (previousCityCount - expectedCityCount),
+    shardCount: baseline.shardCount,
+    recordedAt: baseline.recordedAt,
+  }, threshold);
+}
+
+/**
  * Rebaseline only a measured city reduction. A class-aware baseline must be
  * recorded while the old corpus is healthy, before deploying the pruning.
+ * If that step was skipped, `previousCityCount` (the measured pre-rollout city
+ * count) lets a legacy baseline stand in, under the guards above.
  */
 export function comparePlannedCityReduction(
   current: SitemapCoverage,
   baseline: SitemapBaseline,
   expectedCityCount: number,
   threshold = REGRESSION_THRESHOLD,
+  previousCityCount?: number,
 ): string[] {
   if (!isPositiveInteger(expectedCityCount)) {
     return ["Expected city count must be a positive integer."];
+  }
+  if (previousCityCount !== undefined) {
+    if (baseline.pageClasses) {
+      return ["--previous-city-count is only for a legacy baseline without pageClasses; the class-aware baseline already records cities."];
+    }
+    return compareLegacyCityReduction(current, baseline, expectedCityCount, previousCityCount, threshold);
   }
   if (!baseline.pageClasses) {
     return ["City reduction requires a baseline with pageClasses; refresh the healthy baseline before rollout."];

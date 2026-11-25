@@ -5,6 +5,7 @@ import {
   comparePlannedCityReduction,
   compareSitemapCoverage,
   parseAcceptedCityReduction,
+  parsePreviousCityCount,
   parseSitemapBaseline,
   shouldUpdateSitemapBaseline,
   type SitemapCoverage,
@@ -165,4 +166,60 @@ describe("planned city reduction", () => {
       expect(shouldUpdateSitemapBaseline(true, problems)).toBe(false);
     },
   );
+});
+
+describe("planned city reduction against a legacy baseline", () => {
+  // Legacy baseline: 100 URLs, of which 30 were cities before rollout.
+  const legacy = parseSitemapBaseline(JSON.stringify({ totalUrls: 100, shardCount: 4, recordedAt: "2026-08-12" }));
+  const reduced = (): SitemapCoverage => coverage({
+    totalUrls: 75,
+    pageClasses: { core: 10, city: 5, facility: 60 },
+  });
+
+  it("parses the measured pre-rollout city count only alongside an accepted reduction", () => {
+    expect(parsePreviousCityCount([])).toBeUndefined();
+    expect(parsePreviousCityCount(["--update-baseline", "--accept-city-reduction", "5", "--previous-city-count", "30"])).toBe(30);
+    expect(() => parsePreviousCityCount(["--previous-city-count", "30"])).toThrow(/requires/);
+    expect(() => parsePreviousCityCount(["--accept-city-reduction", "5", "--previous-city-count", "x"])).toThrow(/positive integer/);
+  });
+
+  it("still refuses a legacy baseline when no previous city count is given", () => {
+    expect(comparePlannedCityReduction(reduced(), legacy, 5).join()).toContain("before rollout");
+  });
+
+  it("accepts the exact planned reduction when the previous city count is stated", () => {
+    expect(comparePlannedCityReduction(reduced(), legacy, 5, undefined, 30)).toEqual([]);
+  });
+
+  it("rejects a city count that does not match exactly", () => {
+    expect(comparePlannedCityReduction(reduced(), legacy, 6, undefined, 30)).not.toEqual([]);
+  });
+
+  it("rejects a 'reduction' that is not smaller than the stated previous count", () => {
+    expect(comparePlannedCityReduction(coverage({ totalUrls: 100 }), legacy, 30, undefined, 30)).not.toEqual([]);
+  });
+
+  it("rejects a previous city count at or above the baseline total", () => {
+    expect(comparePlannedCityReduction(reduced(), legacy, 5, undefined, 100).join()).toContain("below the baseline total");
+  });
+
+  it("rejects a non-city collapse beyond the usual regression threshold", () => {
+    const current = coverage({ totalUrls: 60, pageClasses: { core: 10, city: 5, facility: 45 } });
+    expect(comparePlannedCityReduction(current, legacy, 5, undefined, 30).join()).toContain("core+facility URLs dropped");
+  });
+
+  it("rejects unknown routes, a zeroed class and a lost shard", () => {
+    expect(comparePlannedCityReduction(
+      coverage({ totalUrls: 76, pageClasses: { core: 10, city: 5, facility: 60, unknown: 1 } }), legacy, 5, undefined, 30,
+    )).not.toEqual([]);
+    expect(comparePlannedCityReduction(
+      coverage({ totalUrls: 65, pageClasses: { core: 0, city: 5, facility: 60 } }), legacy, 5, undefined, 30,
+    )).not.toEqual([]);
+    expect(comparePlannedCityReduction({ ...reduced(), shardCount: 3 }, legacy, 5, undefined, 30).join())
+      .toContain("shard count decreased");
+  });
+
+  it("refuses the legacy path once a class-aware baseline exists", () => {
+    expect(comparePlannedCityReduction(reduced(), baseline, 5, undefined, 30).join()).toContain("only for a legacy baseline");
+  });
 });
